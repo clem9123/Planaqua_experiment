@@ -50,6 +50,6 @@ rsconnect/
 
 # ignore files
 *.html
-
+*.Rproj
 
 
