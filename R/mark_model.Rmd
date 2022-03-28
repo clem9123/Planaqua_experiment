@@ -2,6 +2,10 @@
 title: "R Notebook"
 output: html_notebook
 ---
+```{r warning=FALSE}
+library(FSA)
+library(RMark)
+```
 
 Creation af the capture history data table
 
@@ -22,6 +26,7 @@ Compter le nombre de poissons changés de lac
 
 ```{r}
 fish_mooved <- BDD_a %>% filter (Lake_capture != Lake_released)
+Mooved_tag = fish_mooved$Tag_id
 table(fish_mooved$Lake_capture)
 table(fish_mooved$Lake_released)
 ```
@@ -50,21 +55,28 @@ Si je fais ça est ce qu'il y a moyen de rentrer l'emigration et immigration exa
 population parameters estimate with cormak jolly seber model
 
 ```{r}
-library(Rmark)
 # les données qu'il me faut
 t <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Lake)
 t[] <- lapply(t, as.character)
 t[!is.na(t)] <- "1"
 t[is.na(t)] <- "0"
 
-capt_hist <- data.frame(ch = unite(t %>%
-                                  select(`2016`:`2022`), 
-                                col = "ch", 
-                                sep = ""))
+capt_hist <- data.frame(ch = unite(t %>%select(`2016`:`2022`), 
+                        col = "ch", 
+                        sep = ""))
 
 ```
 
 ```{r}
 phi.p <- mark(capt_hist)
+```
+
+```{r}
+t <- BDD_a %>% filter(!(Tag_id %in% Mooved_tag)) %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Lake)
+Lake <- apply(t[-1],1,function(x) unique(na.omit(x))) #%>% unlist()
+t[] <- lapply(t, as.character)
+
+t[!is.na(t)] <- "1"
+t[is.na(t)] <- "0"
 ```
 
