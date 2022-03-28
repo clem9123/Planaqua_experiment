@@ -1,0 +1,70 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Creation af the capture history data table
+
+```{r}
+t <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Lake)
+t[] <- lapply(t, as.character)
+t[!is.na(t)] <- "1"
+t[is.na(t)] <- "0"
+t <- data.frame(lapply(t,as.numeric))
+
+#t <- as.matrix(t)
+
+capture_history <- as.data.frame(table(as.factor(paste(t$`2016`, t$`2017`, t$`2018`, t$`2019`, t$`2020`, t$`2021`, t$`2022`, sep=""))))
+sum(capture_history$Freq)
+```
+
+Compter le nombre de poissons changés de lac
+
+```{r}
+fish_mooved <- BDD_a %>% filter (Lake_capture != Lake_released)
+table(fish_mooved$Lake_capture)
+table(fish_mooved$Lake_released)
+```
+
+
+Model et test
+
+```{r}
+capt.hist = capHistSum(t)
+pop.estimation <- mrOpen(capt.hist)
+summary(pop.estimation)
+confint(pop.estimation)
+```
+
+Do the same thing but for different lakes (avec le problème des changements de lac)
+
+```{r}
+
+```
+
+Test the method by using only 2017 2018 2019 2020 et 2021 to see if this is really a good estimate
+Problem is mooved fishes between 2018 et 2019 (je ne sias pas comment le prendre ne compte)
+2 idées : séparer les poissons quand ils ont été déplacés
+Si je fais ça est ce qu'il y a moyen de rentrer l'emigration et immigration exacte pour avoir une vraie survie et cie
+
+population parameters estimate with cormak jolly seber model
+
+```{r}
+library(Rmark)
+# les données qu'il me faut
+t <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Lake)
+t[] <- lapply(t, as.character)
+t[!is.na(t)] <- "1"
+t[is.na(t)] <- "0"
+
+capt_hist <- data.frame(ch = unite(t %>%
+                                  select(`2016`:`2022`), 
+                                col = "ch", 
+                                sep = ""))
+
+```
+
+```{r}
+phi.p <- mark(capt_hist)
+```
+

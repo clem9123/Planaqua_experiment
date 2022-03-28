@@ -1,0 +1,721 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_notebook: default
+editor_options:
+  chunk_output_type: console
+---
+
+##################### Library et récupération des données
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(readxl)
+library(writexl)
+library(truncnorm)
+setwd("C:/Users/sandrine/Documents/IEES_stage/code_et_donnee/data/")
+BDD <- read_excel("BDD_original_complet.xlsx", sheet = "BDD", col_types = "text")
+```
+
+#################### Date
+
+Modification de la colonne date car sous format texte
+  passer en mode date
+  ajouter la colonne année
+
+```{r}
+BDD <- BDD %>% mutate(Date = as.Date(as.numeric(BDD$Date), origin = "1899-12-30"))
+BDD <- BDD %>% mutate (Année = format(as.Date(Date,"%d/%m/%Y"),"%Y"))
+```
+
+#################### Sppression des tags apparaissant plusieurs fois par ans (en supprimant les Nasses et les sessions doublés )
+
+# 2016 et 2017
+
+Commande pour vérifier l'histoire de vie de tout les tags ensuite supprimé 
+  t <- BDD[which(BDD$Tag_id_short == "403274155"),]
+
+```{r}
+# suppression en 2016 d'un gardon introduit dans 2 lacs en gardant celui qui réaparait ensuite
+BDD <- BDD[-which(BDD$Tag_id_short == "403274155" & BDD$`Lac relacher` == "9"),]
+
+# suppression de 2 perches ayant le même tag
+BDD <- BDD[- which(BDD$Tag_id_short == "403275274"),]
+
+# suppression en 2017 d'un gardon recapturé dans 2 lacs en gardant celui qui réaparait ensuite
+BDD <- BDD[-which(BDD$Tag_id_short == "407006699" & BDD$`Lac relacher` == "6"),]
+```
+
+# 2018
+
+```{r}
+# suppression d'une données incohérentes, un gardon apparait tout à coup dans un autre lac
+BDD <- BDD[-which(BDD$Tag_id_short == "403275664" & BDD$`Lac relacher` == "6"),]
+```
+
+# 2019 : 
+
+J'ai nommé dans le fichier original la première peche completement inutile : Z
+
+```{r}
+# suppression de deux gardons trouvé dans un lac inhabituel
+BDD <- BDD[-which(BDD$Tag_id_short == "403274991" & BDD$`Lac relacher` == "10"),]
+BDD <- BDD[-which(BDD$Tag_id_short == "405697885" & BDD$`Lac relacher` == "7"),]
+```
+
+# suppression 2020 
+
+```{r}
+# suppression d'une perche trouvée dans un lac inhabituel
+BDD <- BDD[-which(BDD$Tag_id_short == "403274339" & BDD$`Lac relacher` == "10"),]
+```
+
+# 2022
+
+```{r}
+# 2 gardon trouvé dans deux lacs different, seu occurence, poid et taille differentes aussi -> je pourrai aussi éventuellement juste supprimer le tag
+BDD <- BDD[-which(BDD$Tag_id_short == "005147354"),]
+# 2 poissons marqué pareil dans le même lac, retrouvé plus tard, suppression d'une des occurences (celles qui est plus grosse que la recapture)
+BDD <- BDD[-which(BDD$Tag_id_short == "005147406" & BDD$Masse == "14"),]
+# suppression d'un tag donné à un gardon et une perche aucune autres occurences
+BDD <- BDD[-which(BDD$Tag_id_short == "005147505"),]
+# deux fois le meme poissons, environs meme taille et meme poids dans le meme lac, suppression d'une des occurence
+BDD <- BDD[-which(BDD$Tag_id_short == "005149563" & BDD$Masse == "6"),]
+```
+
+Suppression des commentaires bizare de 2017 directement dans la bese
+
+################## suppression des lignes doublé de Verif_puce en 2022
+
+```{r}
+an ="2022"
+t <- data.frame(table(subset(BDD, Année == an & `Methode de capture` != "Nasse" & Tag_id_short != "NA")$Tag_id_short))
+t <- t[which(t$Freq !=1),]
+f <- BDD[which(BDD$Tag_id_short %in% t$Var1),] %>% filter (Tag_id_short != "NA" & Année == an & `Methode de capture` != "Nasse")
+
+BDD <- BDD[-which(BDD$Index %in% f$Index & BDD$Statut_obs=="VERIF_PUCE"),]
+
+#poisson enregistré deux fois le même jour, suppression d'une des occurence
+BDD <- BDD[-which(BDD$Tag_id_short == "403273983" & is.na(BDD$Masse)),]
+#pareil
+BDD <- BDD[-which(BDD$Tag_id_short == "403274340" & BDD$Masse == "219"),]
+# pareil et suppression de l'occurence ou le poisson aurait repetissé
+BDD <- BDD[-which(BDD$Tag_id_short == "405698426" & BDD$Masse == "82"),]
+# pareil
+BDD <- BDD[-which(BDD$Tag_id_short == "405698575" & BDD$Masse == "116"),]
+
+# poisson relaché dans deux lac en 2018
+BDD <- BDD[-which(BDD$Tag_id_short == "407006667" & BDD$`Lac capture` == "6"),]
+
+#BDD <- BDD[-which(BDD$Index %in% c(14607,15743,16106,16551)),]
+```
+
+##################### Verification qu'aucun tag n'est en double maintenant, en enlevant la Nasse parce que bien évidemment cela crée des doublons
+
+```{r}
+BDD %>% group_by(Année) %>% filter(Session_capture %in% c("A",NA,"NA","")& Tag_id_short != "NA" & `Methode de capture` != "Nasse") %>% summarise(nb_tag_unique = length(unique(Tag_id_short)), nb_tag = length(Tag_id_short))
+```
+je ne sais pas pourquoi la condition Methode de capture != Nasse supprime l'année 2016
+
+##################### suppression des lignes d'introduction doublée
+
+```{r}
+# création d'une ligne d'index
+BDD <- BDD %>% arrange(Date)
+BDD <- BDD %>% mutate (Index = 1:length(BDD$Index))
+# récupération de toute les lignes d'introduction après 2016
+BDD_intro = subset (BDD, Statut_obs =="Introduction" & Année != "2016")
+
+ligne_suppr <- 0 # compte des lignes supprimée
+erreur =c() # récupere les lignes d'introduction qui ne sont pas des premières introductions 
+            # mais dont l'information n'est aussi pas contenue dans la ligne précédente dans `Lac relacher`
+
+# parcours de toutes les lignes d'intro
+for (i in 1: nrow(BDD_intro)){
+  index = BDD_intro[i,]$Index
+  tag = BDD_intro[i,]$Tag_id_short
+  # si ce tag existe déjà dans la base avant :
+  if (nrow(subset(BDD, Tag_id_short == tag & Index < index)) > 0){
+    # et si le Lac relacher de la ligne d'avant correspond au Lac de l'introduction (que ce soit Lac relacher ou Lac capture)
+    if (subset(BDD, Tag_id_short == tag & Index < index)$`Lac relacher`[length (subset(BDD, Tag_id_short == tag & Index < index)$`Lac relacher`)] == BDD_intro [i,]$`Lac relacher`|
+        subset(BDD, Tag_id_short == tag & Index < index)$`Lac relacher`[length (subset(BDD, Tag_id_short == tag & Index < index)$`Lac relacher`)] == BDD_intro [i,]$`Lac capture`){
+      # supprimer la ligne, et compter la suppression
+      ligne_suppr <- ligne_suppr + 1
+      BDD <- BDD[-which(BDD$Index ==index),]
+    }
+    # si le tag existe avent mais les lacs ne correspondent pas récuperer l'erreur
+    else {
+      erreur <- append(erreur, tag)
+      }
+  }
+}
+
+
+# ligne de verif : t <- BDD[which(BDD$Tag_id_short %in% erreur),]
+#BDD <- BDD[-erreur,] # j'ai vérifié normalement l'erreur est supprimée proprement, et l'info n'est pas perdue, c'est juste qu'ele était dans lac capture
+ligne_suppr
+erreur
+```
+on a donc ligne_suppr = 581
+et 11 erreurs
+
+# Reglement des tag présent dans erreur ci dessus
+
+```{r}
+# suppression de lignes d'introduction qui ont échappé au tri car elles était au dessus de la ligne de marquage
+BDD <- BDD[-which(BDD$Tag_id_short == "403275384" & BDD$Statut_obs == "Introduction"),]
+BDD <- BDD[-which(BDD$Tag_id_short == "407006479" & BDD$Statut_obs == "Introduction" & BDD$Année == "2020"),]
+BDD <- BDD[-which(BDD$Tag_id_short == "407006545" & BDD$Statut_obs == "Introduction" & BDD$Année == "2020"),]
+BDD <- BDD[-which(BDD$Tag_id_short == "403274120" & BDD$Statut_obs == "Introduction" & BDD$Date == as.Date("2020-07-22")),]
+
+# modification d'un lac relacher mal rentrer et suppression de la ligne d'intro suivante devuenue inutile
+BDD[which(BDD$Tag_id_short == "403275770" & BDD$Statut_obs == "Marquage"),]$`Lac relacher` <- "6"
+BDD <- BDD[-which(BDD$Tag_id_short == "403275770" & BDD$Statut_obs == "Introduction"),]
+
+# suppression d'un tag mis sur une perche et un gardon jamais retrouvé par ailleurs
+BDD <- BDD[-which(BDD$Tag_id_short == "403275884"),]
+
+# changement de lac mal noté, modifié
+BDD[which(BDD$Tag_id_short == "403274107" & BDD$Date == "2017-10-20"),]$`Lac relacher` <- "12"
+BDD <- BDD[-which(BDD$Tag_id_short == "403274107" & BDD$Statut_obs == "Introduction" & BDD$Date == "2019-11-29"),]
+
+# modification de changement de lac qui ont été mal noté
+BDD[which(BDD$Tag_id_short == "403275063" & BDD$Date == "2018-10-10"),]$`Lac relacher` <- "5"
+BDD <- BDD[-which(BDD$Tag_id_short == "403275063" & BDD$Statut_obs == "Introduction" & BDD$Date == "2018-10-17"),]
+BDD[which(BDD$Tag_id_short == "403276039" & BDD$Date == "2018-10-09"),]$`Lac relacher` <- "5"
+BDD <- BDD[-which(BDD$Tag_id_short == "403276039" & BDD$Statut_obs == "Introduction" & BDD$Date == "2018-10-17"),]
+BDD[which(BDD$Tag_id_short == "403276126" & BDD$Date == "2019-11-27"),]$`Lac relacher` <- "9"
+BDD <- BDD[-which(BDD$Tag_id_short == "403276126" & BDD$Statut_obs == "Introduction" & BDD$Date == "2019-11-29"),]
+
+
+# plus supprimé les intro de 2020 car elles sont aussi en lac relacher mais avanyt le marquage donc échappe au tri au dessus
+BDD <- BDD[-which(BDD$Année == "2020" & BDD$Statut_obs == "Introduction"),]
+```
+
+################ verification que les introductions sont toutes notés en lac relaché (et pas lac capture)
+
+```{r}
+# changement d'une introduction de brochet noté en marquage
+BDD[which(BDD$Statut_obs=="Marquage" & BDD$Espece == "Brochet"),]$Statut_obs <- "Introduction"
+
+# modification dans les colonne de Lac des "NA" en NA
+BDD$`Lac capture` <- BDD$`Lac capture` %>% na_if("NA")
+BDD$`Lac relacher` <- BDD$`Lac relacher` %>% na_if("NA")
+
+# variable de décompte des changement et de récupération des erreurs
+erreur = c()
+suppr = 0
+nb_transfo =0
+
+# Récupération de toutes les introductions
+BDD_intro <- subset(BDD, Statut_obs == "Introduction")
+
+# Pour chaque ligne d'introduction
+for (i in 1:nrow(BDD_intro)){
+  r = BDD_intro[i,]
+  # si il n'y a pas de lac d'introduction du tout :
+  if (is.na(r$`Lac relacher`) & is.na(r$`Lac capture`)){
+    # supprimer la ligne
+    BDD <- BDD[-which(BDD$Index == r$Index),]
+    suppr <- suppr +1
+  }
+  # Si le lac est noté dans lac capture et pas lac relacher
+  if (is.na(r$`Lac relacher`) & !is.na(r$`Lac capture`)){
+    # l'écrire dans lac relacher
+    BDD[which(BDD$Index == r$Index),]$`Lac relacher` <- r$`Lac capture`
+    # et le supprimer de lac capture
+    BDD[which(BDD$Index == r$Index),]$`Lac capture` <- NA
+    nb_transfo <- nb_transfo + 1
+  }
+  # Si jamais l'intro possede deux lac  : récuperer l'erreur
+  if (!is.na(r$`Lac relacher`) & !is.na(r$`Lac capture`)){
+    erreur <- append(erreur, r$Tag_id_short)
+  }
+}
+```
+erreur : 0
+nb_transfo : 379
+
+# ajout de la bonne colonne de statut obs
+
+```{r}
+# remplacement de non puce, juvenile, marquage et verif puce par capture ou recapture dans une nouvelle colonne Obs_status
+# j'enregistre aussi le statut de juvenile dans tag id
+BDD <- BDD %>% mutate (Statut_obs = tolower(BDD$Statut_obs))
+BDD <- BDD %>% mutate (Tag_id_short = case_when(
+  Statut_obs == "juvenile" ~ "juvenile", TRUE ~ Tag_id_short))
+BDD <- BDD %>% mutate (Obs_status = case_when(
+  Statut_obs %in% c("non_puce", "juvenile","marquage") ~ "capture",
+  Statut_obs == "verif_puce" ~ "recapture",
+  TRUE ~ Statut_obs))
+```
+
+# gerer les elimination et les noter capture ou recapture en fonction
+```{r}
+BDD <- BDD %>% mutate (Index = 1:length(BDD$Index))
+
+# récuperation des lignes notés élimination
+BDD_elim <- subset (BDD, Obs_status == "elimination")
+
+
+for (i in 1:nrow(BDD_elim)){
+  r = BDD_elim[i,]
+  
+  # verification de ce su'il peut y avoir écrit dans la colonne de Lac relacher avant de la modifier : toujours marqué Lac 17
+  #if (!is.na(r$`Lac relacher`)){print(r$`Lac relacher`)}
+  
+  # noter elimination dans la colonne Lac relacher pour ne pas perdre l'information
+  BDD[which(BDD$Index == r$Index),]$`Lac relacher` <- "elimination"
+  
+  # si il n'y a pas de tag
+  if (is.na(r$Tag_id_short)){
+    # noter cette elimination en capture
+    BDD[which(BDD$Index == r$Index),]$Obs_status <- "capture"
+  }
+  # sinon si ce tag existe déjà
+  else if (nrow(subset(BDD, Tag_id_short == r$Tag_id_short & Index < r$Index)) > 0){
+    # noter cette elimination en recapture
+    BDD[which(BDD$Index == r$Index),]$Obs_status <- "recapture"
+  }
+  # et si elle n'existe pas encore 
+  else if (nrow(subset(BDD, Tag_id_short == r$Tag_id_short & Index < r$Index)) == 0){
+    # noter capture
+    BDD[which(BDD$Index == r$Index),]$Obs_status <- "capture"
+  }
+}
+```
+
+# ligne avec staut_obs = na ou elimine sont supprimé 
+
+2 ligne qui dit juste pas de peche au 3eme passage lac 9 2021
+1 ligne avec que des NA
+1 ligne avec une erreur de peche ?
+1 ligne avec un Gardon pas pesé pas pucé lac 13 remis dans lac 13 (éventuellement à garder)
+
+```{r}
+BDD <- BDD[-which (BDD$Obs_status %in% c("elimine","na")),]
+```
+
+# mise en bonne forme de la colonne Obs_status
+################## verification que les recaptures sont bien d'abord capturés
+
+```{r}
+BDD <- BDD %>% mutate (Index = 1:length(BDD$Index))
+
+# mise en forme des NA dans Tag_id_short 
+BDD$Tag_id_short <- BDD$Tag_id_short %>% na_if("NA") %>% na_if("NON PUCEE") %>% na_if("NON PUCEES")
+
+# recuperation des données de recapture
+BDD_recapt <- BDD %>% filter (Obs_status== "recapture")
+
+# donnée de compte des changements
+change <- 0
+ok<- 0
+
+for (i in 1:nrow(BDD_recapt)){
+  r <- BDD_recapt[i,]
+  # si le tag est null alors c'est une capture
+  if (is.na(r$Tag_id_short)){ 
+    BDD[which(BDD$Index == r$Index),]$Obs_status <- "capture"
+  }
+  # si le tag apparait dans le passé alors c'est bon c'est bien une recapture le mettre dans ok
+  if (nrow(subset(BDD, Tag_id_short == r$Tag_id_short & Obs_status %in% c("capture","introduction" ) & Index < r$Index)) >= 1){
+    ok <- ok +1
+  }
+  # sinon c'est une capture
+  else {
+    change <- change +1
+    BDD[which(BDD$Index == r$Index),]$Obs_status <- "capture"
+    }
+}
+```
+
+################## verification que les capture sont bien la première itération du tag
+
+```{r}
+BDD <- BDD %>% mutate (Index = 1:length(BDD$Index))
+
+# récupération des captures (de poisson tagués)
+BDD_capt <- BDD %>% filter (Obs_status== "capture" & !is.na(Tag_id_short) & Tag_id_short != "juvenile")
+
+# variable de décompte
+erreur <- c()
+change <- 0
+ok<- 0
+
+for (i in 1:nrow(BDD_capt)){
+  r <- BDD_capt[i,]
+  # si le tag apparait par le passé : noter en recapture
+  if (nrow(subset(BDD, Tag_id_short == r$Tag_id_short & Index < r$Index)) >= 1){
+    change <- change +1
+    erreur <- append(erreur, r$Tag_id_short)
+    BDD[which(BDD$Index == r$Index),]$Obs_status <- "recapture"
+  }
+  #sinon c'est bon
+  else {
+    ok <- ok + 1
+    }
+}
+```
+# donc là la colonne Obs_status est bonne normalement
+
+################### verification que lac relacher (n-1) == lac capture (n)
+je vais changer les lac relacher
+mais pas la peine de se souvier de faire disparaitre des éliminations car elles sont noté d'une autre manière et seront changée par la suite
+
+```{r}
+summary(BDD)
+BDD <- BDD %>% mutate (Index = 1:length(BDD$Index))
+
+# récupération des recapture pour vérifier qu'a leur apparition précédente ils étaient dans le bon lac
+BDD_recapt <- BDD %>% filter (Obs_status== "recapture" & !is.na(Tag_id_short) & Tag_id_short != "juvenile")
+
+# variable de décompte
+ok<- 0
+erreur <- c()
+erreur_na <- 0
+
+# Mofdification de la colonne Lac relacher : changer tous les NA en le lac capturer
+# Si le poisson est mort ou eliminer c'est écrit differement donc pas de problèmes
+BDD <- BDD %>% mutate (`Lac relacher` = case_when(
+  is.na(`Lac relacher`) ~ `Lac capture`, 
+  TRUE ~ `Lac relacher`))
+
+for (i in 1:nrow(BDD_recapt)){
+  r <- BDD_recapt[i,]
+  
+  # récupération de la liste des apparition précédente de ce tag
+  sub_tag = subset(BDD, Tag_id_short == r$Tag_id_short & Index < r$Index)
+
+  # si lac captute = Lac relacher de la derniere fois que l'on a vu ce tag : ok
+  if (sub_tag$`Lac relacher`[length(sub_tag$`Lac relacher`)] == r$`Lac capture`){
+    ok <- ok +1
+  }
+  # a faire tourner après pour verifier qu'il n'y a ppas de fausse mort
+  #else if(sub_tag$`Lac relacher`[length(sub_tag$`Lac relacher`)] == "MORT"){
+    #print("fausse mort")
+    #print(r)}
+  
+  #sinon
+  else {
+    #'  !!!!!!!! corrige les erreurs mais peu fausser les resultats s'ils manque par exemple
+    #BDD[which(BDD$Index == sub_tag$Index[length(sub_tag$`Lac relacher`)]),]$`Lac relacher` <- 
+    #  BDD[which(BDD$Index == r$Index),]$`Lac capture`
+    erreur <- append(erreur, r$Tag_id_short)
+    }
+}
+```
+il y a 27 erreurs
+Je les ai mise dans un tableau excel nommé incohérence, à regarder avec Gerard et Elisa
+
+```{r}
+# suppresson de toutes ces données incohérentes
+BDD <- BDD[-which(BDD$Tag_id_short %in% erreur),]
+
+```
+
+################## Ecriture de MORT et NA quand le poisson est mort ou non relaché
+
+Dans la base de donnée j'ai mis lac relacher = NA quand le poisson était pas relaché
+Normalement là ou il y a un lac relacher il n'y a pas de commentaire mort et il n'y a pas de statut relacher non
+
+```{r}
+#BDD_mort <- subset (BDD, !(`Lac relacher` %in% c("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16")))
+
+#Je garde l'info que le poisson est mort avant de modifier la colonne Lac relacher
+BDD[which(grepl("mort|euthan", BDD$`Lac relacher`, ignore.case =TRUE)),]$Commentaires_obs <- "MORT"
+
+# quand il est eliminé ou mis dans le lac 17 : mettre NA
+BDD[which(BDD$`Methode de capture` == "Vidange"),]$`Lac relacher` <- NA
+BDD[which(grepl("elimin", BDD$`Lac relacher`, ignore.case =TRUE)),]$`Lac relacher` <- NA
+BDD[which(grepl("17", BDD$`Lac relacher`, ignore.case =TRUE)),]$`Lac relacher` <- NA
+BDD[which(grepl("elimin", BDD$Commentaires_obs, ignore.case =TRUE)),]$`Lac relacher` <- NA
+BDD[which(grepl("elimin", BDD$Commentaires_session, ignore.case =TRUE)),]$`Lac relacher` <- NA
+BDD[which(grepl("non|elimin", BDD$`Statut relacher`, ignore.case =TRUE)),]$`Lac relacher` <- NA
+
+#Et si jamais il y a une info de mort quelque part, mettre mort
+BDD[which(grepl("mort|euthan", BDD$`Lac relacher`, ignore.case =TRUE)),]$`Lac relacher` <- "MORT"
+BDD[which(grepl("mort|euthan", BDD$Commentaires_obs, ignore.case =TRUE)),]$`Lac relacher` <- "MORT"
+BDD[which(grepl("mort|euthan", BDD$Commentaires_session, ignore.case =TRUE)),]$`Lac relacher` <- "MORT"
+BDD[which(grepl("mort|euthan", BDD$`Statut relacher`, ignore.case =TRUE)),]$`Lac relacher` <- "MORT"
+
+
+# changement pour 1 commentaire LAC 17 en mort, je ne peux pas le faire au dessus car si je met des chiffres je risque de trouver d'autres commentaire pas en rapport avec la mort
+BDD[which(BDD$Commentaires_obs =="LAC 17"),]$`Lac relacher` <- NA
+
+# une seule fausse mort pour ce poisson : 	405698001, que l'on retrouve ensuite 2 fois dans sont lac d'origine donc correction
+BDD[which(BDD$Tag_id_short =="405698001" & BDD$`Lac relacher` == "MORT"),]$Commentaires_obs <- NA
+BDD[which(BDD$Tag_id_short =="405698001" & BDD$`Lac relacher` == "MORT"),]$`Lac relacher` <- "2"
+
+# petite verif : t <- BDD[which(BDD$Tag_id_short == 405698001),]
+```
+
+
+lac relaché ? :
+Perche venant de lac sans perche en 2020 (probablement sortie de leur lac) mais on ne sait pas ou elles ont été mise et on ne les retrouve jamais (((, le seul qui se repete est une introduction de 2016)))
+
+
+############################### Créer les lignes pour les juvéniles
+
+Il faudrait peut-être que je fasse un tableau de toutes les lignes supprimés pour vérifier que dedans il n'y a pas des commentaires de juveniles -->> grose flemme en vrai, c'est improbable, en fait je vais compter pour etre sur mais à la main, 
+
+```{r}
+BDD <- BDD %>% mutate (Index = 1:length(BDD$Index))
+BDD_juv <- BDD %>% filter(!is.na(nb_juv))
+if (length(colnames(BDD))!=20) {print("attention changement dans les colonnes qui va fausser toute la suite")}
+for (i in 1:nrow(BDD_juv)){
+  r = BDD_juv[i,]
+  if (r$`Methode de capture` == "Vidange"){
+    r_juv = data.frame(r$Index,r$Date,NA,"juvenile",r$`Methode de capture`,r$`Lac capture`,r$Session_capture,r$Passage_filet, r$Espece, NA,"juvenile",NA,NA,NA,NA,NA,NA,NA,r$Année,"capture")
+  }
+  else {
+    r_juv = data.frame(r$Index,r$Date,NA,"juvenile",r$`Methode de capture`,r$`Lac capture`,r$Session_capture,r$Passage_filet, r$Espece, NA,"juvenile",NA,NA,NA,r$`Lac capture`,NA,NA,NA,r$Année,"capture")
+  }
+  colnames(r_juv)=colnames(BDD)
+  for (i in 1:r$nb_juv){
+    #print("ok")
+    BDD <- rbind(BDD,r_juv)
+  }
+}
+
+BDD <- BDD %>% arrange(Index)
+BDD <- BDD %>% mutate (Index = 1:length(BDD$Index))
+
+```
+
+## réorganisation des colonnes et mise dans un format propre et uniforme
+
+Pour pouvoir regarder les données avant de les enregistrer
+
+```{r}
+rm(BDD_capt,BDD_elim,BDD_intro,BDD_juv,BDD_recapt)
+rm(f,r,r_juv,sub_tag,t)
+rm(an,change,erreur,erreur_na,i,index_juv,ligne_suppr,nb_transfo,ok,suppr,tag,index)
+```
+
+```{r}
+BDD <- BDD %>% na_if("NA")
+BDD$Passage_filet <- BDD$Passage_filet %>% na_if("NA")
+BDD$Session_capture <- BDD$Session_capture %>% na_if("NA")
+BDD$Tag_id_long <- BDD$Tag_id_long %>% na_if("NA")
+BDD$`Statut relacher` <- BDD$`Statut relacher` %>% na_if("NA")
+BDD$Commentaires_obs <- BDD$Commentaires_obs %>% na_if("NA")
+BDD$Commentaires_session <- BDD$Commentaires_session %>% na_if("NA")
+#Index
+#Date
+BDD <- BDD %>% mutate(`Numéro action par Tag` = as.integer(`Numéro action par Tag`))
+BDD <- BDD %>% mutate(Statut_obs = as.factor(Statut_obs))
+BDD <- BDD %>% mutate(`Methode de capture` = as.factor(`Methode de capture`))
+BDD <- BDD %>% mutate(`Lac capture` = as.factor(`Lac capture`))
+BDD <- BDD %>% mutate(Session_capture = as.factor (Session_capture))
+BDD <- BDD %>% mutate(Passage_filet = as.factor (Passage_filet))
+BDD <- BDD %>% mutate(Espece = as.factor(tolower(Espece)))
+#Tag_id_long
+#Tag_id_short
+BDD <- BDD %>% mutate(Masse = as.numeric(Masse))
+BDD <- BDD %>% mutate(Taille = as.numeric(Taille))
+BDD <- BDD %>% mutate(`Statut relacher` = as.factor(`Statut relacher`))
+BDD <- BDD %>% mutate(`Lac relacher` = as.factor(`Lac relacher`))
+#Commentaires_obs
+#Commentaires_session
+#nb_juv
+BDD <- BDD %>% mutate(Année = as.integer (Année))
+BDD <- BDD %>% mutate(Obs_status = as.factor (Obs_status))
+
+summary(BDD)
+```
+
+Les questions
+OK Qu'est ce qui n'a pas d'espece ? 12 <- gardon probablement
+OK Statut obs = NA : what is it ? 13
+OK Methode de capture = NA (que pour les intros) ? oui c'est bon
+OK Lac capture = NA que pour les intro ? oui c'ets bon
+? Session capture : Esc ce que je rajoute A pour tout le monde en NA
+OK pOURQUOI 2750 NA dans lac relacher ? Parce que séparation entre NA <- remis en 17 ou sortie pour raison x ou y et MORT
+OK mettre NA a lac relacher pour toute la vidange
+
+```{r}
+#manque 12 nom d'espece mais c'est probablement un gardon car au milieu d'entrée de gardon et juveniles
+BDD[which(is.na(BDD$Espece)),]$Espece <- "gardon"
+summary(BDD)
+```
+
+```{r}
+#statut obs NA pour quelques poissons (13) : correction
+BDD_sona <- subset(BDD, is.na(Statut_obs))
+for (i in 1:nrow(BDD_sona)){
+  r = BDD_sona[i,]
+  if (nrow(subset(BDD, Tag_id_short == r$Tag_id_short & Index < r$Index)) ==0 ){
+    BDD[r$Index,]$Obs_status <- "capture"
+    BDD[r$Index,]$Statut_obs <- "capture"
+  }
+  else {
+    BDD[r$Index,]$Obs_status <- "recapture"
+    BDD[r$Index,]$Statut_obs <- "recapture"
+    }
+}
+
+BDD <- BDD %>% mutate(`Lac relacher` = case_when(`Lac relacher` == "?" ~ NA,
+                                                  TRUE ~ `Lac relacher`))
+```
+
+
+## Ecriture de ce nouveau tableau dans un fichier excel
+
+```{r}
+#write_xlsx(BDD,"C:/Users/sandrine/Documents/IEES_stage/code_et_donnee/data/data_presque_final.xlsx")
+```
+
+```{r}
+colnames(BDD)
+BDD_f <- data.frame(BDD$Index,BDD$Date,BDD$Obs_status,BDD$`Lac capture`,BDD$`Methode de capture`,BDD$Session_capture,BDD$Passage_filet,BDD$Tag_id_short,BDD$Espece,BDD$Masse,BDD$Taille,BDD$`Lac relacher`,BDD$Commentaires_obs)
+colnames(BDD_f) <- c("Index","Date","Obs_status","Lake_capture","Method_capture","Session_capture","Passage_net","Tag_id","Species","Weight","Size","Lake_released","Comment_obs")
+```
+
+
+
+```{r}
+write_xlsx(BDD_f,"C:/Users/sandrine/Documents/IEES_stage/code_et_donnee/data/data_final.xlsx")
+```
+
+####################### à faire ensuite pour créer le data avec le poids
+
+
+```{r}
+BDD_f <- read_excel("data_final.xlsx", col_types = c("numeric","date","text","text","text","text","text","text","text","numeric","numeric","text","text"), na = "")
+BDD_f <- BDD_f %>% mutate(Lake_capture = as.factor(Lake_capture),
+                          Method_capture =as.factor(Method_capture),
+                          Session_capture = as.factor(Session_capture),
+                          Passage_net = as.factor(Passage_net),
+                          Obs_status = as.factor(Obs_status),
+                          Species = as.factor(Species),
+                          Lake_released = as.factor(Lake_released))
+
+# ajout de la colonne année 
+BDD_f <- BDD_f %>% mutate (Year = as.factor(format(Date,"%Y")))
+
+
+## ajout des tailles des juveniles
+
+# création d'un tableau donnant la taille moyenne par année et par lac
+juv_ws <- BDD_f %>% filter(Tag_id == "juvenile" & Species == "gardon" & Method_capture != "Nasse") %>%
+  group_by(Year, Lake_capture) %>%
+  summarise (mean_size = mean(Size, na.rm =TRUE),
+             sd_size = sd(Size, na.rm =TRUE), 
+             mean_weight = mean(Weight, na.rm =TRUE),
+             sd_weight = sd(Weight, na.rm =TRUE),
+             n_juv = n(),
+             n_juv_w = sum(!is.na(Weight))) %>%
+  ungroup()
+
+
+BDD_juv <- BDD_f %>% filter (Tag_id == "juvenile" & 
+                               is.na(Weight) & 
+                               Species == "gardon" & 
+                               Method_capture != "Nasse" )
+
+for (i in 1:nrow(BDD_juv)){
+  r = BDD_juv[i,]
+  y = r$Year
+  if (y == "2022"){y <- 2021}
+  if (is.numeric(subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$mean_weight)){
+    BDD_f [r$Index-1,]$Weight <- rtruncnorm(1, a= 0.1, b= 200, mean = subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$mean_weight,
+                                          sd = subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$sd_weight, mean )
+  }
+  if (is.numeric(subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$mean_size)){
+    BDD_f [r$Index-1,]$Size <- rtrucnorm (1, a= 0.1, b= 200, mean = subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$mean_size,
+                                         sd = subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$sd_size)
+  }
+}
+
+## ajout des tailles et poids 2022
+
+BDD_vid <- BDD_f %>% filter(!is.na(Tag_id) & Tag_id != "juvenile" & 
+                              Tag_id %in% subset(BDD_f, Year == "2021" & Method_capture == "Chalut")$Tag_id &
+                              (is.na(Weight) | is.na(Size)) &
+                              Year == "2022")
+
+for (i in 1: nrow(BDD_vid)){
+  r = BDD_vid[i,]
+  BDD_f[r$Index-1,]$Weight <- BDD_f[which(BDD_f$Tag_id == r$Tag_id &
+                                            BDD_f$Year == "2021" &
+                                            BDD_f$Method_capture == "Chalut"),]$Weight
+  BDD_f[r$Index-1,]$Size <- BDD_f[which(BDD_f$Tag_id == r$Tag_id &
+                                          BDD_f$Year == "2021" &
+                                          BDD_f$Method_capture == "Chalut"),]$Size
+}
+
+BDD_f <- BDD_f %>% mutate(Date = as.Date(BDD_f$Date))
+BDD_f <- BDD_f[,1:13]
+write_xlsx(BDD_f, "C:/Users/sandrine/Documents/IEES_stage/code_et_donnee/data/data_final_ws_norm.xlsx")
+```
+
+```{r}
+BDD_f <- read_excel("data_final.xlsx",col_types = c("numeric","date","text","text","text","text","text","text","text","numeric","numeric","text","text"), na = "")
+BDD_f <- BDD_f %>% mutate(Lake_capture = as.factor(Lake_capture),
+                          Method_capture =as.factor(Method_capture),
+                          Session_capture = as.factor(Session_capture),
+                          Passage_net = as.factor(Passage_net),
+                          Obs_status = as.factor(Obs_status),
+                          Species = as.factor(Species),
+                          Lake_released = as.factor(Lake_released))
+
+# ajout de la colonne année 
+BDD_f <- BDD_f %>% mutate (Year = as.factor(format(Date,"%Y")))
+
+
+## ajout des tailles des juveniles
+
+# création d'un tableau donnant la taille moyenne par année et par lac
+juv_ws <- BDD_f %>% filter(Tag_id == "juvenile" & Species == "gardon" & Method_capture != "Nasse") %>%
+  group_by(Year, Lake_capture) %>%
+  summarise (mean_size = mean(Size, na.rm =TRUE),
+             median_size =median(Size, na.rm =TRUE), 
+             mean_weight = mean(Weight, na.rm =TRUE),
+             median_weight = median(Weight, na.rm =TRUE),
+             n_juv = n(),
+             n_juv_w = sum(!is.na(Weight))) %>%
+  ungroup()
+
+
+BDD_juv <- BDD_f %>% filter (Tag_id == "juvenile" & 
+                               is.na(Weight) & 
+                               Species == "gardon" & 
+                               Method_capture != "Nasse" )
+for (i in 1:nrow(BDD_juv)){
+  r = BDD_juv[i,]
+  y = r$Year
+  if (y == "2022"){y <- 2021}
+  if (is.numeric(subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$mean_weight)){
+    BDD_f [r$Index-1,]$Weight <- subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$mean_weight
+  }
+  if (is.numeric(subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$mean_size)){
+    BDD_f [r$Index-1,]$Size <- subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$mean_size
+  }
+}
+
+## ajout des tailles et poids 2022
+
+BDD_vid <- BDD_f %>% filter(!is.na(Tag_id) & Tag_id != "juvenile" & 
+                              Tag_id %in% subset(BDD_f, Year == "2021" & Method_capture == "Chalut")$Tag_id &
+                              (is.na(Weight) | is.na(Size)) &
+                              Year == "2022")
+
+for (i in 1: nrow(BDD_vid)){
+  r = BDD_vid[i,]
+  BDD_f[r$Index-1,]$Weight <- BDD_f[which(BDD_f$Tag_id == r$Tag_id &
+                                            BDD_f$Year == "2021" &
+                                            BDD_f$Method_capture == "Chalut"),]$Weight
+  BDD_f[r$Index-1,]$Size <- BDD_f[which(BDD_f$Tag_id == r$Tag_id &
+                                          BDD_f$Year == "2021" &
+                                          BDD_f$Method_capture == "Chalut"),]$Size
+}
+
+BDD_f <- BDD_f %>% mutate(Date = as.Date(BDD_f$Date))
+BDD_f <- BDD_f[,1:13]
+write_xlsx(BDD_f, "C:/Users/sandrine/Documents/IEES_stage/code_et_donnee/data/data_final_ws.xlsx")
+
+```
+
