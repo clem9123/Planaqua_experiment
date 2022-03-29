@@ -44,15 +44,36 @@ Compter le nombre de poissons changés de lac
 Model et test
 
 ```{r}
-capt.hist = capHistSum(data.frame(lapply(t,as.numeric)) %>% select(X2016:X2022))
+capt.hist = capHistSum(data.frame(lapply(t,as.numeric)) %>% select(X2017:X2021))
 pop.estimation <- mrOpen(capt.hist)
 summary(pop.estimation)
 confint(pop.estimation)
+
+tbl = data.frame(N = summary(pop.estimation)$N, Lake = 0)
+
+ggplot(summary(pop.estimation))+
+  geom_point(aes(x = c(2017:2021), y = N))
 ```
 
 Do the same thing but for different lakes (avec le problème des changements de lac)
 
 ```{r}
+for (i in 1:16){
+  capt.hist = capHistSum(data.frame(lapply(t,as.numeric)) %>% filter (Lake == i) %>% select(X2017:X2021))
+  pop.estimation <- mrOpen(capt.hist)
+  tbl <- rbind(tbl,data.frame(N = summary(pop.estimation)$N, Lake = i))
+}
+tbl <- cbind (tbl, Year = 2017:2021)
+```
+
+```{r}
+
+ggplot(tbl %>% filter(Lake !=0),aes (x = Year, y = N, color = factor(Lake)))+
+  geom_point()+
+  geom_line()
+
+ggplot(tbl %>% filter(Lake !=0), aes (x = Year, y = N, fill = factor(Lake)))+
+  geom_bar(stat = 'identity', position = "dodge")
 ```
 
 Test the method by using only 2017 2018 2019 2020 et 2021 to see if this is really a good estimate
@@ -62,7 +83,39 @@ Si je fais ça est ce qu'il y a moyen de rentrer l'emigration et immigration exa
 
 population parameters estimate with cormak jolly seber model
 
+Essai de model plus propre
 
+```{r}
+capt_hist.models=function()
+{
+Phi.t <- list(formula = ~ time)
+
+Phi.lake <- list(formula= ~ Lake)
+Phi.t.lake <- list(formula = ~ time + Lake)
+
+phitreatment <- list(formula = ~ Treatment)
+phittreatment <- list(formula = ~ Treatment + time)
+
+phiperch <- list(formula = ~ Perch)
+phitperch <- list(formula = ~time + Perch)
+
+phinutrients <- list(formula = ~ Nutrients)
+phitnutrients <- list(formula = ~ time + Nutrients)
+
+phitest <- list(formula = ~ time + Perch + Nutrients)
+
+p <- list(formula = ~ 1)
+
+cml=create.model.list("CJS")
+results=mark.wrapper(cml,data=capt_hist.proc,ddl=capt_hist.ddl)
+return(results)
+}
+```
+
+```{r}
+capt_hist.result = capt_hist.models()
+capt_hist.result
+```
 
 
 ```{r}
