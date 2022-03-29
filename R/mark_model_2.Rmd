@@ -19,7 +19,7 @@ Mooved_tag = fish_mooved$Tag_id
 ```
 
 
-```{r}
+```{r warning=FALSE}
 t <- BDD_a %>% filter(!(Tag_id %in% Mooved_tag)) %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Lake)
 Lake <- apply(t[-1],1,function(x) unique(na.omit(x))[1]) #%>% unlist()
 t[] <- lapply(t, as.character)
@@ -61,6 +61,9 @@ Problem is mooved fishes between 2018 et 2019 (je ne sias pas comment le prendre
 Si je fais ça est ce qu'il y a moyen de rentrer l'emigration et immigration exacte pour avoir une vraie survie et cie
 
 population parameters estimate with cormak jolly seber model
+
+
+
 
 ```{r}
 phit <- list(formula = ~ time)
@@ -218,7 +221,155 @@ phitxtreatment.p$result$real
 collect.models()
 ```
 
+Cmlean up
+```{r}
+rm(list = ls(all = TRUE)) # j'aimerai supprimer tous les models seulement (voir ce que l'on peut faire avec class)
+cleanup(ask = FALSE)
+```
 
+## Essai avec la taille
+
+```{r}
+#t <- BDD_a %>% filter(!(Tag_id %in% Mooved_tag)) %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Lake)
+#Lake <- apply(t[-1],1,function(x) unique(na.omit(x))[1]) #%>% unlist()
+#because I already got lake
+
+t <- BDD_a %>% filter(!(Tag_id %in% Mooved_tag)) %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Weight)
+# je vais d'abord faire des groupes avec les tailles que j'avais choisis
+t <- t[-1]
+t[t<25] <- 1
+t[t>=25 & t<50] <- 2
+t[t>=50 & t<95] <- 3
+t[t>=95] <- 4
+t[is.na(t)] <- 0
+
+t <- cbind(t,Lake) %>% merge(Lake_treatment, all = TRUE)
+capt_hist <- data.frame(ch = unite(t %>%select(`2016`:`2022`), 
+                        col = "ch", 
+                        sep = "")#,
+                        #Lake = t$Lake,
+                        #Treatment = t$Treatment,
+                        #Perch = t$Perch,
+                        #Nutrients = t$Nutrients
+                        )
+
+capt_hist.proc <- process.data(capt_hist, model = "Multistrata")#, groups = c("Lake","Treatment","Perch","Nutrients"))
+capt_hist.ddl <- make.design.data(data = capt_hist.proc)
+```
+
+```{r}
+phi <- list(formula =~ 1)
+phiweight <- list(formula =~ stratum)
+p <- list(formula =~ 1)
+pweight <- list(formula =~ stratum)
+psi <- list(formula =~ -1 +stratum:tostratum, link = "mlogit")
+psiweight <- list(formula =~ stratum)
+```
+
+```{r message=FALSE, warning=FALSE}
+phi.p.psi <- mark(capt_hist.proc,
+                 capt_hist.ddl,
+                 model.parameters = list(S = phi,
+                                         p = p,
+                                         Psi = psi),
+                 output = FALSE, silent = TRUE)
+phi.p.psi$result$real
+```
+
+```{r}
+Psilist = get.real(phi.p.psi, "Psi", vcv = TRUE)
+Psi.values = Psilist$estimates
+TransitionMatrix(Psi.values[Psi.values$time ==1,],
+                 vcv.real = Psilist$vcv.real)$TransitionMat
+```
+
+```{r message=FALSE, warning=FALSE}
+phitaille.ptaille.psi <- mark(capt_hist.proc,
+                 capt_hist.ddl,
+                 model.parameters = list(S = phiweight,
+                                         p = pweight,
+                                         Psi = psi),
+                 output = FALSE, silent = TRUE)
+phitaille.ptaille.psi$result$real
+```
+
+```{r}
+Psilist = get.real(phitaille.ptaille.psi, "Psi", vcv = TRUE)
+Psi.values = Psilist$estimates
+TransitionMatrix(Psi.values[Psi.values$time ==1,],
+                 vcv.real = Psilist$vcv.real)$TransitionMat
+```
+
+```{r message=FALSE, warning=FALSE}
+phitaille.p.psi <- mark(capt_hist.proc,
+                 capt_hist.ddl,
+                 model.parameters = list(S = phiweight,
+                                         p = p,
+                                         Psi = psi),
+                 output = FALSE, silent = TRUE)
+phitaille.p.psi$result$real
+```
+
+```{r message=FALSE, warning=FALSE}
+phi.ptaille.psi <- mark(capt_hist.proc,
+                 capt_hist.ddl,
+                 model.parameters = list(S = phi,
+                                         p = pweight,
+                                         Psi = psi),
+                 output = FALSE, silent = TRUE)
+phi.ptaille.psi$result$real
+```
+
+```{r}
+collect.models()
+```
+
+
+```{r}
+#t <- BDD_a %>% filter(!(Tag_id %in% Mooved_tag)) %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Lake)
+#Lake <- apply(t[-1],1,function(x) unique(na.omit(x))[1]) #%>% unlist()
+#because I already got lake
+
+t <- BDD_a %>% filter(!(Tag_id %in% Mooved_tag)) %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Weight)
+# je vais faire des groupes avec la belle distribution de 2008
+t[] <- lapply(t, as.character)
+t[!is.na(t)] <- "1"
+t[is.na(t)] <- "0"
+t <- cbind(t,Lake) %>% merge(Lake_treatment, all = TRUE)
+capt_hist <- data.frame(ch = unite(t %>%select(`2016`:`2022`), 
+                        col = "ch", 
+                        sep = ""),
+                        Lake = t$Lake,
+                        Treatment = t$Treatment,
+                        Perch = t$Perch,
+                        Nutrients = t$Nutrients)
+
+capt_hist.proc <- process.data(capt_hist, groups = c("Lake","Treatment","Perch","Nutrients"))
+capt_hist.ddl <- make.design.data(data = capt_hist.proc)
+```
+
+```{r}
+#t <- BDD_a %>% filter(!(Tag_id %in% Mooved_tag)) %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Lake)
+#Lake <- apply(t[-1],1,function(x) unique(na.omit(x))[1]) #%>% unlist()
+#because I already got lake
+
+t <- BDD_a %>% filter(!(Tag_id %in% Mooved_tag)) %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Weight)
+# je vais faire des groupes un peu aléatoire en divisant betement le groupe de données en 3 ou 4
+t[] <- lapply(t, as.character)
+t[!is.na(t)] <- "1"
+t[is.na(t)] <- "0"
+t <- cbind(t,Lake) %>% merge(Lake_treatment, all = TRUE)
+capt_hist <- data.frame(ch = unite(t %>%select(`2016`:`2022`), 
+                        col = "ch", 
+                        sep = ""),
+                        Lake = t$Lake,
+                        Treatment = t$Treatment,
+                        Perch = t$Perch,
+                        Nutrients = t$Nutrients)
+
+capt_hist.proc <- process.data(capt_hist, groups = c("Lake","Treatment","Perch","Nutrients"))
+capt_hist.ddl <- make.design.data(data = capt_hist.proc)
+```
 
 Look at the estimates -- > see the effects (cyclique, début des naissances...)
 Faire sans 2016 et 2020 --> fausse les données, regarder déja dans l'abondance si ça fausse les données
@@ -233,3 +384,5 @@ Stat bayesion markage de truite -- > article
 Cours de stat bayesienne
 
 Model sur Jags
+
+
