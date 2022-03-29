@@ -68,15 +68,121 @@ capt_hist <- data.frame(ch = unite(t %>%select(`2016`:`2022`),
 ```
 
 ```{r}
+
 phi.p <- mark(capt_hist)
 ```
 
 ```{r}
 t <- BDD_a %>% filter(!(Tag_id %in% Mooved_tag)) %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Lake)
-Lake <- apply(t[-1],1,function(x) unique(na.omit(x))) #%>% unlist()
+Lake <- apply(t[-1],1,function(x) unique(na.omit(x))[1]) #%>% unlist()
 t[] <- lapply(t, as.character)
 
 t[!is.na(t)] <- "1"
 t[is.na(t)] <- "0"
+t <- cbind(t,Lake) %>% merge(Lake_treatment, all = TRUE)
+capt_hist <- data.frame(ch = unite(t %>%select(`2016`:`2022`), 
+                        col = "ch", 
+                        sep = ""),
+                        Lake = t$Lake,
+                        Treatment = t$Treatment,
+                        Perch = t$Perch,
+                        Nutrients = t$Nutrients)
 ```
+
+```{r}
+capt_hist.proc <- process.data(capt_hist, groups = c("Lake","Treatment","Perch","Nutrients"))
+capt_hist.ddl <- make.design.data(data = capt_hist.proc)
+```
+
+```{r}
+philake <- list(formula= ~ Lake)
+p <- list(formula = ~ 1)
+```
+
+```{r}
+philake.p <- mark(capt_hist.proc,
+                 capt_hist.ddl,
+                 model.parameters = list(Phi = philake, p = p))
+```
+
+```{r}
+summary(philake.p)
+philake.p$result$real
+```
+
+```{r}
+phit <- list(formula = ~ time)
+phitreatment <- list(formula = ~ Treatment)
+phiperch <- list(formula = ~ Perch)
+phitperch <- list(formula = ~time + Perch)
+phinutrients <- list(formula = ~ Nutrients)
+phitnutrients <- list(formula = ~ time + Nutrients)
+phitlake <- list(formula = ~ time + Lake)
+```
+
+```{r message=FALSE, warning=FALSE}
+phit.p <- mark(capt_hist.proc,
+                 capt_hist.ddl,
+                 model.parameters = list(Phi = phit, p = p))
+```
+
+```{r}
+phitlake.p <- mark(capt_hist.proc,
+                 capt_hist.ddl,
+                 model.parameters = list(Phi = phitlake, p = p))
+```
+
+
+```{r}
+phittreatment <- list(formula = ~ time + Treatment)
+```
+
+```{r}
+phitreatment.p <- mark(capt_hist.proc,
+                 capt_hist.ddl,
+                 model.parameters = list(Phi = phitreatment, p = p))
+phittreatment.p <- mark(capt_hist.proc,
+                 capt_hist.ddl,
+                 model.parameters = list(Phi = phittreatment, p = p))
+phinutrients.p <- mark(capt_hist.proc,
+                 capt_hist.ddl,
+                 model.parameters = list(Phi = phinutrients, p = p))
+phiperch.p <- mark(capt_hist.proc,
+                 capt_hist.ddl,
+                 model.parameters = list(Phi = phiperch, p = p))
+```
+
+```{r}
+phitnutrients.p <- mark(capt_hist.proc,
+                 capt_hist.ddl,
+                 model.parameters = list(Phi = phitnutrients, p = p))
+phitperch.p <- mark(capt_hist.proc,
+                 capt_hist.ddl,
+                 model.parameters = list(Phi = phitperch, p = p))
+```
+```{r}
+phitest <- list(formula = ~ time + Perch + Nutrients)
+
+phinutrients.p <- mark(capt_hist.proc,
+                 capt_hist.ddl,
+                 model.parameters = list(Phi = phitest, p = p))
+```
+
+```{r}
+collect.models()
+```
+
+Look at the estimates -- > see the effects (cyclique, début des naissances...)
+Faire sans 2016 et 2020 --> fausse les données, regarder déja dans l'abondance si ça fausse les données
+Est ces que les models peuvent prendre en compte les juvéniles
+Comment marche le CJS model -- > écrire les formules et tout dans un beau markdown, déjà sur une belle feulle dans mon cahier
+Faire des groupes de tailles -- > regarder lesquels ont le plus de sens (par exemple en regardant les tags de 2018)
+
+Etude des tailles -- > article
+
+Stat bayesion markage de truite -- > article
+
+Cours de stat bayesienne
+
+Model sur Jags
 
