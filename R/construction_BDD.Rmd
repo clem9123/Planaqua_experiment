@@ -15,8 +15,7 @@ library(tidyverse)
 library(readxl)
 library(writexl)
 library(truncnorm)
-setwd("C:/Users/sandrine/Documents/IEES_stage/code_et_donnee/data/")
-BDD <- read_excel("BDD_original_complet.xlsx", sheet = "BDD", col_types = "text")
+BDD <- read_excel("./data/BDD_original_complet.xlsx", sheet = "BDD", col_types = "text")
 ```
 
 #################### Date
@@ -577,16 +576,15 @@ colnames(BDD_f) <- c("Index","Date","Obs_status","Lake_capture","Method_capture"
 
 
 ```{r}
-write_xlsx(BDD_f,"C:/Users/sandrine/Documents/IEES_stage/code_et_donnee/data/data_final.xlsx")
+write_xlsx(BDD_f,"./data/data_final.xlsx")
 ```
 
 ####################### à faire ensuite pour créer le data avec le poids
 
-
 ```{r}
-BDD_f <- read_excel("data_final.xlsx", col_types = c("numeric","date","text","text","text","text","text","text","text","numeric","numeric","text","text"), na = "")
+BDD_f <- read_excel("./data/data_final.xlsx", col_types = c("numeric","date","text","text","text","text","text","text","text","numeric","numeric","text","text"), na = "")
 BDD_f <- BDD_f %>% mutate(Lake_capture = as.factor(Lake_capture),
-                          Method_capture =as.factor(Method_capture),
+                          Method_capture =as.factor(Methode_capture),
                           Session_capture = as.factor(Session_capture),
                           Passage_net = as.factor(Passage_net),
                           Obs_status = as.factor(Obs_status),
@@ -622,40 +620,45 @@ for (i in 1:nrow(BDD_juv)){
   if (y == "2022"){y <- 2021}
   if (is.numeric(subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$mean_weight)){
     BDD_f [r$Index-1,]$Weight <- rtruncnorm(1, a= 0.1, b= 200, mean = subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$mean_weight,
-                                          sd = subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$sd_weight, mean )
+                                          sd = subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$sd_weight)
   }
   if (is.numeric(subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$mean_size)){
-    BDD_f [r$Index-1,]$Size <- rtrucnorm (1, a= 0.1, b= 200, mean = subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$mean_size,
+    BDD_f [r$Index-1,]$Size <- rtruncnorm (1, a= 0.1, b= 200, mean = subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$mean_size,
                                          sd = subset(juv_ws, Year== y & Lake_capture == r$Lake_capture)$sd_size)
   }
 }
+BDD_f <- BDD_f %>% mutate(Date = as.Date(BDD_f$Date))
 
 ## ajout des tailles et poids 2022
 
-BDD_vid <- BDD_f %>% filter(!is.na(Tag_id) & Tag_id != "juvenile" & 
-                              Tag_id %in% subset(BDD_f, Year == "2021" & Method_capture == "Chalut")$Tag_id &
-                              (is.na(Weight) | is.na(Size)) &
-                              Year == "2022")
+w <- BDD_f %>% filter(Tag_id !="juvenile" & !is.na(Tag_id) & Method_capture %in% c("Chalut","Vidange"))
+w <- w %>% filter (Year == "2021" | Year == "2022")
+w <- w %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Weight) %>% filter(is.na(`2022`) & !is.na(`2021`))
 
-for (i in 1: nrow(BDD_vid)){
-  r = BDD_vid[i,]
-  BDD_f[r$Index-1,]$Weight <- BDD_f[which(BDD_f$Tag_id == r$Tag_id &
-                                            BDD_f$Year == "2021" &
-                                            BDD_f$Method_capture == "Chalut"),]$Weight
-  BDD_f[r$Index-1,]$Size <- BDD_f[which(BDD_f$Tag_id == r$Tag_id &
-                                          BDD_f$Year == "2021" &
-                                          BDD_f$Method_capture == "Chalut"),]$Size
+for (i in 1:nrow(w)){
+  r = w[i,]
+  BDD_f[which(BDD_f$Tag_id == r$Tag_id & BDD_f$Year == "2022"),]$Weight <- r$`2021`
 }
 
-BDD_f <- BDD_f %>% mutate(Date = as.Date(BDD_f$Date))
+s <- BDD_f %>% filter(Tag_id !="juvenile" & !is.na(Tag_id) & Method_capture %in% c("Chalut","Vidange"))
+s <- s %>% filter (Year == "2021" | Year == "2022")
+s <- s %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Size) %>% filter(is.na(`2022`) & !is.na(`2021`))
+
+for (i in 1:nrow(s)){
+  r = s[i,]
+  BDD_f[which(BDD_f$Tag_id == r$Tag_id & BDD_f$Year == "2022"),]$Size <- r$`2021`
+}
+
 BDD_f <- BDD_f[,1:13]
-write_xlsx(BDD_f, "C:/Users/sandrine/Documents/IEES_stage/code_et_donnee/data/data_final_ws_norm.xlsx")
+write_xlsx(BDD_f, "./data/data_test.xlsx")
 ```
 
+###### pour faire le tableau avec la moyenne sans la variabilité offerte par la loi normale
+
 ```{r}
-BDD_f <- read_excel("data_final.xlsx",col_types = c("numeric","date","text","text","text","text","text","text","text","numeric","numeric","text","text"), na = "")
+BDD_f <- read_excel("./data/data_final.xlsx",col_types = c("numeric","date","text","text","text","text","text","text","text","numeric","numeric","text","text"), na = "")
 BDD_f <- BDD_f %>% mutate(Lake_capture = as.factor(Lake_capture),
-                          Method_capture =as.factor(Method_capture),
+                          Method_capture =as.factor(Methode_capture),
                           Session_capture = as.factor(Session_capture),
                           Passage_net = as.factor(Passage_net),
                           Obs_status = as.factor(Obs_status),
@@ -698,24 +701,27 @@ for (i in 1:nrow(BDD_juv)){
 
 ## ajout des tailles et poids 2022
 
-BDD_vid <- BDD_f %>% filter(!is.na(Tag_id) & Tag_id != "juvenile" & 
-                              Tag_id %in% subset(BDD_f, Year == "2021" & Method_capture == "Chalut")$Tag_id &
-                              (is.na(Weight) | is.na(Size)) &
-                              Year == "2022")
+w <- BDD_f %>% filter(Tag_id !="juvenile" & !is.na(Tag_id) & Method_capture %in% c("Chalut","Vidange"))
+w <- w %>% filter (Year == "2021" | Year == "2022")
+w <- w %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Weight) %>% filter(is.na(`2022`) & !is.na(`2021`))
 
-for (i in 1: nrow(BDD_vid)){
-  r = BDD_vid[i,]
-  BDD_f[r$Index-1,]$Weight <- BDD_f[which(BDD_f$Tag_id == r$Tag_id &
-                                            BDD_f$Year == "2021" &
-                                            BDD_f$Method_capture == "Chalut"),]$Weight
-  BDD_f[r$Index-1,]$Size <- BDD_f[which(BDD_f$Tag_id == r$Tag_id &
-                                          BDD_f$Year == "2021" &
-                                          BDD_f$Method_capture == "Chalut"),]$Size
+for (i in 1:nrow(w)){
+  r = w[i,]
+  BDD_f[which(BDD_f$Tag_id == r$Tag_id & BDD_f$Year == "2022"),]$Weight <- r$`2021`
+}
+
+s <- BDD_f %>% filter(Tag_id !="juvenile" & !is.na(Tag_id) & Method_capture %in% c("Chalut","Vidange"))
+s <- s %>% filter (Year == "2021" | Year == "2022")
+s <- s %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Size) %>% filter(is.na(`2022`) & !is.na(`2021`))
+
+for (i in 1:nrow(s)){
+  r = s[i,]
+  BDD_f[which(BDD_f$Tag_id == r$Tag_id & BDD_f$Year == "2022"),]$Size <- r$`2021`
 }
 
 BDD_f <- BDD_f %>% mutate(Date = as.Date(BDD_f$Date))
 BDD_f <- BDD_f[,1:13]
-write_xlsx(BDD_f, "C:/Users/sandrine/Documents/IEES_stage/code_et_donnee/data/data_final_ws.xlsx")
+write_xlsx(BDD_f, "./data/data_test.xlsx")
 
 ```
 
