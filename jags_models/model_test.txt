@@ -1,0 +1,11 @@
+
+model
+{
+  # Likelihood function
+  for (i in 1 : n){
+    Height[i] ~ dnorm(mean,sd)
+    }
+# Priors
+mean ~ dnorm(0,1)
+sd ~ dnorm(1,0.01)
+}
