@@ -49,7 +49,7 @@ t[!is.na(t)] <- "1"
 t[is.na(t)] <- "0"
 t <- data.frame(sapply(t,as.numeric))
 set.seed(2022)
-#t <- t[sample(1:nrow(t), 400),]
+#t <- t[sample(1:nrow(t), 100),]
 t <- as.matrix(t)
 ```
 
@@ -80,7 +80,7 @@ z.inits <- function(ch){
 }
 
 # model
-CJS_0 <- function()
+cjs_0 <- function()
 {
   # Likelihood
   for (i in 1:nind){
@@ -95,13 +95,10 @@ CJS_0 <- function()
   p ~ dunif(0,1)
 }
 
-
 # Initial values
 
-inits <- list(list(phi = 0.5, p = 0.5,z = z.inits(CH)),
-              list(phi = 0.2, p = 0.9,z = z.inits(CH)),
-              list(phi = 0.7, p = 0.7,z = z.inits(CH)))
-
+inits <- list(list(phi = 0.5, p = 0.1,z = z.inits(CH)),
+              list(phi = 0.2, p = 0.9,z = z.inits(CH)))
 # Parameters monitored
   
 parameters <- c("phi", "p")
@@ -110,31 +107,26 @@ parameters <- c("phi", "p")
 
 ```{r}
 # Call JAGS from R (BRT 1 min)
-cjs.c.c <- jags(data = jags.data, 
+CJS_0 <- jags(data = jags.data, 
                 inits = inits, 
                 parameters.to.save = parameters, 
-                model.file = CJS_0, 
-                n.chains = 3, 
-                n.iter = 4000, 
-                n.burnin = 1500)
+                model.file = cjs_0, 
+                n.chains = 2, 
+                #n.cluster = 2,
+                n.iter = 10000, 
+                n.burnin = 3000)
 
 # Summarize posteriors
-print(cjs.c.c, digits = 3)
-traceplot(cjs.c.c, ask =FALSE)
-autocorr.plot(cjs.c.c)
+print(CJS_0, digits = 3)
+traceplot(CJS_0, ask =FALSE)
+autocorr.plot(CJS_0)
 ```
 
 ```{r}
-z.inits <- function(ch){
-  state <- ch
-  state[state==0] <- 1
-  #get.first <- function(x) min(which(x!=0))
-  f <- apply(ch, 1, get.first)
-  for (i in 1:nrow(ch)){
-    state[i,1:f[i]] <- NA
-  }
-  return(state)
-}
+save(CJS_0, file = "object/CJS_0.RData")
+```
+
+```{r}
 
 ```
 
