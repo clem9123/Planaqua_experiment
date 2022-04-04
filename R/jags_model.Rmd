@@ -60,8 +60,9 @@ get.first <- function(x) min(which(x!=0))
 f <- apply(CH, 1, get.first)
 
 # Bundle data
-jags.data <- list(y = CH, 
-                  z = z.inits(CH),
+nind = nrow(CH)
+n.occasions = ncol(CH)
+jags.data <- list(y = CH,
                   f = f, 
                   nind = nrow(CH), 
                   n.occasions = ncol(CH))
@@ -149,9 +150,10 @@ z.inits <- function(ch){
 # Initial values
 
 Phi <- matrix(0.5, ncol = n.occasions-1, nrow = nind)
+P <- matrix(0.5, ncol = n.occasions-1, nrow = nind)
 
-inits <- list(list(phi = 0.5, p = 0.1,z = z.inits(CH), Phi),
-              list(phi = 0.2, p = 0.9,z = z.inits(CH),Phi))
+inits <- list(list(phi = 0.2, Phi = Phi , p = 0.1, P = P, z = z.inits(CH)),
+              list(phi = 0.8, Phi = Phi, p = 0.9, P = P, z = z.inits(CH)))
 # Parameters monitored
   
 parameters <- c("phi", "p")
@@ -166,11 +168,12 @@ cjs_1 <- function()
     # Priors
     for (i in 1:nind){
       for (t in 1:(n.occasions-1)){
-        Phi[i,t] ~ dnorm(phi, 0.01)
+        Phi[i,t] ~ dnorm(phi,0.1)
+        P[i,t] ~ dnorm (p,0.1)
         } #t
-      } #i
-    phi ~ dunif(0, 1)         # Prior for mean survival
-    p ~ dunif(0, 1)           # Prior for mean recapture
+      } #i        # Prior for mean survival
+    p ~ dunif(0, 1) # Prior for mean recapture
+    phi ~ dunif(0, 1)
     
     # Likelihood 
     for (i in 1:nind){
@@ -185,20 +188,30 @@ cjs_1 <- function()
         z[i,t] ~ dbern(Phi[i,t-1] * z[i,t-1])
         
         # Observation process
-        y[i,t] ~ dbern(p * z[i,t])
+        y[i,t] ~ dbern(P[i,t-1] * z[i,t])
         } #t
       } #i
 }
 ```
 
 ```{r}
-CJS_1 <- jags(data = jags.data, 
+CJS_1 <- jags.parfit(data = jags.data, 
                 inits = inits, 
-                parameters.to.save = parameters, 
-                model.file = cjs_1, 
+                params = parameters, #eters.to.save
+                model = cjs_1, #.file
                 n.chains = 2, 
                 #n.cluster = 2,
-                n.iter = 100, 
-                n.burnin = 50)
+                n.iter = 1000, 
+                n.burnin = 500)
+```
+
+```{r}
+print(CJS_1, digits = 3)
+traceplot(CJS_1, ask =FALSE)
+autocorr.plot(CJS_1)
+```
+
+```{r}
+
 ```
 
