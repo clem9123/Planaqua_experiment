@@ -1,0 +1,178 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(R2jags)
+```
+
+
+```{r}
+w <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Weight)
+w <- na.omit(w)
+w <- w[,-c(1,8)]
+w <- as.matrix(w)
+```
+
+```{r}
+jags.data <- list(w = w,
+                  nind = nrow(w), 
+                  n.occasions = ncol(w))
+
+inits = list(list(t0 = runif(1, -3, 1), K = runif(1,0,10), L = runif(1,0,300), sd = rep(runif(1,0,300), 6)),
+             list(t0 = runif(1, -3, 1), K = runif(1,0,10), L = runif(1,0,300), sd = rep(runif(1,0,300), 6)))
+
+parameters = c("t0","K","L","sd")
+```
+
+```{r}
+Von_B <- function()
+{
+  #Priors
+  t0 ~ dunif(-3,1)
+  K ~ dunif(0,10)
+  L ~ dunif (0,300)
+  for (t in 1:n.occasions){
+    sd[t] ~ dunif(0,400)
+  }
+  #Likelihood
+  for (i in 1:nind){
+    for (t in 1:n.occasions){
+      w[i,t] ~ dnorm(L*(1-exp(-K*(t-t0))), 1/(sd[t]^2))
+    } # t
+  } # i
+}
+```
+
+```{r}
+results_w <- jags(data = jags.data,
+              inits = inits,
+              parameters.to.save = parameters,
+              model.file = Von_B,
+              n.chains = 2,
+              #method = 'parallel',
+              n.iter = 3000,
+              n.burnin = 1500)
+```
+
+```{r}
+print(results_w, digits = 3)
+traceplot(results_w, ask =FALSE)
+autocorr.plot(results_w)
+```
+
+# model avec la formule de growth plutôt (plus besoin de t0)
+```{r}
+jags.data <- list(w = w,
+                  nind = nrow(w), 
+                  n.occasions = ncol(w))
+
+inits = list(list(L0 = runif(0, 40, 1), K = runif(1,0,10), L = runif(1,0,300), sd = rep(runif(1,0,300), 6)),
+             list(L0 = runif(0, 40, 1), K = runif(1,0,10), L = runif(1,0,300), sd = rep(runif(1,0,300), 6)))
+
+parameters = c("L0","K","L","sd")
+```
+
+```{r}
+Von_B_g <- function()
+{
+  #Priors
+  L0 ~ dnorm(15,1/8)
+  K ~ dunif(0,10)
+  L ~ dunif (0,1000)
+  for (t in 1:n.occasions){
+    sd[t] ~ dunif(0,400)
+  }
+  #Likelihood
+  for (i in 1:nind){
+    w[i,1] ~ dnorm(L0, 1/(sd[1]^2))
+    for (t in 2:n.occasions){
+      w[i,t] ~ dnorm(w[i,t-1]+K*(L-w[i,t-1]), 1/(sd[t]^2))
+    } # t
+  } # i
+}
+```
+
+```{r}
+results_wg <- jags(data = jags.data,
+              inits = inits,
+              parameters.to.save = parameters,
+              model.file = Von_B_g,
+              n.chains = 2,
+              #method = 'parallel',
+              n.iter = 3000,
+              n.burnin = 1500)
+```
+
+```{r}
+print(results_wg, digits = 3)
+traceplot(results_wg, ask =FALSE)
+autocorr.plot(results_wg)
+```
+
+```{r}
+#save(results_w, file = "object/results_w.RData")
+#save(results_wg, file = "object/results_wg.RData")
+```
+
+```{r}
+t <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Weight)
+t <- t[,-c(1,8)]
+t <- as.matrix(t)
+
+tbl = data.frame()
+for (i in 1:nrow(t)){
+  for (j in 1:(ncol(t)-1)){
+    if (!is.na(t[i,j]) & !is.na(t[i,j+1])){
+      tbl <- rbind(tbl, c(t[i,j], t[i,j+1]))
+    }
+  }
+}
+
+```
+
+```{r}
+jags.data <- list(y = tbl$X69,
+                  nind = nrow(tbl),
+                  f = tbl$X31)
+
+inits = list(list(sd = runif(1,0,200), K = runif(1,0,10), L = runif(1,0,300)),
+             list(sd = runif(1,0,200), K = runif(1,0,10), L = runif(1,0,300)))
+
+parameters = c("K","L","sd")
+```
+
+
+```{r}
+growth_vonB <- function()
+{
+  #Priors
+  K ~ dunif(0,10)
+  L ~ dunif(0,300)
+  sd ~ dunif(0,200)
+  #Likelihood
+  for (i in 1:nind){
+    y[i] ~ dnorm(f[i]+K*(L-f[i]), 1/(sd^2))
+  }
+}
+```
+
+```{r}
+growth_result <- jags(data = jags.data,
+              inits = inits,
+              parameters.to.save = parameters,
+              model.file = growth_vonB,
+              n.chains = 2,
+              #method = 'parallel',
+              n.iter = 3000,
+              n.burnin = 1500)
+```
+
+```{r}
+print(growth_result, digits = 3)
+traceplot(growth_result, ask =FALSE)
+autocorr.plot(growth_result)
+```
+
+
