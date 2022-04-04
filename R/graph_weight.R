@@ -67,9 +67,12 @@ ggplot(BDD_a %>% filter(Tag_id %in% tag))+ #Year !="2022" &
 
 
 yg2 = data.frame(subset(t, !is.na(t[,1]))[,1])
-for (i in 1: 6){
-  yg2 <- cbind(yg2,0)
-  yg2 <- apply(yg2, rnorm(1,yg2[,ncol(yg2)] + 0.274*(94-yg2[,ncol(yg2)]), 15))
+yg2 = cbind(yg2, "2017" = 1,"2018"= 1,"2019"= 1,"2020"= 1,"2021"= 1,"2022"= 1)
+for (i in 2:7){
+  for (j in 1: nrow(yg2)){
+    mean = yg2[j,i-1] + 0.274*(94-yg2[j,i-1])
+    yg2[j,i] <- rtruncnorm(1, yg2[j,i-1],Inf ,mean, 15)
+  }
 }
 colnames(yg2) <- c("2016","2017","2018","2019","2020","2021","2022")
 #yg2 <- cbind(yg2,ind = c(1:nrow(yg2)))
