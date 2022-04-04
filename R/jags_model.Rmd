@@ -7,6 +7,23 @@ output: html_notebook
 ```{r}
 library(R2jags)
 ```
+# importation des données
+
+```{r}
+
+######  Test avec mes données_construction
+
+t <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Lake)
+t[] <- lapply(t, as.character)
+t[!is.na(t)] <- "1"
+t[is.na(t)] <- "0"
+t <- data.frame(sapply(t,as.numeric))
+#set.seed(2022)
+#t <- t[sample(1:nrow(t), 100),]
+t <- as.matrix(t)
+```
+
+# création d'un tableau pour tester le model
 
 ```{r}
 # Define parameter values
@@ -38,20 +55,7 @@ simul.cjs <- function(phi, p, marked){
 
 ```
 
-
-```{r}
-
-######  Test avec mes données_construction
-
-t <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Lake)
-t[] <- lapply(t, as.character)
-t[!is.na(t)] <- "1"
-t[is.na(t)] <- "0"
-t <- data.frame(sapply(t,as.numeric))
-set.seed(2022)
-t <- t[sample(1:nrow(t), 100),]
-t <- as.matrix(t)
-```
+# mise en forme des données pour être fittée
 
 ```{r}
 CH <-  t #(pour mes données) ou simul.cjs(phi,p, marked)
@@ -67,6 +71,8 @@ jags.data <- list(y = CH,
                   nind = nrow(CH), 
                   n.occasions = ncol(CH))
 ```
+
+# parametres pour le model CJS_0
 
 ```{r}
 
@@ -136,6 +142,8 @@ samps <- do.call(jags.parallel,list(names(jags.data),inits,parameters,
 #save(CJS_0, file = "object/CJS_0.RData")
 ```
 
+#Paramètres pour le model CJS_1
+
 ```{r}
 z.inits <- function(ch){
   state <- ch
@@ -195,10 +203,10 @@ cjs_1 <- function()
 ```
 
 ```{r}
-CJS_1 <- jags.parfit(data = jags.data, 
+CJS_1 <- jags(data = jags.data, 
                 inits = inits, 
-                params = parameters, #eters.to.save
-                model = cjs_1, #.file
+                parameters.to.save = parameters, #
+                model.file = cjs_1, #
                 n.chains = 2, 
                 #n.cluster = 2,
                 n.iter = 1000, 
@@ -212,6 +220,6 @@ autocorr.plot(CJS_1)
 ```
 
 ```{r}
-
+#save(CJS_1, file = "object/CJS_1.RData")
 ```
 
