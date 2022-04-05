@@ -109,7 +109,10 @@ ggplot(yg2 %>% filter(name == "2016"))+
 
 
 
-
+ggplot(BDD_a %>% filter( Tag_year == "2016"), aes(x = Year, y  = Size, color = Treatment))+
+  #geom_point()+
+  geom_line(aes(group = Tag_id))+
+  facet_wrap(~Treatment)
 
 
 
