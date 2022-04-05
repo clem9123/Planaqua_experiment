@@ -1,6 +1,5 @@
 
 # importation des library
-library(dplyr)
 library(tidyverse)
 library(readxl)
 library(writexl)

@@ -14,7 +14,7 @@ ggplot(BDD_a %>% filter( Tag_year == "2016"))+
 ggplot(BDD_a %>% filter(Tag_year == "2019"))+
   geom_boxplot(aes(x = Year, y = Log_weight, color = Treatment))
 
-ggplot(BDD_a %>% filter( Tag_year == "2016"), aes(x = Year, y  = Weight, color = Treatment))+
+ggplot(BDD_a %>% filter( Tag_year == "2016"), aes(x = Year, y  = Size, color = Treatment))+
   #geom_point()+
   geom_line(aes(group = Tag_id))+
   facet_wrap(~Treatment)
@@ -65,6 +65,8 @@ ggplot(BDD_a %>% filter(Tag_id %in% tag))+ #Year !="2022" &
   geom_errorbar(data = data.frame(x,yg,var), aes(x = factor(x), y = yg, ymax =yg+etg,ymin = yg-etg))
 
 
+ggplot(BDD_a, aes(x = Year, y  = Size, color = Treatment))+
+  geom_line(aes(group = Tag_id))
 
 yg2 = data.frame(subset(t, !is.na(t[,1]))[,1])
 yg2 = cbind(yg2, "2017" = 1,"2018"= 1,"2019"= 1,"2020"= 1,"2021"= 1,"2022"= 1)
@@ -106,14 +108,38 @@ ggplot(yg2 %>% filter(name == "2016"))+
 
 
 
+L = 160
+K = 0.161
+t0 = 2014.5
+
+x = c(2016:2021)
+y = c(100)
+for (t in x[-1]){
+  y = append(y, y[length(y)]+K*(L-y[length(y)]))
+}
+y = L*(1-exp(-K*(x-t0)))
 
 
-
-ggplot(BDD_a %>% filter( Tag_year == "2016"), aes(x = Year, y  = Size, color = Treatment))+
+ggplot(BDD_a %>% filter(Year != 2022))+
   #geom_point()+
-  geom_line(aes(group = Tag_id))+
-  facet_wrap(~Treatment)
+  geom_line(aes(group = Tag_id, x = Year, y  = Size, color = Treatment))+
+  geom_point (data = data.frame(x,y), aes(x = factor(x), y = y))#+
+  #facet_wrap(~Treatment)
 
 
+yg2 = data.frame(subset(s, !is.na(s[,1]))[,1])
+yg2 = cbind(yg2, "2017" = 1,"2018"= 1,"2019"= 1,"2020"= 1,"2021"= 1,"2022"= 1)
+for (i in 2:7){
+  for (j in 1: nrow(yg2)){
+    mean = yg2[j,i-1] + 0.161*(161 - yg2[j,i-1])
+    yg2[j,i] <- rtruncnorm(1, yg2[j,i-1],Inf ,mean, 15)
+  }
+}
+colnames(yg2) <- c("2016","2017","2018","2019","2020","2021","2022")
+#yg2 <- cbind(yg2,ind = c(1:nrow(yg2)))
+yg2 <- pivot_longer(yg2, cols = colnames(yg2))
 
+yg2 <- yg2 %>% arrange(name)
+yg2 <- yg2 %>% mutate(name = factor(name, levels = c("2016","2017","2018","2019","2020","2021","2022")))
+yg2 <- cbind(yg2, Tag_id = c(1:1926))
 

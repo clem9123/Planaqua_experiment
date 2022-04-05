@@ -1,0 +1,107 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+tr <- BDD_a %>% group_by(Tag_id, Treatment) %>% summarize() %>% ungroup()
+mooved <- tr[duplicated(tr$Tag_id),]$Tag_id
+tr <- tr %>% filter ( !duplicated(tr$Tag_id))
+tr <- tr %>% mutate (Treatment = ifelse(Tag_id %in% mooved, NA, Treatment))
+```
+
+```{r}
+la <- BDD_a %>% group_by(Tag_id, Lake) %>% summarize() %>% ungroup()
+mooved <- la[duplicated(la$Tag_id),]$Tag_id
+la <- la %>% filter ( !duplicated(la$Tag_id))
+la <- la %>% mutate (Lake = ifelse(Tag_id %in% mooved, NA, Lake))
+```
+
+```{r}
+s <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Weight)
+s <- s %>% merge(la) %>% merge(tr)
+#s <- s[!is.na(s$`2016`)&!is.na(s$`2017`)&!is.na(s$`2018`)&!is.na(s$`2019`)&!is.na(s$`2020`)&!is.na(s$`2021`),]
+
+tbl = data.frame()
+for (i in 1:nrow(s)){
+  for (j in 2:(ncol(s)-4)){
+    if (!is.na(s[i,j]) & !is.na(s[i,j+1])){
+      tbl <- rbind(tbl, c(s[i,j], s[i,j+1], s$Lake[i], s$Treatment[i]))
+    }
+  }
+}
+colnames(tbl) <- c("t1","t2","Lake","Treatment")
+tbl <- tbl %>% filter (t2 > t1)
+jags.data <- list(y = tbl$t2,
+                  f = tbl$t1,
+                  Lake = tbl$Lake,
+                  Treatment = tbl$Treatment,
+                  nind = nrow(tbl))
+```
+
+```{r}
+inits = list(list(sd = runif(1,0,200),K = 0.6, Linf = runif(1,100,300)),
+             list(sd = runif(1,0,200),K = runif(1,0,1), Linf = runif(1,100,300)),
+             list(sd = runif(1,0,200),K = 0.5, Linf = runif(1,100,300))) #sd = runif(1,0,200), 
+
+parameters = c("K","Linf")#, "sd")
+
+growth_vonB <- function()
+{
+  #Priors
+  K ~ dunif(0,1)
+  Linf ~ dunif(100,300)
+  #sd ~ dunif(0,200)
+  #Likelihood
+  for (i in 1:nind){
+    y[i] ~ dnorm(f[i]+K*(Linf-f[i]), 0.001)#1/(sd^2))
+  }
+}
+```
+
+
+
+```{r}
+growth_result <- jags(data = jags.data,
+              inits = inits,
+              parameters.to.save = parameters,
+              model.file = growth_vonB,
+              n.chains = 3,
+              #method = 'parallel',
+              n.iter = 10000,
+              n.burnin = 5000)
+
+print(growth_result, digits = 3)
+traceplot(growth_result, ask =FALSE)
+autocorr.plot(growth_result)
+```
+
+```{r}
+ggplot(tbl)+
+  geom_point(aes (x = t1, y = t1-t2, color = factor(Treatment)))
+ggplot(tbl)+
+  geom_boxplot(aes (y = (t2-t1)/t1, x = factor(Treatment)))
+ggplot(tbl)+
+  geom_boxplot(aes (y = t2, x = factor(Treatment)))
+```
+
+```{r}
+inits = list(list(sd = runif(1,0,200),K = runif(4,0,1), Linf = runif(1,100,300)),
+             list(sd = runif(1,0,200),K = runif(4,0,1), Linf = runif(1,100,300)),
+             list(sd = runif(1,0,200),K = runif(4,0,1), Linf = runif(1,100,300))) #sd = runif(1,0,200), 
+
+parameters = c("K","Linf", "sd")
+
+growth_vonB <- function()
+{
+  #Priors
+  for (tr in 1:4){
+    K[tr] ~ dunif(0,1)}
+  Linf ~ dunif(100,300)
+  sd ~ dunif(0,200)
+  #Likelihood
+  for (i in 1:nind){
+    y[i] ~ dnorm(f[i]+K*(Linf-f[i]), 1/(sd^2))
+  }
+}
+```
+
