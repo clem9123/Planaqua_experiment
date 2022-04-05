@@ -110,21 +110,21 @@ ggplot(yg2 %>% filter(name == "2016"))+
 
 L = 160
 K = 0.161
-t0 = 2014.5
+t0 = 2012
 
 x = c(2016:2021)
-y = c(100)
+y = c(125)
 for (t in x[-1]){
   y = append(y, y[length(y)]+K*(L-y[length(y)]))
 }
 y = L*(1-exp(-K*(x-t0)))
 
 
-ggplot(BDD_a %>% filter(Year != 2022))+
+ggplot(BDD_a %>% filter( Tag_year =="2016"))+ #%>% filter(Year != 2022))+
   #geom_point()+
   geom_line(aes(group = Tag_id, x = Year, y  = Size, color = Treatment))+
-  geom_point (data = data.frame(x,y), aes(x = factor(x), y = y))#+
-  #facet_wrap(~Treatment)
+  geom_point (data = data.frame(x,y), aes(x = factor(x), y = y))+
+  facet_wrap(~Treatment)
 
 
 yg2 = data.frame(subset(s, !is.na(s[,1]))[,1])
