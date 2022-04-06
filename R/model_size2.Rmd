@@ -1,0 +1,207 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+# Data 
+
+```{r message=FALSE, warning=FALSE}
+library(R2jags)
+
+tr <- BDD_a %>% filter (Tag_year == "2016") %>% group_by(Tag_id, Treatment) %>% summarize() %>% ungroup()
+mooved <- tr[duplicated(tr$Tag_id),]$Tag_id
+tr <- tr %>% filter ( !duplicated(tr$Tag_id))
+tr <- tr %>% mutate (Treatment = ifelse(Tag_id %in% mooved, NA, Treatment))
+
+la <- BDD_a %>% group_by(Tag_id, Lake) %>% summarize() %>% ungroup()
+mooved <- la[duplicated(la$Tag_id),]$Tag_id
+la <- la %>% filter ( !duplicated(la$Tag_id))
+la <- la %>% mutate (Lake = ifelse(Tag_id %in% mooved, NA, Lake))
+
+s <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Size)
+s <- s %>% merge(la) %>% merge(tr)
+
+s <- s %>% filter (!is.na(Treatment))
+
+set.seed(2022)
+s <- s[sample(1:nrow(s), 200),]
+
+get.first <- function(x) min(which(!is.na(x)))
+f <- apply(s, 1, get.first)
+
+jags.data <- list(y = s[2:7],
+                  f = f,
+                  Lake = s$Lake,
+                  Treatment = s$Treatment,
+                  nind = nrow(s),
+                  noccas = 6)
+```
+
+
+
+# Growth model 1
+
+K ~ 1
+Linf ~ 1
+t0 ~ 1
+
+
+```{r}
+inits = list(list(t0 = runif(1, 2010,2016), K = runif(1,0,1), Linf = runif(1,0,300)),
+             list(t0 = runif(1, 2010,2016), K = runif(1,0,1), Linf = runif(1,0,300)))
+
+parameters = c("t0","K","Linf")
+
+model_g <- function ()
+{
+  #Priors
+  t0 ~ dunif(2010,2016)
+  K ~ dunif(0,10)
+  Linf ~ dunif (0,300)
+  #Likelihood
+  for (i in 1:nind){
+    for (t in f[i]:noccas){
+      y[i,t] ~ dnorm(Linf*(1-exp(-K*(2015+t-t0))), 0.004)
+    } # t
+  } # i
+} # func
+    
+Model_g <- jags(data = jags.data,
+              inits = inits,
+              parameters.to.save = parameters,
+              model.file = model_g,
+              n.chains = 2,
+              n.iter = 20000)
+
+print(Model_g, digits = 3)
+traceplot(Model_g, ask =FALSE)
+autocorr.plot(Model_g)
+
+#save(Model_g, file = "C:/Users/sandrine/Documents/R_script/Planaqua_experiment/R/object/Model_g.RData")
+```
+
+# Growth model 2
+
+K ~ 1
+Linf ~ Treatment
+t0 ~ 1
+
+```{r}
+inits = list(list(t0 = runif(1,2010,2016), K = runif(1,0,10), Linf = runif(4,0,300)),
+             list(t0 = runif(1,2010,2016), K = runif(1,0,10), Linf = runif(4,0,300)))
+
+parameters = c("t0","K","Linf")
+
+model_g_Ltr <- function ()
+{
+  #Priors
+  t0 ~ dunif(2010,2016)
+  K ~ dunif(0,10)
+  for (tr in 1:4){
+    Linf[tr] ~ dunif (0,300)}
+  #Likelihood
+  for (i in 1:nind){
+    for (t in f[i]:noccas){
+      y[i,t] ~ dnorm(Linf[Treatment[i]]*(1-exp(-K*(2015+t-t0))), 0.004)
+    } # t
+  } # i
+} # func
+    
+Model_g_Ltr <- jags(data = jags.data,
+              inits = inits,
+              parameters.to.save = parameters,
+              model.file = model_g_Ltr,
+              n.chains = 2,
+              n.iter = 20000)
+
+print(Model_g_Ltr, digits = 3)
+traceplot(Model_g_Ltr, ask =FALSE)
+autocorr.plot(Model_g_Ltr)
+
+#save(Model_g_Ltr, file = "object/Model_g_Ltr.RData")
+
+```
+
+# Growth model 3
+
+K ~ Treatment 
+Linf ~ 1
+t0 ~ 1
+
+```{r}
+inits = list(list(t0 = runif(1, 2010,2016), K = runif(4,0,10), Linf = runif(1,0,300)),
+             list(t0 = runif(1, 2010,2016), K = runif(4,0,10), Linf = runif(1,0,300)))
+
+parameters = c("t0","K","Linf")
+
+model_g_Ktr <- function ()
+{
+  #Priors
+  t0 ~ dunif(2010,2016)
+  Linf ~ dunif (0,300)
+  for (tr in 1:4){
+    K[tr] ~ dunif(0,10)
+  }
+  #Likelihood
+  for (i in 1:nind){
+    for (t in f[i]:noccas){
+      y[i,t] ~ dnorm(Linf*(1-exp(-K[Treatment[i]]*(2015+t-t0))), 0.0001)
+    } # t
+  } # i
+} # func
+    
+Model_g_Ktr <- jags(data = jags.data,
+              inits = inits,
+              parameters.to.save = parameters,
+              model.file = model_g_Ktr,
+              n.chains = 2,
+              n.iter = 3000,
+              n.burnin = 1500)
+
+print(Model_g_Ktr, digits = 3)
+traceplot(Model_g_Ktr, ask =FALSE)
+autocorr.plot(Model_g_Ktr)
+
+#save(Model_g_Ktr, file = "object/Model_g_Ktr.RData")
+```
+
+```{r}
+inits = list(list(t0 = runif(1, 2010,2016), K = runif(4,0,10), Linf = runif(1,0,300)),
+             list(t0 = runif(1, 2010,2016), K = runif(4,0,10), Linf = runif(1,0,300)))
+
+parameters = c("t0","K","Linf")
+
+model_g_Ktr_Linfi <- function ()
+{
+  #Priors
+  t0 ~ dunif(2010,2016)
+  Linf ~ dunif (0,300)
+  for (i in 1:nind){
+    Li[i] ~ dnorm(Linf, 0.01)
+    }
+  for (tr in 1:4){
+    K[tr] ~ dunif(0,10)
+  }
+  #Likelihood
+  for (i in 1:nind){
+    for (t in f[i]:noccas){
+      y[i,t] ~ dnorm(Li[i]*(1-exp(-K[Treatment[i]]*(2015+t-t0))), 0.0001)
+    } # t
+  } # i
+} # func
+    
+Model_g_Ktr_Linfi <- jags(data = jags.data,
+              inits = inits,
+              parameters.to.save = parameters,
+              model.file = model_g_Ktr_Linfi,
+              n.chains = 2,
+              n.iter = 30000)
+
+print(Model_g_Ktr_Linfi, digits = 3)
+traceplot(Model_g_Ktr_Linfi, ask =FALSE)
+autocorr.plot(Model_g_Ktr_Linfi)
+
+#save(Model_g_Ktr, file = "object/Model_g_Ktr.RData")
+```
+
+
+

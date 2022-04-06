@@ -109,7 +109,7 @@ ggplot(yg2 %>% filter(name == "2016"))+
 
 
 L = 160
-K = 0.161
+K = 1
 t0 = 2012
 
 x = c(2016:2021)
@@ -142,4 +142,58 @@ yg2 <- pivot_longer(yg2, cols = colnames(yg2))
 yg2 <- yg2 %>% arrange(name)
 yg2 <- yg2 %>% mutate(name = factor(name, levels = c("2016","2017","2018","2019","2020","2021","2022")))
 yg2 <- cbind(yg2, Tag_id = c(1:1926))
+
+
+
+L = 200
+K = 0.261
+t0 = 2014.5
+
+
+#y = c(125)
+#for (t in x[-1]){
+#  y = append(y, y[length(y)]+K*(L-y[length(y)]))
+#}
+
+x = c(2016:2021)
+vB <- function(x,K,L,t0) {return (L*(1-exp(-K*(x-t0))))}
+
+
+ggplot(BDD_a %>% filter(Tag_year =="2016" & Year != "2022"))+
+  #geom_point()+
+  geom_line(aes(group = Tag_id, x = Year, y  = Size, color = Treatment))+
+  geom_point (data = data.frame(x,y= vB(x,1,170,2014.8)), aes(x = factor(x), y = y), color = "red")
+  geom_point (data = data.frame(x,y= 20+ vB(x,0.5,200,2014.8)), aes(x = factor(x), y = y))+
+  geom_point (data = data.frame(x,y= -5+ vB(x,0.5,200,2014)), aes(x = factor(x), y = y))+
+  geom_point (data = data.frame(x,y=30 +vB(x,0.5,200,2014)), aes(x = factor(x), y = y))+
+  geom_point (data = data.frame(x,y= -20 +vB(x,0.5,200,2014)), aes(x = factor(x), y = y))+
+  geom_point (data = data.frame(x,y=-30 +vB(x,0.5,200,2014)), aes(x = factor(x), y = y))+
+  facet_wrap(~Treatment)
+
+  
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
