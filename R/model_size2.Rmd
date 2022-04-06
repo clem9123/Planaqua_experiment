@@ -7,7 +7,7 @@ output: html_notebook
 ```{r message=FALSE, warning=FALSE}
 library(R2jags)
 
-tr <- BDD_a %>% filter (Tag_year == "2016") %>% group_by(Tag_id, Treatment) %>% summarize() %>% ungroup()
+tr <- BDD_a %>% group_by(Tag_id, Treatment) %>% summarize() %>% ungroup()
 mooved <- tr[duplicated(tr$Tag_id),]$Tag_id
 tr <- tr %>% filter ( !duplicated(tr$Tag_id))
 tr <- tr %>% mutate (Treatment = ifelse(Tag_id %in% mooved, NA, Treatment))
@@ -20,9 +20,13 @@ la <- la %>% mutate (Lake = ifelse(Tag_id %in% mooved, NA, Lake))
 s <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Size)
 s <- s %>% merge(la) %>% merge(tr)
 
+nrow(s)
+
 s <- s %>% filter (!is.na(Treatment))
 
-set.seed(2022)
+nrow(s)
+
+set.seed(1234)
 s <- s[sample(1:nrow(s), 200),]
 
 get.first <- function(x) min(which(!is.na(x)))
@@ -36,7 +40,7 @@ jags.data <- list(y = s[2:7],
                   noccas = 6)
 ```
 
-
+# j'ajoute sd partout
 
 # Growth model 1
 
@@ -46,10 +50,10 @@ t0 ~ 1
 
 
 ```{r}
-inits = list(list(t0 = runif(1, 2010,2016), K = runif(1,0,1), Linf = runif(1,0,300)),
-             list(t0 = runif(1, 2010,2016), K = runif(1,0,1), Linf = runif(1,0,300)))
+inits <- function(){
+  list(t0 = runif(1, 2010,2016), K = runif(1,0,10), Linf = runif(1,0,300), p = runif(1,0,1))}
 
-parameters = c("t0","K","Linf")
+parameters = c("t0","K","Linf","p")
 
 model_g <- function ()
 {
@@ -57,19 +61,20 @@ model_g <- function ()
   t0 ~ dunif(2010,2016)
   K ~ dunif(0,10)
   Linf ~ dunif (0,300)
+  p ~ dunif(0,1)
   #Likelihood
   for (i in 1:nind){
     for (t in f[i]:noccas){
-      y[i,t] ~ dnorm(Linf*(1-exp(-K*(2015+t-t0))), 0.004)
+      y[i,t] ~ dnorm(Linf*(1-exp(-K*(2015+t-t0))), p)
     } # t
   } # i
 } # func
     
-Model_g <- jags(data = jags.data,
+Model_g <- jags.parallel(data = jags.data,
               inits = inits,
               parameters.to.save = parameters,
               model.file = model_g,
-              n.chains = 2,
+              n.chains = 4,
               n.iter = 20000)
 
 print(Model_g, digits = 3)
@@ -86,16 +91,17 @@ Linf ~ Treatment
 t0 ~ 1
 
 ```{r}
-inits = list(list(t0 = runif(1,2010,2016), K = runif(1,0,10), Linf = runif(4,0,300)),
-             list(t0 = runif(1,2010,2016), K = runif(1,0,10), Linf = runif(4,0,300)))
+inits <- function(){
+  list(t0 = runif(1, 2010,2016), K = runif(1,0,10), Linf = runif(4,0,300), p = runif(1,0,1))}
 
-parameters = c("t0","K","Linf")
+parameters = c("t0","K","Linf","p")
 
 model_g_Ltr <- function ()
 {
   #Priors
   t0 ~ dunif(2010,2016)
   K ~ dunif(0,10)
+  p ~ dunif(0,1)
   for (tr in 1:4){
     Linf[tr] ~ dunif (0,300)}
   #Likelihood
@@ -106,7 +112,7 @@ model_g_Ltr <- function ()
   } # i
 } # func
     
-Model_g_Ltr <- jags(data = jags.data,
+Model_g_Ltr <- jags.parallel(data = jags.data,
               inits = inits,
               parameters.to.save = parameters,
               model.file = model_g_Ltr,
@@ -121,6 +127,15 @@ autocorr.plot(Model_g_Ltr)
 
 ```
 
+```{r}
+param <- data.frame(rbind(as.mcmc(Model_g_Ltr)[[1]],as.mcmc(Model_g_Ltr)[[2]]))
+ggplot(param)+
+  geom_density(aes(x = Linf.1.), color = "red")+
+  geom_density(aes(x = Linf.2.), color = "blue")+
+  geom_density(aes(x = Linf.3.), color = "green")+
+  geom_density(aes(x = Linf.4.), color = "black")
+```
+
 # Growth model 3
 
 K ~ Treatment 
@@ -128,34 +143,37 @@ Linf ~ 1
 t0 ~ 1
 
 ```{r}
-inits = list(list(t0 = runif(1, 2010,2016), K = runif(4,0,10), Linf = runif(1,0,300)),
-             list(t0 = runif(1, 2010,2016), K = runif(4,0,10), Linf = runif(1,0,300)))
+#inits = list(list(t0 = runif(1, 2010,2016), K = runif(4,0,10), Linf = runif(1,0,300)),
+#             list(t0 = runif(1, 2010,2016), K = runif(4,0,10), Linf = runif(1,0,300)))
 
-parameters = c("t0","K","Linf")
+inits <- function(){
+  list(t0 = runif(1, 2010,2016), K = runif(4,0,10), Linf = runif(1,0,300), p = runif(1,0,1))}
+
+parameters = c("t0","K","Linf","p")
 
 model_g_Ktr <- function ()
 {
   #Priors
   t0 ~ dunif(2010,2016)
   Linf ~ dunif (0,300)
+  p ~ dunif(0,1)
   for (tr in 1:4){
     K[tr] ~ dunif(0,10)
   }
   #Likelihood
   for (i in 1:nind){
     for (t in f[i]:noccas){
-      y[i,t] ~ dnorm(Linf*(1-exp(-K[Treatment[i]]*(2015+t-t0))), 0.0001)
+      y[i,t] ~ dnorm(Linf*(1-exp(-K[Treatment[i]]*(2015+t-t0))), p)
     } # t
   } # i
 } # func
     
-Model_g_Ktr <- jags(data = jags.data,
+Model_g_Ktr <- jags.parallel(data = jags.data,
               inits = inits,
               parameters.to.save = parameters,
               model.file = model_g_Ktr,
-              n.chains = 2,
-              n.iter = 3000,
-              n.burnin = 1500)
+              n.chains = 4,
+              n.iter = 20000)
 
 print(Model_g_Ktr, digits = 3)
 traceplot(Model_g_Ktr, ask =FALSE)
@@ -165,43 +183,293 @@ autocorr.plot(Model_g_Ktr)
 ```
 
 ```{r}
-inits = list(list(t0 = runif(1, 2010,2016), K = runif(4,0,10), Linf = runif(1,0,300)),
-             list(t0 = runif(1, 2010,2016), K = runif(4,0,10), Linf = runif(1,0,300)))
+param <- data.frame(rbind(as.mcmc(Model_g_Ktr)[[1]],as.mcmc(Model_g_Ktr)[[2]]))
+ggplot(param)+
+  geom_density(aes(x = K.1.), color = "red")+
+  geom_density(aes(x = K.2.), color = "blue")+
+  geom_density(aes(x = K.3.), color = "green")+
+  geom_density(aes(x = K.4.), color = "black")
+```
 
-parameters = c("t0","K","Linf")
+# Growth model 3
 
-model_g_Ktr_Linfi <- function ()
+K ~ Treatment 
+Linf ~ Treatment
+t0 ~ 1
+
+```{r}
+inits <- function(){
+  list(t0 = runif(1, 2010,2016), K = runif(4,0,10), Linf = runif(4,0,300), p = runif(1,0,1))}
+
+parameters = c("t0","K","Linf","p")
+
+model_g_Ktr_Ltr <- function ()
 {
   #Priors
   t0 ~ dunif(2010,2016)
-  Linf ~ dunif (0,300)
-  for (i in 1:nind){
-    Li[i] ~ dnorm(Linf, 0.01)
-    }
+  p ~ dunif(0,1)
   for (tr in 1:4){
     K[tr] ~ dunif(0,10)
+    Linf[tr] ~ dunif (0,300)
   }
   #Likelihood
   for (i in 1:nind){
     for (t in f[i]:noccas){
-      y[i,t] ~ dnorm(Li[i]*(1-exp(-K[Treatment[i]]*(2015+t-t0))), 0.0001)
+      y[i,t] ~ dnorm(Linf[Treatment[i]]*(1-exp(-K[Treatment[i]]*(2015+t-t0))), p)
     } # t
   } # i
 } # func
     
-Model_g_Ktr_Linfi <- jags(data = jags.data,
+Model_g_Ktr_Ltr <- jags.parallel(data = jags.data,
               inits = inits,
               parameters.to.save = parameters,
-              model.file = model_g_Ktr_Linfi,
-              n.chains = 2,
-              n.iter = 30000)
+              model.file = model_g_Ktr_Ltr,
+              n.chains = 4,
+              n.iter = 20000)
 
-print(Model_g_Ktr_Linfi, digits = 3)
-traceplot(Model_g_Ktr_Linfi, ask =FALSE)
-autocorr.plot(Model_g_Ktr_Linfi)
+print(Model_g_Ktr_Ltr, digits = 3)
+traceplot(Model_g_Ktr_Ltr, ask =FALSE)
+autocorr.plot(Model_g_Ktr_Ltr)
+
+#save(Model_g_Ktr_Ltr, file = "object/Model_g_Ktr_Ltr.RData")
+```
+
+```{r}
+param <- data.frame(rbind(as.mcmc(Model_g_Ktr_Ltr)[[1]],as.mcmc(Model_g_Ktr_Ltr)[[2]]))
+ggplot(param)+
+  geom_density(aes(x = K.1.), color = "red")+
+  geom_density(aes(x = K.2.), color = "blue")+
+  geom_density(aes(x = K.3.), color = "green")+
+  geom_density(aes(x = K.4.), color = "black")
+ggplot(param)+
+  geom_density(aes(x = Linf.1.), color = "red")+
+  geom_density(aes(x = Linf.2.), color = "blue")+
+  geom_density(aes(x = Linf.3.), color = "green")+
+  geom_density(aes(x = Linf.4.), color = "black")
+
+```
+
+
+# Model 4
+Avec variation individuelle de Linf (par traitement avec un effet random sur les individus)
+
+K ~ Treatment
+Linf ~ Treatment
+variation de linf par individu avec une variabilité pi
+
+```{r}
+inits <- function(){
+  list(t0 = runif(1, 2010,2016), K = runif(4,0,10), Linf = runif(4,130,250), p = runif(1,0,1), linf = runif(nind, 130,250),pi = runif(1,0,1))}
+
+parameters = c("t0","K","Linf","p","pi")
+
+model_g_Ktr_Ltri <- function ()
+{
+  #Priors
+  t0 ~ dunif(2010,2016)
+  p ~ dunif(0,1)
+  pi ~ dunif(0,1)
+  for (tr in 1:4){
+    K[tr] ~ dunif(0,10)
+    Linf[tr] ~ dunif (130,250)
+  }
+  for (i in 1:nind){
+    linf[i] ~ dnorm(Linf[Treatment[i]], pi)
+  }
+  #Likelihood
+  for (i in 1:nind){
+    for (t in f[i]:noccas){
+      y[i,t] ~ dnorm(linf[i]*(1-exp(-K[Treatment[i]]*(2015+t-t0))), p)
+    } # t
+  } # i
+} # func
+    
+Model_g_Ktr_Ltri <- jags.parallel(data = jags.data,
+              inits = inits,
+              parameters.to.save = parameters,
+              model.file = model_g_Ktr_Ltri,
+              n.chains = 4,
+              n.iter = 20000)
+
+print(Model_g_Ktr_Ltri, digits = 3)
+traceplot(Model_g_Ktr_Ltri, ask =FALSE)
+autocorr.plot(Model_g_Ktr_Ltri)
+
+#save(Model_g_Ktr, file = "object/Model_g_Ktr.RData")
+```
+
+```{r}
+param <- data.frame(rbind(as.mcmc(Model_g_Ktr_Ltri)[[1]],as.mcmc(Model_g_Ktr_Ltri)[[2]]))
+ggplot(param)+
+  geom_density(aes(x = K.1.), color = "red")+
+  geom_density(aes(x = K.2.), color = "blue")+
+  geom_density(aes(x = K.3.), color = "green")+
+  geom_density(aes(x = K.4.), color = "black")
+ggplot(param)+
+  geom_density(aes(x = Linf.1.), color = "red")+
+  geom_density(aes(x = Linf.2.), color = "blue")+
+  geom_density(aes(x = Linf.3.), color = "green")+
+  geom_density(aes(x = Linf.4.), color = "black")
+```
+#Model 5
+
+Linf ~ Treatment et variation sur les individus
+
+```{r}
+inits <- function(){
+  list(t0 = runif(1, 2010,2016), K = runif(1,0,10), Linf = runif(4,130,250), p = runif(1,0,1), linf = runif(nind, 130,250))}
+
+parameters = c("t0","K","Linf","p")
+
+model_g_Ltri <- function ()
+{
+  #Priors
+  t0 ~ dunif(2010,2016)
+  p ~ dunif(0,1)
+  K ~ dunif(0,10)
+  for (tr in 1:4){
+    Linf[tr] ~ dunif (130,250)
+  }
+  for (i in 1:nind){
+    linf[i] ~ dnorm(Linf[Treatment[i]], 0.005)
+  }
+  #Likelihood
+  for (i in 1:nind){
+    for (t in f[i]:noccas){
+      y[i,t] ~ dnorm(linf[i]*(1-exp(-K*(2015+t-t0))), p)
+    } # t
+  } # i
+} # func
+    
+Model_g_Ltri <- jags.parallel(data = jags.data,
+              inits = inits,
+              parameters.to.save = parameters,
+              model.file = model_g_Ltri,
+              n.chains = 4,
+              n.iter = 20000)
+
+print(Model_g_Ltri, digits = 3)
+traceplot(Model_g_Ltri, ask =FALSE)
+autocorr.plot(Model_g_Ltri)
 
 #save(Model_g_Ktr, file = "object/Model_g_Ktr.RData")
 ```
 
 
+```{r}
+param <- data.frame(rbind(as.mcmc(Model_g_Ltri)[[1]],as.mcmc(Model_g_Ltri)[[2]]))
+
+ggplot(param)+
+  geom_density(aes(x = Linf.1.), color = "red")+
+  geom_density(aes(x = Linf.2.), color = "blue")+
+  geom_density(aes(x = Linf.3.), color = "green")+
+  geom_density(aes(x = Linf.4.), color = "black")
+```
+# Model 6
+
+
+```{r}
+inits <- function(){
+  list(t0 = runif(nind, 2014,2021), K = runif(1,0,10), Linf = runif(4,130,250), p = runif(1,0,1))}
+
+parameters = c("K","Linf","p")
+
+model_g_Ltr_t0i <- function ()
+{
+  #Priors
+  p ~ dunif(0,1)
+  K ~ dunif(0,10)
+  for (tr in 1:4){
+    Linf[tr] ~ dunif (130,250)
+    
+  }
+  for (i in 1:nind){
+    t0[i] ~ dunif(2014,2021)
+  }
+  #Likelihood
+  for (i in 1:nind){
+    for (t in f[i]:noccas){
+      y[i,t] ~ dnorm(Linf[Treatment[i]]*(1-exp(-K*(2015+t-t0[i]))), p)
+    } # t
+  } # i
+} # func
+    
+Model_g_Ltr_t0i <- jags.parallel(data = jags.data,
+              inits = inits,
+              parameters.to.save = parameters,
+              model.file = model_g_Ltr_t0i,
+              n.chains = 4,
+              n.iter = 20000)
+
+print(Model_g_Ltr_t0i, digits = 3)
+traceplot(Model_g_Ltr_t0i, ask =FALSE)
+autocorr.plot(Model_g_Ltr_t0i)
+
+#save(Model_g_Ktr, file = "object/Model_g_Ktr.RData")
+```
+
+```{r}
+param <- data.frame(rbind(as.mcmc(Model_g_Ltr_t0i)[[1]],as.mcmc(Model_g_Ltr_t0i)[[2]]))
+
+ggplot(param)+
+  geom_density(aes(x = Linf.1.), color = "red")+
+  geom_density(aes(x = Linf.2.), color = "blue")+
+  geom_density(aes(x = Linf.3.), color = "green")+
+  geom_density(aes(x = Linf.4.), color = "black")
+```
+# Model 7
+
+```{r}
+inits <- function(){
+  list(t0 = runif(nind, 2014, 2015), K = runif(4,0,10), Linf = runif(4,130,250), p = runif(1,0,1))}
+
+parameters = c("K","Linf","p")
+
+model_g_Ktr_Ltr_t0i <- function ()
+{
+  #Priors
+  p ~ dunif(0,1)
+  for(tr in 1:4){
+    Linf[tr]~ dunif (130,250)
+    K[tr] ~ dunif(0,10)
+  }
+  for (i in 1:nind){
+    t0[i] ~ dunif(2014,f[i]+2015)
+  }
+  #Likelihood
+  for (i in 1:nind){
+    for (t in f[i]:noccas){
+      y[i,t] ~ dnorm(Linf[Treatment[i]]*(1-exp(-K[Treatment[i]]*(2015+t-t0[i]))), p)
+    } # t
+  } # i
+} # func
+    
+Model_g_Ktr_Ltr_t0i <- jags.parallel(data = jags.data,
+              inits = inits,
+              parameters.to.save = parameters,
+              model.file = model_g_Ktr_Ltr_t0i,
+              n.chains = 4,
+              n.iter = 20000)
+
+print(Model_g_Ktr_Ltr_t0i, digits = 3)
+traceplot(Model_g_Ktr_Ltr_t0i, ask =FALSE)
+autocorr.plot(Model_g_Ktr_Ltr_t0i)
+
+#save(Model_g_Ktr_Ltr_t0i, file = "object/Model_g_Ktr_Ltr_t0i.RData")
+```
+```{r}
+param <- data.frame(rbind(as.mcmc(Model_g_Ktr_t0i)[[1]],as.mcmc(Model_g_Ktr_t0i)[[2]]))
+
+ggplot(param)+
+  geom_density(aes(x = K.1.), color = "red")+
+  geom_density(aes(x = K.2.), color = "blue")+
+  geom_density(aes(x = K.3.), color = "green")+
+  geom_density(aes(x = K.4.), color = "black")
+
+ggplot(param)+
+  geom_density(aes(x = Linf.1.), color = "red")+
+  geom_density(aes(x = Linf.2.), color = "blue")+
+  geom_density(aes(x = Linf.3.), color = "green")+
+  geom_density(aes(x = Linf.4.), color = "black")
+```
 

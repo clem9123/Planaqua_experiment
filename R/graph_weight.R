@@ -161,16 +161,15 @@ vB <- function(x,K,L,t0) {return (L*(1-exp(-K*(x-t0))))}
 
 ggplot(BDD_a %>% filter(Tag_year =="2016" & Year != "2022"))+
   #geom_point()+
-  geom_line(aes(group = Tag_id, x = Year, y  = Size, color = Treatment))+
-  geom_point (data = data.frame(x,y= vB(x,1,170,2014.8)), aes(x = factor(x), y = y), color = "red")
-  geom_point (data = data.frame(x,y= 20+ vB(x,0.5,200,2014.8)), aes(x = factor(x), y = y))+
-  geom_point (data = data.frame(x,y= -5+ vB(x,0.5,200,2014)), aes(x = factor(x), y = y))+
-  geom_point (data = data.frame(x,y=30 +vB(x,0.5,200,2014)), aes(x = factor(x), y = y))+
-  geom_point (data = data.frame(x,y= -20 +vB(x,0.5,200,2014)), aes(x = factor(x), y = y))+
-  geom_point (data = data.frame(x,y=-30 +vB(x,0.5,200,2014)), aes(x = factor(x), y = y))+
-  facet_wrap(~Treatment)
-
+  #facet_wrap(~Treatment)+
+  #geom_line(aes(group = Tag_id, x = Year, y  = Size, color = Treatment))+
+  geom_point (data = data.frame(x,y=vB(x,0.617,189,2014.5), Treatment = 1), aes(x = factor(x), y = y), color = "red")+
+  geom_point (data = data.frame(x,y=vB(x,0.756,180,2014.5), Treatment = 2), aes(x = factor(x), y = y), color = "green")+
+  geom_point (data = data.frame(x,y=vB(x,0.85,163.4,2014.5), Treatment = 3), aes(x = factor(x), y = y), color = "blue")+
+  geom_point (data = data.frame(x,y=vB(x,0.743,173.4,2014.5), Treatment = 4), aes(x = factor(x), y = y), color = "violet")
   
+
+
 
 
   
