@@ -1,0 +1,86 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+print(Model_g_t0i, digits = 3)
+traceplot(Model_g_t0i, ask =FALSE)
+autocorr.plot(Model_g_t0i, ask = FALSE)
+```
+
+```{r}
+print(Model_g_Ktr_t0i, digits = 3)
+traceplot(Model_g_Ktr_t0i, ask =FALSE)
+autocorr.plot(Model_g_Ktr_t0i, ask = FALSE)
+```
+
+```{r}
+print(Model_g_Ltr_t0i, digits = 3)
+traceplot(Model_g_Ltr_t0i, ask =FALSE)
+autocorr.plot(Model_g_Ltr_t0i)
+```
+
+```{r}
+param <- data.frame(rbind(as.mcmc(Model_g_Ltr_t0i)[[1]],as.mcmc(Model_g_Ltr_t0i)[[2]]))
+ggplot(param)+
+  geom_density(aes(x = Linf.1.), color = "red")+
+  geom_density(aes(x = Linf.2.), color = "blue")+
+  geom_density(aes(x = Linf.3.), color = "green")+
+  geom_density(aes(x = Linf.4.), color = "black")
+```
+
+```{r}
+print(Model_g_Ktr_Ltr_t0i, digits = 3)
+traceplot(Model_g_Ktr_Ltr_t0i, ask =FALSE)
+autocorr.plot(Model_g_Ktr_Ltr_t0i)
+```
+```{r}
+param <- data.frame(rbind(as.mcmc(Model_g_Ktr_Ltr_t0i)[[1]],as.mcmc(Model_g_Ktr_Ltr_t0i)[[2]]))
+ggplot(param)+
+  geom_density(aes(x = Linf.1.), color = "red")+
+  geom_density(aes(x = Linf.2.), color = "blue")+
+  geom_density(aes(x = Linf.3.), color = "green")+
+  geom_density(aes(x = Linf.4.), color = "black")
+
+ggplot(param)+
+  geom_density(aes(x = K.1.), color = "red")+
+  geom_density(aes(x = K.2.), color = "blue")+
+  geom_density(aes(x = K.3.), color = "green")+
+  geom_density(aes(x = K.4.), color = "black")
+```
+
+```{r}
+print(Model_g_t0, digits = 3)
+traceplot(Model_g_t0, ask =FALSE)
+autocorr.plot(Model_g_t0)
+```
+
+```{r}
+print(Model_g_Ktr_t0, digits = 3)
+traceplot(Model_g_Ktr_t0, ask =FALSE)
+autocorr.plot(Model_g_Ktr_t0)
+```
+
+```{r}
+print(Model_g_Ltr_t0, digits = 3)
+traceplot(Model_g_Ltr_t0, ask =FALSE)
+autocorr.plot(Model_g_Ltr_t0)
+```
+
+```{r}
+param <- data.frame(rbind(as.mcmc(Model_g_Ltr_t0)[[1]],as.mcmc(Model_g_Ltr_t0)[[2]]))
+ggplot(param)+
+  geom_density(aes(x = Linf.1.), color = "red")+
+  geom_density(aes(x = Linf.2.), color = "blue")+
+  geom_density(aes(x = Linf.3.), color = "green")+
+  geom_density(aes(x = Linf.4.), color = "black")
+```
+
+```{r}
+print(Model_g_Ktr_Ltr_t0, digits = 3)
+traceplot(Model_g_Ktr_Ltr_t0, ask =FALSE)
+autocorr.plot(Model_g_Ktr_Ltr_t0)
+```
+
