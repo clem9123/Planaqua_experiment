@@ -26,7 +26,7 @@ s <- s %>% filter (!is.na(Treatment))
 
 nrow(s)
 
-s <- s[sample(1:nrow(s), 100),]
+#s <- s[sample(1:nrow(s), 100),]
 
 get.first <- function(x) min(which(!is.na(x)))
 f <- apply(s, 1, get.first)
