@@ -241,30 +241,49 @@ autocorr.plot(results_wgt)
 # data creation
 
 ```{r}
-t <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Weight)
+la <- BDD_a %>% group_by(Tag_id, Lake) %>% summarize() %>% ungroup()
+mooved <- la[duplicated(la$Tag_id),]$Tag_id
+la <- la %>% filter ( !duplicated(la$Tag_id))
+la <- la %>% mutate (Lake = ifelse(Tag_id %in% mooved, NA, Lake))
+tr <- BDD_a %>% group_by(Tag_id, Treatment) %>% summarize() %>% ungroup()
+mooved <- tr[duplicated(tr$Tag_id),]$Tag_id
+tr <- tr %>% filter ( !duplicated(tr$Tag_id))
+tr <- tr %>% mutate (Treatment = ifelse(Tag_id %in% mooved, NA, Treatment))
+
+
+t <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from =Size)
+t <- merge(t, tr)
 t <- t[,-c(1,8)]
-t <- as.matrix(t)
+#t <- as.matrix(t)
 
 tbl = data.frame()
 for (i in 1:nrow(t)){
-  for (j in 1:(ncol(t)-1)){
+  for (j in 1:(ncol(t)-2)){
     if (!is.na(t[i,j]) & !is.na(t[i,j+1])){
-      tbl <- rbind(tbl, c(t[i,j], t[i,j+1]))
+      tbl <- rbind(tbl, c(t[i,j], t[i,j+1], t$Treatment[i]))
     }
   }
 }
 
-jags.data <- list(y = tbl$X69,
+colnames(tbl) <- c("t1","t2","Treatment")
+
+tbl <- tbl[!is.na(Treatment),]
+
+jags.data <- list(y = tbl$t2,
                   nind = nrow(tbl),
-                  f = tbl$X31)
+                  Treatment = tbl$Treatment,
+                  f = tbl$t1)
 ```
 
 # Inits and functions
 
 ```{r}
-inits = list(list(sd = runif(1,0,200), K = runif(1,0,10), Linf = runif(1,0,300)),
-             list(sd = runif(1,0,200), K = runif(1,0,10), Linf = runif(1,0,300)),
-             list(sd = runif(1,0,200), K = runif(1,0,10), Linf = runif(1,0,300)))
+inits <- function(){
+  list(sd = runif(1,0,200), K = runif(1,0,10), Linf = runif(1,0,300))
+}
+#inits = list(list(sd = runif(1,0,200), K = runif(1,0,10), Linf = runif(1,0,300)),
+#             list(sd = runif(1,0,200), K = runif(1,0,10), Linf = runif(1,0,300)),
+#             list(sd = runif(1,0,200), K = runif(1,0,10), Linf = runif(1,0,300)))
 
 parameters = c("K","Linf","sd")
 
@@ -279,12 +298,84 @@ growth_vonB <- function()
     y[i] ~ dnorm(f[i]+K*(Linf-f[i]), 1/(sd^2))
   }
 }
+
+growth_result <- jags.parallel(data = jags.data,
+              inits = inits,
+              parameters.to.save = parameters,
+              model.file = growth_vonB,
+              n.chains = 3,
+              #method = 'parallel',
+              n.iter = 1000,
+              n.burnin = 500)
+
+print(growth_result, digits = 3)
+traceplot(growth_result, ask =FALSE)
+autocorr.plot(growth_result)
 ```
 
 # running and results
 
 ```{r}
-growth_result <- jags(data = jags.data,
+inits <- function(){
+  list(sd = runif(1,0,200), K = runif(4,0,10), Linf = runif(1,0,300))
+}
+#inits = list(list(sd = runif(1,0,200), K = runif(1,0,10), Linf = runif(1,0,300)),
+#             list(sd = runif(1,0,200), K = runif(1,0,10), Linf = runif(1,0,300)),
+#             list(sd = runif(1,0,200), K = runif(1,0,10), Linf = runif(1,0,300)))
+
+parameters = c("K","Linf","sd")
+
+growth_vonB <- function()
+{
+  #Priors
+  for (tr in 1:4){
+    K[tr] ~ dunif(0,10)}
+  Linf ~ dunif(0,300)
+  sd ~ dunif(0,200)
+  #Likelihood
+  for (i in 1:nind){
+    y[i] ~ dnorm(f[i]+K[Treatment[i]]*(Linf-f[i]), 1/(sd^2))
+  }
+}
+
+growth_result <- jags.parallel(data = jags.data,
+              inits = inits,
+              parameters.to.save = parameters,
+              model.file = growth_vonB,
+              n.chains = 3,
+              #method = 'parallel',
+              n.iter = 1000,
+              n.burnin = 500)
+
+print(growth_result, digits = 3)
+traceplot(growth_result, ask =FALSE)
+autocorr.plot(growth_result)
+```
+
+```{r}
+inits <- function(){
+  list(sd = runif(1,0,200), K = runif(4,0,10), Linf = runif(4,0,300))
+}
+#inits = list(list(sd = runif(1,0,200), K = runif(1,0,10), Linf = runif(1,0,300)),
+#             list(sd = runif(1,0,200), K = runif(1,0,10), Linf = runif(1,0,300)),
+#             list(sd = runif(1,0,200), K = runif(1,0,10), Linf = runif(1,0,300)))
+
+parameters = c("K","Linf","sd")
+
+growth_vonB <- function()
+{
+  #Priors
+  for (tr in 1:4){
+    K[tr] ~ dunif(0,10)
+    Linf[tr] ~ dunif(0,300)}
+  sd ~ dunif(0,200)
+  #Likelihood
+  for (i in 1:nind){
+    y[i] ~ dnorm(f[i]+K[Treatment[i]]*(Linf[Treatment[i]]-f[i]), 1/(sd^2))
+  }
+}
+
+growth_result <- jags.parallel(data = jags.data,
               inits = inits,
               parameters.to.save = parameters,
               model.file = growth_vonB,

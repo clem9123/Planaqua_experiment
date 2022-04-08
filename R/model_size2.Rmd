@@ -26,8 +26,7 @@ s <- s %>% filter (!is.na(Treatment))
 
 nrow(s)
 
-set.seed(1234)
-s <- s[sample(1:nrow(s), 200),]
+s <- s[sample(1:nrow(s), 100),]
 
 get.first <- function(x) min(which(!is.na(x)))
 f <- apply(s, 1, get.first)
@@ -78,8 +77,8 @@ Model_g <- jags.parallel(data = jags.data,
               n.iter = 20000)
 
 print(Model_g, digits = 3)
-traceplot(Model_g, ask =FALSE)
-autocorr.plot(Model_g)
+#traceplot(Model_g, ask =FALSE)
+#autocorr.plot(Model_g)
 
 #save(Model_g, file = "C:/Users/sandrine/Documents/R_script/Planaqua_experiment/R/object/Model_g.RData")
 ```
@@ -370,9 +369,9 @@ ggplot(param)+
 
 ```{r}
 inits <- function(){
-  list(t0 = runif(nind, 2014,2021), K = runif(1,0,10), Linf = runif(4,130,250), p = runif(1,0,1))}
+  list(t0 = runif(nind, 2014,2016), K = runif(1,0,10), Linf = runif(4,130,250), p = runif(1,0,1))}
 
-parameters = c("K","Linf","p")
+parameters = c("K","Linf","p", "t0")
 
 model_g_Ltr_t0i <- function ()
 {
@@ -384,7 +383,7 @@ model_g_Ltr_t0i <- function ()
     
   }
   for (i in 1:nind){
-    t0[i] ~ dunif(2014,2021)
+    t0[i] ~ dunif(2014,2015+f[i])
   }
   #Likelihood
   for (i in 1:nind){
@@ -402,10 +401,21 @@ Model_g_Ltr_t0i <- jags.parallel(data = jags.data,
               n.iter = 20000)
 
 print(Model_g_Ltr_t0i, digits = 3)
-traceplot(Model_g_Ltr_t0i, ask =FALSE)
-autocorr.plot(Model_g_Ltr_t0i)
+
+#traceplot(Model_g_Ltr_t0i, ask =FALSE)
+
+#autocorr.plot(Model_g_Ltr_t0i)
 
 #save(Model_g_Ktr, file = "object/Model_g_Ktr.RData")
+```
+
+```{r}
+out <- data.frame(rbind(as.mcmc(Model_g_Ltr_t0i)[[1]],as.mcmc(Model_g_Ltr_t0i)[[2]],as.mcmc(Model_g_Ltr_t0i)[[3]],as.mcmc(Model_g_Ltr_t0i)[[4]]))
+out <- out[,c(8:107)]
+m_out <- apply(out,2,mean)
+m_out <- unlist(m_out)
+ggplot(data.frame(m_out))+
+  geom_density(aes(x = m_out))
 ```
 
 ```{r}

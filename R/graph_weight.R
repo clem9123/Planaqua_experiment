@@ -170,18 +170,48 @@ ggplot(BDD_a %>% filter(Tag_year =="2016" & Year != "2022"))+
   
 
 
+ggplot(BDD_a %>% filter(Year != "2022"))+ #Tag_year =="2016" & 
+  #geom_point()+
+  facet_wrap(~Treatment)+
+  geom_line(aes(group = Tag_id, x = Year, y  = Size, color = Treatment))+
+  geom_point (data = data.frame(x,y=vB(x,1.839,145,2014.5), Treatment = 1), aes(x = factor(x), y = y), color = "red")+
+  geom_point (data = data.frame(x,y=vB(x,1.839,152,2014.5), Treatment = 2), aes(x = factor(x), y = y), color = "green")+
+  geom_point (data = data.frame(x,y=vB(x,1.839,139.4,2014.5), Treatment = 3), aes(x = factor(x), y = y), color = "blue")+
+  geom_point (data = data.frame(x,y=vB(x,1.839,151.4,2014.5), Treatment = 4), aes(x = factor(x), y = y), color = "violet")+
+  geom_point (data = data.frame(x,y=vB(x,0.964,172,2014.5), Treatment = 1), aes(x = factor(x), y = y), color = "red")+
+  geom_point (data = data.frame(x,y=vB(x,0.964,171,2014.5), Treatment = 2), aes(x = factor(x), y = y), color = "green")+
+  geom_point (data = data.frame(x,y=vB(x,0.964,162.4,2014.5), Treatment = 3), aes(x = factor(x), y = y), color = "blue")+
+  geom_point (data = data.frame(x,y=vB(x,0.964,166.4,2014.5), Treatment = 4), aes(x = factor(x), y = y), color = "violet")
 
 
-  
-  
-  
-  
-  
-  
-  
-  
+ggplot(BDD_a %>% filter(Tag_year =="2016" & Year != "2022"))+
+  #geom_point()+
+  #facet_wrap(~Treatment)+
+  #geom_line(aes(group = Tag_id, x = Year, y  = Size, color = Treatment))+
+  geom_point (data = data.frame(x,y=vB(x,0.8,176,2014.5), Treatment = 1), aes(x = factor(x), y = y), color = "red")+
+  geom_point (data = data.frame(x,y=vB(x,1,172,2014.5), Treatment = 2), aes(x = factor(x), y = y), color = "green")+
+  geom_point (data = data.frame(x,y=vB(x,1.1,160,2014.5), Treatment = 3), aes(x = factor(x), y = y), color = "blue")+
+  geom_point (data = data.frame(x,y=vB(x,2,200,2014.5), Treatment = 4), aes(x = factor(x), y = y), color = "violet")
+
+ggplot(BDD_a %>% filter(Tag_year =="2016"  & Treatment %in% c(1,3)))+ #Tag_year =="2016" & 
+  #geom_point()+
+  #facet_wrap(~Lake)+
+  geom_line(aes(group = Tag_id, x = Year, y  = log(Size), color = Treatment))
+
+Aux <- BDD_a %>% filter(Tag_year =="2016") %>% group_by(Year, Treatment) %>% summarise (mean = mean(Size), max = max(Size), min = min(Size))
+
+ggplot(Aux)+ #Tag_year =="2016" & 
+  #geom_point()+
+  #facet_wrap(~Lake)+
+  geom_line(aes(group = Treatment, x = Year, y  = mean, color = Treatment))+
+  geom_line(aes(group = Treatment, x = Year, y  = min, color = Treatment))+
+  geom_line(aes(group = Treatment, x = Year, y  = max, color = Treatment))
 
 
+ggplot(BDD_a %>% filter(Tag_year =="2016" & Year != "2022"))+ #Tag_year =="2016" & 
+  #geom_point()+
+  #facet_wrap(~Treatment)+
+  geom_boxplot(aes(x = Year, y  = Size, color = Treatment))
 
 
 
