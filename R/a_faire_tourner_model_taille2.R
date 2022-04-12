@@ -15,8 +15,8 @@ s <- s %>% merge(la) %>% merge(tr)
 
 s <- s %>% filter (!is.na(Treatment)) %>% filter(!is.na(Lake))
 
-set.seed(1234)
-s <- s[sample(1:nrow(s), 100),]
+#set.seed(1234)
+#s <- s[sample(1:nrow(s), 100),]
 
 get.first <- function(x) min(which(!is.na(x)))
 f <- apply(s, 1, get.first)
@@ -30,7 +30,7 @@ jags.data <- list(y = s[2:7],
                     mutate(Treatment = as.numeric(Treatment)) %>% select(Lake, Treatment),
                   nind = nrow(s),
                   noccas = 6,
-                  ni = 10000)
+                  ni = 100000)
 
 
 #################### Model 1
@@ -58,7 +58,7 @@ model_g_Ktr_Ltr <- function ()
   } # i
 } # func
 
-Model_g_Ktr_Ltr <- jags.parallel(data = jags.data,
+Model_g_Ktr_Ltr_2016 <- jags.parallel(data = jags.data,
                                  inits = inits,
                                  parameters.to.save = parameters,
                                  model.file = model_g_Ktr_Ltr,
@@ -69,7 +69,7 @@ Model_g_Ktr_Ltr <- jags.parallel(data = jags.data,
 #traceplot(Model_g_Ktr_Ltr_t0i, ask =FALSE)
 #autocorr.plot(Model_g_Ktr_Ltr_t0i)
 
-save(Model_g_Ktr_Ltr, file = "R/object/Model_g_Ktr_Ltr_2016.RData")
+save(Model_g_Ktr_Ltr_2016, file = "R/object/Model_g_Ktr_Ltr_2016.RData")
 
 #################### Model 2
 # 2016 avec Lake variable et pas t0
@@ -109,7 +109,7 @@ model_g_Ktrla_Ltrla <- function ()
   } # i
 } # func
 
-Model_g_Ktrla_Ltrla <- jags.parallel(data = jags.data,
+Model_g_Ktrla_Ltrla_2016 <- jags.parallel(data = jags.data,
                                  inits = inits,
                                  parameters.to.save = parameters,
                                  model.file = model_g_Ktrla_Ltrla,
@@ -120,7 +120,7 @@ Model_g_Ktrla_Ltrla <- jags.parallel(data = jags.data,
 #traceplot(Model_g_Ktr_Ltr_t0i, ask =FALSE)
 #autocorr.plot(Model_g_Ktr_Ltr_t0i)
 
-save(Model_g_Ktrla_Ltrla, file = "R/object/Model_g_Ktrla_Ltrla_2016.RData")
+save(Model_g_Ktrla_Ltrla_2016, file = "R/object/Model_g_Ktrla_Ltrla_2016.RData")
 
 ################### Model 3
 # 2016 avec Lake variable et t0
@@ -162,7 +162,7 @@ model_g_Ktrla_Ltrla_t0 <- function ()
   } # i
 } # func
 
-Model_g_Ktr_Ltr_t0 <- jags.parallel(data = jags.data,
+Model_g_Ktrla_Ltrla_t0i_2016 <- jags.parallel(data = jags.data,
                                     inits = inits,
                                     parameters.to.save = parameters,
                                     model.file = model_g_Ktrla_Ltrla_t0,
@@ -173,4 +173,4 @@ Model_g_Ktr_Ltr_t0 <- jags.parallel(data = jags.data,
 #traceplot(Model_g_Ktr_Ltr_t0i, ask =FALSE)
 #autocorr.plot(Model_g_Ktr_Ltr_t0i)
 
-save(Model_g_Ktrla_Ltrla_t0, file = "R/object/Model_g_Ktrla_Ltrla_t0i_2016.RData")
+save(Model_g_Ktrla_Ltrla_t0i_2016, file = "R/object/Model_g_Ktrla_Ltrla_t0i_2016.RData")
