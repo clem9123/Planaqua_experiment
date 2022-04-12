@@ -239,7 +239,7 @@ model_g_t0 <- function ()
   } # i
 } # func
 
-Model_g_t0 <- jags.parallel(data = jags.data,
+Model_g_t0i_2016 <- jags.parallel(data = jags.data,
                              inits = inits,
                              parameters.to.save = parameters,
                              model.file = model_g_t0,
@@ -250,7 +250,7 @@ Model_g_t0 <- jags.parallel(data = jags.data,
 #traceplot(Model_g_t0i, ask =FALSE)
 #autocorr.plot(Model_g_t0i)
 
-save(Model_g_t0, file = "R/object/Model_g_t0_2016.RData")
+save(Model_g_t0i_2016, file = "R/object/Model_g_t0i_2016.RData")
 
 ################## Model 2
 
@@ -278,7 +278,7 @@ model_g_Ktr_t0 <- function ()
   } # i
 } # func
 
-Model_g_Ktr_t0 <- jags.parallel(data = jags.data,
+Model_g_Ktr_t0i_2016 <- jags.parallel(data = jags.data,
                                  inits = inits,
                                  parameters.to.save = parameters,
                                  model.file = model_g_Ktr_t0,
@@ -289,7 +289,7 @@ Model_g_Ktr_t0 <- jags.parallel(data = jags.data,
 #traceplot(Model_g_Ktr_t0i, ask =FALSE)
 #autocorr.plot(Model_g_Ktr_t0i)
 
-save(Model_g_Ktr_t0, file = "R/object/Model_g_Ktr_t0_2016.RData")
+save(Model_g_Ktr_t0i_2016, file = "R/object/Model_g_Ktr_t0i_2016.RData")
 
 ################## Model 3
 
@@ -317,7 +317,7 @@ model_g_Ltr_t0 <- function ()
   } # i
 } # func
 
-Model_g_Ltr_t0 <- jags.parallel(data = jags.data,
+Model_g_Ltr_t0i_2016 <- jags.parallel(data = jags.data,
                                  inits = inits,
                                  parameters.to.save = parameters,
                                  model.file = model_g_Ltr_t0,
@@ -328,7 +328,7 @@ Model_g_Ltr_t0 <- jags.parallel(data = jags.data,
 #traceplot(Model_g_Ltr_t0i, ask =FALSE)
 #autocorr.plot(Model_g_Ltr_t0i)
 
-save(Model_g_Ltr_t0, file = "R/object/Model_g_Ltr_t0_2016.RData")
+save(Model_g_Ltr_t0i_2016, file = "R/object/Model_g_Ltr_t0i_2016.RData")
 
 ################## Model 4
 
@@ -356,7 +356,7 @@ model_g_Ktr_Ltr_t0 <- function ()
   } # i
 } # func
 
-Model_g_Ktr_Ltr_t0 <- jags.parallel(data = jags.data,
+Model_g_Ktr_Ltr_t0i_2016 <- jags.parallel(data = jags.data,
                                      inits = inits,
                                      parameters.to.save = parameters,
                                      model.file = model_g_Ktr_Ltr_t0,
@@ -367,4 +367,4 @@ Model_g_Ktr_Ltr_t0 <- jags.parallel(data = jags.data,
 #traceplot(Model_g_Ktr_Ltr_t0i, ask =FALSE)
 #autocorr.plot(Model_g_Ktr_Ltr_t0i)
 
-save(Model_g_Ktr_Ltr_t0, file = "R/object/Model_g_Ktr_Ltr_t0_2016.RData")
+save(Model_g_Ktr_Ltr_t0i_2016, file = "R/object/Model_g_Ktr_Ltr_t0i_2016.RData")
