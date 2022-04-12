@@ -3,6 +3,34 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+# Importation de tous les models
+
+```{r}
+# Model avec tous les poissons
+
+load ("~/R_script/Planaqua_experiment/R/object/Model_g_t0i.RData")
+load("~/R_script/Planaqua_experiment/R/object/Model_g_Ltr_t0i.RData")
+load("~/R_script/Planaqua_experiment/R/object/Model_g_Ktr_t0i.RData")
+load("~/R_script/Planaqua_experiment/R/object/Model_g_Ktr_Ltr_t0i.RData")
+
+# Model de 2016
+
+load ("~/R_script/Planaqua_experiment/R/object/Model_g_t0i_2016.RData")
+load("~/R_script/Planaqua_experiment/R/object/Model_g_Ltr_t0i_2016.RData")
+load("~/R_script/Planaqua_experiment/R/object/Model_g_Ktr_t0i_2016.RData")
+load("~/R_script/Planaqua_experiment/R/object/Model_g_Ktr_Ltr_t0i_2016.RData")
+
+load("~/R_script/Planaqua_experiment/R/object/Model_g_Ktrla_Ltrla_t0i_2016.RData")
+
+# Model 2016 sans t0 variable
+
+load("~/R_script/Planaqua_experiment/R/object/Model_g_Ktr_Ltr_2016.RData")
+load("~/R_script/Planaqua_experiment/R/object/Model_g_Ktrla_Ltrla_2016.RData")
+
+```
+
+# Model tout poissons
+
 
 ```{r}
 print(Model_g_t0i, digits = 3)
@@ -20,9 +48,7 @@ autocorr.plot(Model_g_Ktr_t0i, ask = FALSE)
 print(Model_g_Ltr_t0i, digits = 3)
 traceplot(Model_g_Ltr_t0i, ask =FALSE)
 autocorr.plot(Model_g_Ltr_t0i)
-```
 
-```{r}
 param <- data.frame(rbind(as.mcmc(Model_g_Ltr_t0i)[[1]],as.mcmc(Model_g_Ltr_t0i)[[2]]))
 ggplot(param)+
   geom_density(aes(x = Linf.1.), color = "red")+
@@ -35,8 +61,7 @@ ggplot(param)+
 print(Model_g_Ktr_Ltr_t0i, digits = 3)
 traceplot(Model_g_Ktr_Ltr_t0i, ask =FALSE)
 autocorr.plot(Model_g_Ktr_Ltr_t0i)
-```
-```{r}
+
 param <- data.frame(rbind(as.mcmc(Model_g_Ktr_Ltr_t0i)[[1]],as.mcmc(Model_g_Ktr_Ltr_t0i)[[2]]))
 ggplot(param)+
   geom_density(aes(x = Linf.1.), color = "red")+
@@ -49,9 +74,7 @@ ggplot(param)+
   geom_density(aes(x = K.2.), color = "blue")+
   geom_density(aes(x = K.3.), color = "green")+
   geom_density(aes(x = K.4.), color = "black")
-```
 
-```{r}
 ggplot()+
   geom_point(aes(x = 1:8, y = 2.1*144*exp(-2.1*(1:8+1.3))), color = "red")+
   geom_point(aes(x = 1:8, y = 1.5*154*exp(-1.5*(1:8+1.3))), color = "blue")+
@@ -59,26 +82,25 @@ ggplot()+
   geom_point(aes(x = 1:8, y = 1.2*156*exp(-1.2*(1:8+1.3))))
 ```
 
+
 ```{r}
-print(Model_g_t0, digits = 3)
-traceplot(Model_g_t0, ask =FALSE)
-autocorr.plot(Model_g_t0)
+print(Model_g_t0i_2016, digits = 3)
+traceplot(Model_g_t0i_2016, ask =FALSE)
+autocorr.plot(Model_g_t0i_2016)
 ```
 
 ```{r}
-print(Model_g_Ktr_t0, digits = 3)
-traceplot(Model_g_Ktr_t0, ask =FALSE)
-autocorr.plot(Model_g_Ktr_t0)
+print(Model_g_Ktr_t0i_2016, digits = 3)
+traceplot(Model_g_Ktr_t0i_2016, ask =FALSE)
+autocorr.plot(Model_g_Ktr_t0i_2016)
 ```
 
 ```{r}
-print(Model_g_Ltr_t0, digits = 3)
-traceplot(Model_g_Ltr_t0, ask =FALSE)
-autocorr.plot(Model_g_Ltr_t0)
-```
+print(Model_g_Ltr_t0i_2016, digits = 3)
+traceplot(Model_g_Ltr_t0i_2016, ask =FALSE)
+autocorr.plot(Model_g_Ltr_t0i_2016)
 
-```{r}
-param <- data.frame(rbind(as.mcmc(Model_g_Ltr_t0)[[1]],as.mcmc(Model_g_Ltr_t0)[[2]]))
+param <- data.frame(rbind(as.mcmc(Model_g_Ltr_t0i_2016)[[1]],as.mcmc(Model_g_Ltr_t0i_2016)[[2]]))
 ggplot(param)+
   geom_density(aes(x = Linf.1.), color = "red")+
   geom_density(aes(x = Linf.2.), color = "blue")+
@@ -87,13 +109,11 @@ ggplot(param)+
 ```
 
 ```{r}
-print(Model_g_Ktr_Ltr_t0, digits = 3)
-traceplot(Model_g_Ktr_Ltr_t0, ask =FALSE)
-autocorr.plot(Model_g_Ktr_Ltr_t0)
-```
+print(Model_g_Ktr_Ltr_t0i_2016, digits = 3)
+traceplot(Model_g_Ktr_Ltr_t0i_2016, ask =FALSE)
+autocorr.plot(Model_g_Ktr_Ltr_t0i_2016)
 
-```{r}
-param <- data.frame(rbind(as.mcmc(Model_g_Ktr_Ltr_t0)[[1]],as.mcmc(Model_g_Ktr_Ltr_t0)[[2]]))
+param <- data.frame(rbind(as.mcmc(Model_g_Ktr_Ltr_t0i_2016)[[1]],as.mcmc(Model_g_Ktr_Ltr_t0i_2016)[[2]]))
 ggplot(param)+
   geom_density(aes(x = Linf.1.), color = "red")+
   geom_density(aes(x = Linf.2.), color = "blue")+
@@ -104,9 +124,7 @@ ggplot(param)+
   geom_density(aes(x = K.2.), color = "blue")+
   geom_density(aes(x = K.3.), color = "green")+
   geom_density(aes(x = K.4.), color = "black")
-```
 
-```{r}
 ggplot()+
   geom_point(aes(x = 1:8, y = 0.8*176*exp(-0.8*(1:8+1.3))), color = "red")+
   geom_point(aes(x = 1:8, y = 1*172.5*exp(-1*(1:8+1.3))), color = "blue")+
@@ -115,7 +133,169 @@ ggplot()+
 ```
 
 ```{r}
-ggplot(BDD_a %>% filter (Year == "2021"))+ #Tag_year == "2016" & 
-  geom_density(aes(x = Weight, color = Treatment))
+print(Model_g_Ktrla_Ltrla_t0i_2016, digits = 3)
+traceplot(Model_g_Ktrla_Ltrla_t0i_2016, ask =FALSE)
+autocorr.plot(Model_g_Ktrla_Ltrla_t0i_2016)
+
+param <- data.frame(rbind(as.mcmc(Model_g_Ktrla_Ltrla_t0i_2016)[[1]],as.mcmc(Model_g_Ktrla_Ltrla_t0i_2016)[[2]]))
+ggplot(param)+
+  geom_density(aes(x = Linf.1.), color = "red")+
+  geom_density(aes(x = Linf.2.), color = "blue")+
+  geom_density(aes(x = Linf.3.), color = "green")+
+  geom_density(aes(x = Linf.4.), color = "black")
+ggplot(param)+
+  geom_density(aes(x = K.1.), color = "red")+
+  geom_density(aes(x = K.2.), color = "blue")+
+  geom_density(aes(x = K.3.), color = "green")+
+  geom_density(aes(x = K.4.), color = "black")
+
+K = Model_g_Ktr_Ltr_t0i_2016[[2]]$mean$K
+Linf = Model_g_Ktr_Ltr_t0i_2016[[2]]$mean$Linf
+
+ggplot()+
+  geom_point(aes(x = 1:8, y = K[1]*Linf[1]*exp(-K[1]*(1:8+1.3))), color = "red")+
+  geom_point(aes(x = 1:8, y = K[2]*Linf[2]*exp(-K[2]*(1:8+1.3))), color = "blue")+
+  geom_point(aes(x = 1:8, y = K[3]*Linf[3]*exp(-K[3]*(1:8+1.3))), color = "green")+
+  geom_point(aes(x = 1:8, y = K[4]*Linf[4]*exp(-K[4]*(1:8+1.3))))
+
+ggplot(param)+
+  geom_boxplot(aes(x = Linfla.1.), color = "red")+
+  geom_boxplot(aes(x = Linfla.8.), color = "red")+
+  geom_boxplot(aes(x = Linfla.3.), color = "red")+
+  geom_boxplot(aes(x = Linfla.6.), color = "red")+
+  geom_boxplot(aes(x = Linfla.11.), color = "blue")+
+  geom_boxplot(aes(x = Linfla.14.), color = "blue")+
+  geom_boxplot(aes(x = Linfla.9.), color = "blue")+
+  geom_boxplot(aes(x = Linfla.16.), color = "blue")+
+  geom_boxplot(aes(x = Linfla.2.), color = "green")+
+  geom_boxplot(aes(x = Linfla.7.), color = "green")+
+  geom_boxplot(aes(x = Linfla.4.), color = "green")+
+  geom_boxplot(aes(x = Linfla.5.), color = "green")+
+  geom_boxplot(aes(x = Linfla.12.), color = "black")+
+  geom_boxplot(aes(x = Linfla.13.), color = "black")+
+  geom_boxplot(aes(x = Linfla.10.), color = "black")+
+  geom_boxplot(aes(x = Linfla.15.), color = "black")
+  
+
+ggplot(param)+
+  geom_boxplot(aes(x = Kla.1.), color = "red")+
+  geom_boxplot(aes(x = Kla.8.), color = "red")+
+  geom_boxplot(aes(x = Kla.3.), color = "red")+
+  geom_boxplot(aes(x = Kla.6.), color = "red")+
+  geom_boxplot(aes(x = Kla.11.), color = "blue")+
+  geom_boxplot(aes(x = Kla.14.), color = "blue")+
+  geom_boxplot(aes(x = Kla.9.), color = "blue")+
+  geom_boxplot(aes(x = Kla.16.), color = "blue")+
+  geom_boxplot(aes(x = Kla.2.), color = "green")+
+  geom_boxplot(aes(x = Kla.7.), color = "green")+
+  geom_boxplot(aes(x = Kla.4.), color = "green")+
+  geom_boxplot(aes(x = Kla.5.), color = "green")+
+  geom_boxplot(aes(x = Kla.12.), color = "black")+
+  geom_boxplot(aes(x = Kla.13.), color = "black")+
+  geom_boxplot(aes(x = Kla.10.), color = "black")+
+  geom_boxplot(aes(x = Kla.15.), color = "black")
+
+```
+
+```{r}
+print(Model_g_Ktrla_Ltrla_2016, digits = 3)
+traceplot(Model_g_Ktrla_Ltrla_2016, ask =FALSE)
+autocorr.plot(Model_g_Ktrla_Ltrla_2016)
+
+param <- data.frame(rbind(as.mcmc(Model_g_Ktrla_Ltrla_2016)[[1]],as.mcmc(Model_g_Ktrla_Ltrla_2016)[[2]]))
+ggplot(param)+
+  geom_density(aes(x = Linf.1.), color = "red")+
+  geom_density(aes(x = Linf.2.), color = "blue")+
+  geom_density(aes(x = Linf.3.), color = "green")+
+  geom_density(aes(x = Linf.4.), color = "black")
+ggplot(param)+
+  geom_density(aes(x = K.1.), color = "red")+
+  geom_density(aes(x = K.2.), color = "blue")+
+  geom_density(aes(x = K.3.), color = "green")+
+  geom_density(aes(x = K.4.), color = "black")
+
+K = Model_g_Ktrla_Ltrla_2016[[2]]$mean$K
+Linf = Model_g_Ktrla_Ltrla_2016[[2]]$mean$Linf
+
+ggplot()+
+  geom_point(aes(x = 1:8, y = K[1]*Linf[1]*exp(-K[1]*(1:8+1.3))), color = "red")+
+  geom_point(aes(x = 1:8, y = K[2]*Linf[2]*exp(-K[2]*(1:8+1.3))), color = "blue")+
+  geom_point(aes(x = 1:8, y = K[3]*Linf[3]*exp(-K[3]*(1:8+1.3))), color = "green")+
+  geom_point(aes(x = 1:8, y = K[4]*Linf[4]*exp(-K[4]*(1:8+1.3))))
+
+ggplot(param)+
+  geom_boxplot(aes(x = Linfla.1.), color = "red")+
+  geom_boxplot(aes(x = Linfla.8.), color = "red")+
+  geom_boxplot(aes(x = Linfla.3.), color = "red")+
+  geom_boxplot(aes(x = Linfla.6.), color = "red")+
+  geom_boxplot(aes(x = Linfla.11.), color = "blue")+
+  geom_boxplot(aes(x = Linfla.14.), color = "blue")+
+  geom_boxplot(aes(x = Linfla.9.), color = "blue")+
+  geom_boxplot(aes(x = Linfla.16.), color = "blue")+
+  geom_boxplot(aes(x = Linfla.2.), color = "green")+
+  geom_boxplot(aes(x = Linfla.7.), color = "green")+
+  geom_boxplot(aes(x = Linfla.4.), color = "green")+
+  geom_boxplot(aes(x = Linfla.5.), color = "green")+
+  geom_boxplot(aes(x = Linfla.12.), color = "black")+
+  geom_boxplot(aes(x = Linfla.13.), color = "black")+
+  geom_boxplot(aes(x = Linfla.10.), color = "black")+
+  geom_boxplot(aes(x = Linfla.15.), color = "black")
+  
+
+ggplot(param)+
+  geom_boxplot(aes(x = Kla.1.), color = "red")+
+  geom_boxplot(aes(x = Kla.8.), color = "red")+
+  geom_boxplot(aes(x = Kla.3.), color = "red")+
+  geom_boxplot(aes(x = Kla.6.), color = "red")+
+  geom_boxplot(aes(x = Kla.11.), color = "blue")+
+  geom_boxplot(aes(x = Kla.14.), color = "blue")+
+  geom_boxplot(aes(x = Kla.9.), color = "blue")+
+  geom_boxplot(aes(x = Kla.16.), color = "blue")+
+  geom_boxplot(aes(x = Kla.2.), color = "green")+
+  geom_boxplot(aes(x = Kla.7.), color = "green")+
+  geom_boxplot(aes(x = Kla.4.), color = "green")+
+  geom_boxplot(aes(x = Kla.5.), color = "green")+
+  geom_boxplot(aes(x = Kla.12.), color = "black")+
+  geom_boxplot(aes(x = Kla.13.), color = "black")+
+  geom_boxplot(aes(x = Kla.10.), color = "black")+
+  geom_boxplot(aes(x = Kla.15.), color = "black")
+```
+
+```{r}
+print(Model_g_Ktr_Ltr_2016, digits = 3)
+traceplot(Model_g_Ktr_Ltr_2016, ask =FALSE)
+autocorr.plot(Model_g_Ktr_Ltr_2016)
+
+param <- data.frame(rbind(as.mcmc(Model_g_Ktr_Ltr_2016)[[1]],as.mcmc(Model_g_Ktr_Ltr_2016)[[2]]))
+ggplot(param)+
+  geom_density(aes(x = Linf.1.), color = "red")+
+  geom_density(aes(x = Linf.2.), color = "blue")+
+  geom_density(aes(x = Linf.3.), color = "green")+
+  geom_density(aes(x = Linf.4.), color = "black")
+ggplot(param)+
+  geom_density(aes(x = K.1.), color = "red")+
+  geom_density(aes(x = K.2.), color = "blue")+
+  geom_density(aes(x = K.3.), color = "green")+
+  geom_density(aes(x = K.4.), color = "black")
+
+K = Model_g_Ktr_Ltr_2016[[2]]$mean$K
+Linf = Model_g_Ktr_Ltr_2016[[2]]$mean$Linf
+
+ggplot()+
+  geom_point(aes(x = 1:8, y = K[1]*Linf[1]*exp(-K[1]*(1:8+1.3))), color = "red")+
+  geom_point(aes(x = 1:8, y = K[2]*Linf[2]*exp(-K[2]*(1:8+1.3))), color = "blue")+
+  geom_point(aes(x = 1:8, y = K[3]*Linf[3]*exp(-K[3]*(1:8+1.3))), color = "green")+
+  geom_point(aes(x = 1:8, y = K[4]*Linf[4]*exp(-K[4]*(1:8+1.3))))
+```
+
+# Tous les DIC des models sur 2016
+```{r}
+
+# le danger c'est que j'ai fait tourner ceux sans la avec les poissons qui ont changés de lac mais pas de traitement donc ça peut modifier le R2 (l'augmenter plutôt)
+
+DIC <- data.frame(c("Model_g_t0i_2016", "Model_g_Ltr_t0i_2016", "Model_g_Ktr_t0i_2016", "Model_g_Ktr_Ltr_t0i_2016", "Model_g_Ktrla_Ltrla_t0i_2016", "Model_g_Ktr_Ltr_2016", "Model_g_Ktrla_Ltrla_2016"),
+                  c(Model_g_t0i_2016[[2]]$DIC, Model_g_Ltr_t0i_2016[[2]]$DIC, Model_g_Ktr_t0i_2016[[2]]$DIC, Model_g_Ktr_Ltr_t0i_2016[[2]]$DIC, Model_g_Ktrla_Ltrla_t0i_2016[[2]]$DIC, Model_g_Ktr_Ltr_2016[[2]]$DIC, Model_g_Ktrla_Ltrla_2016[[2]]$DIC))
+
+DIC
 ```
 

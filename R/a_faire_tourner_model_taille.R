@@ -199,7 +199,7 @@ la <- la %>% mutate (Lake = ifelse(Tag_id %in% mooved, NA, Lake))
 s <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Size)
 s <- s %>% merge(la) %>% merge(tr)
 
-s <- s %>% filter (!is.na(Treatment))
+s <- s %>% filter (!is.na(Treatment)) %>% filter(!is.na(Lake))
 
 #set.seed(1234)
 #s <- s[sample(1:nrow(s), 100),]
