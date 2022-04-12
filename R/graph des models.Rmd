@@ -52,6 +52,14 @@ ggplot(param)+
 ```
 
 ```{r}
+ggplot()+
+  geom_point(aes(x = 1:8, y = 2.1*144*exp(-2.1*(1:8+1.3))), color = "red")+
+  geom_point(aes(x = 1:8, y = 1.5*154*exp(-1.5*(1:8+1.3))), color = "blue")+
+  geom_point(aes(x = 1:8, y = 5*136*exp(-5*(1:8+1.3))), color = "green")+
+  geom_point(aes(x = 1:8, y = 1.2*156*exp(-1.2*(1:8+1.3))))
+```
+
+```{r}
 print(Model_g_t0, digits = 3)
 traceplot(Model_g_t0, ask =FALSE)
 autocorr.plot(Model_g_t0)
@@ -96,6 +104,14 @@ ggplot(param)+
   geom_density(aes(x = K.2.), color = "blue")+
   geom_density(aes(x = K.3.), color = "green")+
   geom_density(aes(x = K.4.), color = "black")
+```
+
+```{r}
+ggplot()+
+  geom_point(aes(x = 1:8, y = 0.8*176*exp(-0.8*(1:8+1.3))), color = "red")+
+  geom_point(aes(x = 1:8, y = 1*172.5*exp(-1*(1:8+1.3))), color = "blue")+
+  geom_point(aes(x = 1:8, y = 1.1*160*exp(-1.1*(1:8+1.3))), color = "green")+
+  geom_point(aes(x = 1:8, y = 1*166*exp(-1*(1:8+1.3))))
 ```
 
 ```{r}
