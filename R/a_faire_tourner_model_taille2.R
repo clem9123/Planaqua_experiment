@@ -39,7 +39,7 @@ jags.data <- list(y = s[2:7],
 inits <- function(){
   list(t0 = runif(1, 2010, 2016), K = runif(4,0,10), Linf = runif(4,130,250), p = runif(1,0,1))}
 
-parameters = c("K","Linf","p")
+parameters = c("K","Linf","p","t0")
 
 model_g_Ktr_Ltr <- function ()
 {
@@ -84,7 +84,7 @@ inits <- function(){
        pLla = runif(4,0,1),
        p = runif(1,0,1))}
 
-parameters = c("K","Linf","p","Kla","Linfla", "pKla", "pLla")
+parameters = c("K","Linf","p","Kla","Linfla", "pKla", "pLla","t0")
 
 model_g_Ktrla_Ltrla <- function ()
 {

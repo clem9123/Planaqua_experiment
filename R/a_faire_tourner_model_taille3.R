@@ -38,7 +38,7 @@ jags.data <- list(y = s[2:7],
 inits <- function(){
   list(t0 = runif(1, 2010, 2016), K = runif(16,0,10), Linf = runif(16,130,250), p = runif(1,0,1))}
 
-parameters = c("K","Linf","p")
+parameters = c("K","Linf","p", "t0")
 
 model_g_Kla_Lla <- function ()
 {
