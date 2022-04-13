@@ -8,24 +8,24 @@ output: html_notebook
 ```{r}
 # Model avec tous les poissons
 
-load ("~/R_script/Planaqua_experiment/R/object/Model_g_t0i.RData")
-load("~/R_script/Planaqua_experiment/R/object/Model_g_Ltr_t0i.RData")
-load("~/R_script/Planaqua_experiment/R/object/Model_g_Ktr_t0i.RData")
-load("~/R_script/Planaqua_experiment/R/object/Model_g_Ktr_Ltr_t0i.RData")
+load ("object/Model_g_t0i.RData")
+load("object/Model_g_Ltr_t0i.RData")
+load("object/Model_g_Ktr_t0i.RData")
+load("object/Model_g_Ktr_Ltr_t0i.RData")
 
 # Model de 2016
 
-load ("~/R_script/Planaqua_experiment/R/object/Model_g_t0i_2016.RData")
-load("~/R_script/Planaqua_experiment/R/object/Model_g_Ltr_t0i_2016.RData")
-load("~/R_script/Planaqua_experiment/R/object/Model_g_Ktr_t0i_2016.RData")
-load("~/R_script/Planaqua_experiment/R/object/Model_g_Ktr_Ltr_t0i_2016.RData")
+load ("object/Model_g_t0i_2016.RData")
+load("object/Model_g_Ltr_t0i_2016.RData")
+load("object/Model_g_Ktr_t0i_2016.RData")
+load("object/Model_g_Ktr_Ltr_t0i_2016.RData")
 
-load("~/R_script/Planaqua_experiment/R/object/Model_g_Ktrla_Ltrla_t0i_2016.RData")
+load("object/Model_g_Ktrla_Ltrla_t0i_2016.RData")
 
 # Model 2016 sans t0 variable
 
-load("~/R_script/Planaqua_experiment/R/object/Model_g_Ktr_Ltr_2016.RData")
-load("~/R_script/Planaqua_experiment/R/object/Model_g_Ktrla_Ltrla_2016.RData")
+load("object/Model_g_Ktr_Ltr_2016.RData")
+load("object/Model_g_Ktrla_Ltrla_2016.RData")
 
 ```
 
@@ -291,7 +291,8 @@ ggplot()+
 # Tous les DIC des models sur 2016
 ```{r}
 
-# le danger c'est que j'ai fait tourner ceux sans la avec les poissons qui ont changés de lac mais pas de traitement donc ça peut modifier le R2 (l'augmenter plutôt)
+# le danger c'est que j'ai fait tourner ceux sans la avec les poissons qui ont changés de lac mais pas de traitement donc ça peut modifier le R2 (l'augmenter plutôt) ça c'est réglé
+# maintenant comment est-ce qu'il prends en compte les effecte random et les autres ?
 
 DIC <- data.frame(c("Model_g_t0i_2016", "Model_g_Ltr_t0i_2016", "Model_g_Ktr_t0i_2016", "Model_g_Ktr_Ltr_t0i_2016", "Model_g_Ktrla_Ltrla_t0i_2016", "Model_g_Ktr_Ltr_2016", "Model_g_Ktrla_Ltrla_2016"),
                   c(Model_g_t0i_2016[[2]]$DIC, Model_g_Ltr_t0i_2016[[2]]$DIC, Model_g_Ktr_t0i_2016[[2]]$DIC, Model_g_Ktr_Ltr_t0i_2016[[2]]$DIC, Model_g_Ktrla_Ltrla_t0i_2016[[2]]$DIC, Model_g_Ktr_Ltr_2016[[2]]$DIC, Model_g_Ktrla_Ltrla_2016[[2]]$DIC))
@@ -299,5 +300,24 @@ DIC <- data.frame(c("Model_g_t0i_2016", "Model_g_Ltr_t0i_2016", "Model_g_Ktr_t0i
 colnames(DIC) <- c("model","DIC")
 
 DIC
+```
+```{r}
+WAIC = data.frame()
+for (Model in list(Model_g_t0i_2016,Model_g_Ltr_t0i_2016, Model_g_Ktr_t0i_2016, Model_g_Ktr_Ltr_t0i_2016, Model_g_Ktrla_Ltrla_t0i_2016, Model_g_Ktr_Ltr_2016, Model_g_Ktrla_Ltrla_2016)){
+Model
+recompile(Model)
+samples <- jags.samples(Model$model[[1]], c("WAIC", "deviance"), type = "mean", n.iter = 200)
+
+samples$p_waic <- samples$WAIC
+samples$waic <- samples$deviance + samples$p_waic
+tmp <- sapply(samples, sum)
+waic <- round(c(waic = tmp[["waic"]], 
+                p_waic = tmp[["p_waic"]]),1)
+WAIC <- rbind (WAIC,waic)}
+
+colnames(WAIC) <- c("waic", "p_waic")
+
+DIC_WAIC <- cbind (DIC,WAIC)
+DIC_WAIC %>% arrange(waic)
 ```
 
