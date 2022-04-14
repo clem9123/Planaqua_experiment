@@ -164,9 +164,9 @@ Then summarizing the data to get : \
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
 library(RMark)
-popan <- convert.inp("data/capture_history.inp")
-colnames(popan) <- c("capture_history", "frequency") # simply for better comprehension here
-head(popan)
+#popan <- convert.inp("data/capture_history.inp")
+#colnames(popan) <- c("capture_history", "frequency") # simply for better comprehension here
+#head(popan)
 ```
 
 
