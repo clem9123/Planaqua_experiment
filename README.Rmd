@@ -1,11 +1,16 @@
 ---
 title: "README"
-output:
-  html_document:
-    df_print: paged
-  pdf_document: default
-  word_document: default
+output: github_document
 ---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "README-"
+)
+```
+
 
 # Ecotron Lake Experiment
 
@@ -159,9 +164,9 @@ Then summarizing the data to get : \
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
 library(RMark)
-popan <- convert.inp("data/capture_history.inp")
-colnames(popan) <- c("capture_history", "frequency") # simply for better comprehension here
-head(popan)
+#popan <- convert.inp("data/capture_history.inp")
+#colnames(popan) <- c("capture_history", "frequency") # simply for better comprehension here
+#head(popan)
 ```
 
 
