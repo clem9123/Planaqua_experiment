@@ -560,7 +560,8 @@ predict <- rbind(data.frame(x = 1:8, y = Linf[1]*(1-exp(-K[1]*(1:8+t0))), Lake =
 ggplot(BDD_a %>% filter (Tag_year == "2016"), aes (x = Year, y = Size))+
   geom_line(aes(group = Tag_id, color = Lake))+
   geom_point(data = predict, aes(x = x, y = y))+
-  facet_wrap(~ factor(Lake, c(1,8,3,6,11,14,9,16,2,7,4,5,12,13,10,15)))
+  facet_wrap(~ factor(Lake, c(1,8,3,6,11,14,9,16,2,7,4,5,12,13,10,15)))+
+  labs(title = "Model_g_Kla_Lla_2016")
 
 t0 = 1.5
 
@@ -587,7 +588,8 @@ predict <- rbind(data.frame(x = 1:8, y = Linf[1]*(1-exp(-K[1]*(1:8+t0))), Lake =
 ggplot(BDD_a %>% filter (Tag_year == "2016"), aes (x = Year, y = Size))+
   geom_line(aes(group = Tag_id, color = Lake))+
   geom_point(data = predict, aes(x = x, y = y))+
-  facet_wrap(~ factor(Lake, c(1,8,3,6,11,14,9,16,2,7,4,5,12,13,10,15)))
+  facet_wrap(~ factor(Lake, c(1,8,3,6,11,14,9,16,2,7,4,5,12,13,10,15)))+
+  labs(title = "Model_g_Kla_Lla_t0i_2016")
 
 
 #ggplot()+
