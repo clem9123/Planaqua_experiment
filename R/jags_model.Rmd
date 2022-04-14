@@ -92,10 +92,13 @@ cjs_0 <- function()
 {
   # Likelihood
   for (i in 1:nind){
-    z[i,f[i]] <- 1
+        # State at first capture is alive
+    z[i,f[i]] <- 1 
     for (t in (f[i]+1):n.occasions){
-      z[i,t] ~ dbern(phi * z[i,t-1])
-      y[i,t] ~ dbern(p * z[i,t])
+          # determine the state alive/dead
+      z[i,t] ~ dbern(phi * z[i,t-1]) 
+          # determine the capture status
+      y[i,t] ~ dbern(p * z[i,t]) 
       }
     }
   # Priors
@@ -176,12 +179,12 @@ cjs_1 <- function()
     # Priors
     for (i in 1:nind){
       for (t in 1:(n.occasions-1)){
-        Phi[i,t] ~ dnorm(phi,0.1)
-        P[i,t] ~ dnorm (p,0.1)
+        Phi[i,t] ~ dnorm(phi,0.1) # Prior individual and time dependant survival
+        P[i,t] ~ dnorm (p,0.1) # Prior individual and time dependant capture
         } #t
-      } #i        # Prior for mean survival
+      } #i        
     p ~ dunif(0, 1) # Prior for mean recapture
-    phi ~ dunif(0, 1)
+    phi ~ dunif(0, 1) 
     
     # Likelihood 
     for (i in 1:nind){
