@@ -91,7 +91,6 @@ Cleaned version of BDD_original_complet.xlsx, see the [construction_BDD.Rmd](con
 | **Size**           | Size of the fish from head to the fork of the tail (in mm)|
 | **Lake_released**  | The lake in which the fish was released, -NA- if it is a new introduction |
 | **Comment**        | Any additional information |
-|||
 
 
 Let's see how it looks \
