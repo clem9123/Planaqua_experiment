@@ -117,20 +117,17 @@ library(readxl)
 BDD_f <- read_excel("data/data_final.xlsx", 
                     col_types = c("numeric","date","text","text","text","text","text",
                                   "text","text","numeric","numeric","text","text"), na = "")
-head(BDD_f)
-#> # A tibble: 6 x 13
-#>   Index Date                Lake_capture Methode_capture Session_capture
-#>   <dbl> <dttm>              <chr>        <chr>           <chr>          
-#> 1     1 2016-12-06 00:00:00 <NA>         <NA>            <NA>           
-#> 2     2 2016-12-06 00:00:00 <NA>         <NA>            <NA>           
-#> 3     3 2016-12-06 00:00:00 <NA>         <NA>            <NA>           
-#> 4     4 2016-12-06 00:00:00 <NA>         <NA>            <NA>           
-#> 5     5 2016-12-06 00:00:00 <NA>         <NA>            <NA>           
-#> 6     6 2016-12-06 00:00:00 <NA>         <NA>            <NA>           
-#> # ... with 8 more variables: Passage_net <chr>, Obs_status <chr>, Tag_id <chr>,
-#> #   Species <chr>, Weight <dbl>, Size <dbl>, Lake_released <chr>,
-#> #   Comment_obs <chr>
+knitr::kable(head(BDD_f))
 ```
+
+| Index | Date       | Lake_capture | Methode_capture | Session_capture | Passage_net | Obs_status   | Tag_id    | Species | Weight | Size | Lake_released | Comment_obs |
+|------:|:-----------|:-------------|:----------------|:----------------|:------------|:-------------|:----------|:--------|-------:|-----:|:--------------|:------------|
+|     1 | 2016-12-06 | NA           | NA              | NA              | NA          | introduction | 403274142 | gardon  |     31 |  129 | 16            | NA          |
+|     2 | 2016-12-06 | NA           | NA              | NA              | NA          | introduction | 403274145 | gardon  |     11 |   97 | 16            | NA          |
+|     3 | 2016-12-06 | NA           | NA              | NA              | NA          | introduction | 403274148 | gardon  |     11 |   98 | 1             | NA          |
+|     4 | 2016-12-06 | NA           | NA              | NA              | NA          | introduction | 403274149 | gardon  |     11 |  100 | 14            | NA          |
+|     5 | 2016-12-06 | NA           | NA              | NA              | NA          | introduction | 403274150 | gardon  |     13 |   98 | 1             | NA          |
+|     6 | 2016-12-06 | NA           | NA              | NA              | NA          | introduction | 403274151 | gardon  |     10 |   88 | 3             | NA          |
 
   
 
