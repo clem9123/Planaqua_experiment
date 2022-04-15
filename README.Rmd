@@ -98,11 +98,12 @@ Let's see how it looks \
 \
 
 ```{r Head of the data, echo=TRUE}
+
 library(readxl)
 BDD_f <- read_excel("data/data_final.xlsx", 
                     col_types = c("numeric","date","text","text","text","text","text",
                                   "text","text","numeric","numeric","text","text"), na = "")
-head(BDD_f)
+knitr::kable(head(BDD_f))
 ```
 
 \
