@@ -92,22 +92,21 @@ data)
 
 ##### Columns description
 
-| Columns name        | Description                                                                                                                                                   |
-|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Index**           | Number of this observation                                                                                                                                    |
-| **Date**            | Date of observation (-dd/mm/yyyy-)                                                                                                                            |
-| **Obs_status**      | Action done with this fish -introduction- -capture- -recapture-                                                                                               |
-| **Lake_capture**    | The lake in which the fish was extracted, -NA- if it is a new introduction                                                                                    |
-| **Method_capture**  | How was the fish extracted ? -Trawl- (in november each year), -Hoop net- (for the perch during summer), or -Draining- (for 2022, when the lake where emptied) |
-| **Session_capture** | Only one -NA- exept in 2019 as a problem of efficiency made 2 fishry necessary (one normal -A- and a second with brushing -B-)                                |
-| **Passage_net**     | Every fishery had 3 net passage -1- -2- and -3-                                                                                                               |
-| **Tag_id**          | Tag identifying individually each fish bigger than 8g                                                                                                         |
-| **Species**         | The species of the fish (-Pike-, -Gardon-, -Perch-, -Able-, -Goujon-)                                                                                         |
-| **Weight**          | Weight (in g)                                                                                                                                                 |
-| **Size**            | Size of the fish from head to the fork of the tail (in mm)                                                                                                    |
-| **Lake_released**   | The lake in which the fish was released, -NA- if it is a new introduction                                                                                     |
-| **Comment**         | Any additional information                                                                                                                                    |
-|                     |                                                                                                                                                               |
+| Columns name        | Description                                                                                                                                                           |
+|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Index**           | Number of this observation                                                                                                                                            |
+| **Date**            | Date of observation (-dd/mm/yyyy-)                                                                                                                                    |
+| **Obs_status**      | Action done with this fish -introduction- -capture- -recapture-                                                                                                       |
+| **Lake_capture**    | The lake in which the fish was extracted, -NA- if it is a new introduction                                                                                            |
+| **Method_capture**  | How was the fish extracted ? -trawl- (in october or november each year), -creel- (for the perch during summer), or -draining- (for 2022, when the lake where emptied) |
+| **Session_capture** | In 2019 a problem of efficiency made 2 fisheries necessary (one normal -A- and a second with brushing -B-)                                                            |
+| **Passage_net**     | Every fishery had 3 net passage -1- -2- and -3-                                                                                                                       |
+| **Tag_id**          | Tag identifying individually each fish bigger than 8g                                                                                                                 |
+| **Species**         | The species of the fish (-pike-, -roach-, -perch-, -gudgeon-, -frog-)                                                                                                 |
+| **Weight**          | Weight (in g)                                                                                                                                                         |
+| **Size**            | Size of the fish from head to the fork of the tail (in mm)                                                                                                            |
+| **Lake_released**   | The lake in which the fish was released, -NA- if it wasn’t released                                                                                                   |
+| **Comment**         | Any additional information                                                                                                                                            |
 
 Let’s see how it looks  
   
@@ -120,14 +119,14 @@ BDD_f <- read_excel("data/data_final.xlsx",
 knitr::kable(head(BDD_f))
 ```
 
-| Index | Date       | Lake_capture | Methode_capture | Session_capture | Passage_net | Obs_status   | Tag_id    | Species | Weight | Size | Lake_released | Comment_obs |
-|------:|:-----------|:-------------|:----------------|:----------------|:------------|:-------------|:----------|:--------|-------:|-----:|:--------------|:------------|
-|     1 | 2016-12-06 | NA           | NA              | NA              | NA          | introduction | 403274142 | gardon  |     31 |  129 | 16            | NA          |
-|     2 | 2016-12-06 | NA           | NA              | NA              | NA          | introduction | 403274145 | gardon  |     11 |   97 | 16            | NA          |
-|     3 | 2016-12-06 | NA           | NA              | NA              | NA          | introduction | 403274148 | gardon  |     11 |   98 | 1             | NA          |
-|     4 | 2016-12-06 | NA           | NA              | NA              | NA          | introduction | 403274149 | gardon  |     11 |  100 | 14            | NA          |
-|     5 | 2016-12-06 | NA           | NA              | NA              | NA          | introduction | 403274150 | gardon  |     13 |   98 | 1             | NA          |
-|     6 | 2016-12-06 | NA           | NA              | NA              | NA          | introduction | 403274151 | gardon  |     10 |   88 | 3             | NA          |
+| Index | Date       | Obs_status   | Lake_capture | Method_capture | Session_capture | Passage_net | Tag_id    | Species | Weight | Size | Lake_released | Comment_obs |
+|------:|:-----------|:-------------|:-------------|:---------------|:----------------|:------------|:----------|:--------|-------:|-----:|:--------------|:------------|
+|     1 | 2016-12-06 | introduction | NA           | NA             | NA              | NA          | 403274142 | roach   |     31 |  129 | 16            | NA          |
+|     2 | 2016-12-06 | introduction | NA           | NA             | NA              | NA          | 403274145 | roach   |     11 |   97 | 16            | NA          |
+|     3 | 2016-12-06 | introduction | NA           | NA             | NA              | NA          | 403274148 | roach   |     11 |   98 | 1             | NA          |
+|     4 | 2016-12-06 | introduction | NA           | NA             | NA              | NA          | 403274149 | roach   |     11 |  100 | 14            | NA          |
+|     5 | 2016-12-06 | introduction | NA           | NA             | NA              | NA          | 403274150 | roach   |     13 |   98 | 1             | NA          |
+|     6 | 2016-12-06 | introduction | NA           | NA             | NA              | NA          | 403274151 | roach   |     10 |   88 | 3             | NA          |
 
   
 
@@ -180,17 +179,17 @@ A short table giving the characteristics of each Lake :
 
 ``` r
 Lake_treatment <- read_excel("data/Lake_treatment.xlsx", col_types =c("text","logical","logical","text"))
-head(Lake_treatment)
-#> # A tibble: 6 x 4
-#>   Lake  Nutrients Perch Treatment
-#>   <chr> <lgl>     <lgl> <chr>    
-#> 1 1     TRUE      FALSE 1        
-#> 2 2     FALSE     FALSE 3        
-#> 3 3     TRUE      TRUE  2        
-#> 4 4     FALSE     TRUE  4        
-#> 5 5     FALSE     TRUE  4        
-#> 6 6     TRUE      TRUE  2
+knitr::kable(head(Lake_treatment))
 ```
+
+| Lake | Nutrients | Perch | Treatment |
+|:-----|:----------|:------|:----------|
+| 1    | TRUE      | FALSE | 1         |
+| 2    | FALSE     | FALSE | 3         |
+| 3    | TRUE      | TRUE  | 2         |
+| 4    | FALSE     | TRUE  | 4         |
+| 5    | FALSE     | TRUE  | 4         |
+| 6    | TRUE      | TRUE  | 2         |
 
   
 
@@ -211,7 +210,7 @@ Utilization of a subset of the data containing only tagged fishes from
 the annual fisheries of November. Then summarizing the data to get :  
 
 ``` r
-library(RMark)
+#library(RMark)
 #popan <- convert.inp("data/capture_history.inp")
 #colnames(popan) <- c("capture_history", "frequency") # simply for better comprehension here
 #head(popan)

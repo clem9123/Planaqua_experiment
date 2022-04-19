@@ -82,14 +82,14 @@ Cleaned version of BDD_original_complet.xlsx, see the [construction_BDD.Rmd](con
 | **Date**           | Date of observation  (-dd/mm/yyyy-)|
 | **Obs_status**     | Action done with this fish -introduction- -capture- -recapture- |
 | **Lake_capture**   | The lake in which the fish was extracted, -NA- if it is a new introduction|
-| **Method_capture** | How was the fish extracted ? -Trawl- (in november each year), -Hoop net- (for the perch during summer), or -Draining- (for 2022, when the lake where emptied)|
-| **Session_capture**| Only one -NA- exept in 2019 as a problem of efficiency made 2 fishry necessary (one normal -A- and a second with brushing -B-)|
+| **Method_capture** | How was the fish extracted ? -trawl- (in october or november each year), -creel- (for the perch during summer), or -draining- (for 2022, when the lake where emptied)|
+| **Session_capture**| In 2019 a problem of efficiency made 2 fisheries necessary (one normal -A- and a second with brushing -B-)|
 | **Passage_net**    | Every fishery had 3 net passage -1- -2- and -3-|
 | **Tag_id**         | Tag identifying individually each fish bigger than 8g |
-| **Species**        | The species of the fish (-Pike-, -Gardon-, -Perch-, -Able-, -Goujon-)|
+| **Species**        | The species of the fish (-pike-, -roach-, -perch-, -gudgeon-, -frog-)|
 | **Weight**         | Weight (in g)|
 | **Size**           | Size of the fish from head to the fork of the tail (in mm)|
-| **Lake_released**  | The lake in which the fish was released, -NA- if it is a new introduction |
+| **Lake_released**  | The lake in which the fish was released, -NA- if it wasn't released|
 | **Comment**        | Any additional information |
 
 
@@ -147,7 +147,7 @@ A short table giving the characteristics of each Lake :
 
 ```{r Head of lake Treatment, echo=TRUE}
 Lake_treatment <- read_excel("data/Lake_treatment.xlsx", col_types =c("text","logical","logical","text"))
-head(Lake_treatment)
+knitr::kable(head(Lake_treatment))
 ```
 
 \
@@ -163,7 +163,7 @@ Utilization of a subset of the data containing only tagged fishes from the annua
 Then summarizing the data to get : \
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
-library(RMark)
+#library(RMark)
 #popan <- convert.inp("data/capture_history.inp")
 #colnames(popan) <- c("capture_history", "frequency") # simply for better comprehension here
 #head(popan)
