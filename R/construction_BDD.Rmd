@@ -564,27 +564,39 @@ BDD <- BDD %>% mutate(`Lac relacher` = case_when(`Lac relacher` == "?" ~ NA,
 ## Ecriture de ce nouveau tableau dans un fichier excel
 
 ```{r}
-#write_xlsx(BDD,"C:/Users/sandrine/Documents/IEES_stage/code_et_donnee/data/data_presque_final.xlsx")
-```
-
-```{r}
 colnames(BDD)
 BDD_f <- data.frame(BDD$Index,BDD$Date,BDD$Obs_status,BDD$`Lac capture`,BDD$`Methode de capture`,BDD$Session_capture,BDD$Passage_filet,BDD$Tag_id_short,BDD$Espece,BDD$Masse,BDD$Taille,BDD$`Lac relacher`,BDD$Commentaires_obs)
 colnames(BDD_f) <- c("Index","Date","Obs_status","Lake_capture","Method_capture","Session_capture","Passage_net","Tag_id","Species","Weight","Size","Lake_released","Comment_obs")
 ```
 
-
+```{r}
+# Putting everything in english
+BDD_f <- BDD_f %>% mutate(Method_capture = case_when(Method_capture == "Chalut" ~ "trawl",
+                                            Method_capture == "Nasse" ~ "creel",
+                                            Method_capture == "Vidange" ~ "draining")) %>% 
+                   mutate(Species = case_when(Species == "gardon" ~ "roach",
+                                              Species == "perche" ~ "perch",
+                                              Species == "goujon" ~ "gudgeon",
+                                              Species == "grenouille" ~ "frog",
+                                              Species == "brochet" ~ "pike")) %>%
+                  mutate(Species = factor(Species)) %>%
+                  mutate(Method_capture = factor(Method_capture)) %>%
+                  mutate(Tag_id = ifelse(Species == "roach" & is.na(Tag_id) & Method_capture == "trawl", "juvenile", Tag_id))
+BDD_f <- BDD_f %>% mutate(Tag_id = ifelse(is.na(Tag_id), "no_tag", Tag_id))
+colnames(BDD_f)
+summary(BDD_f)
+```
 
 ```{r}
-write_xlsx(BDD_f,"./data/data_final.xlsx")
+write_xlsx(BDD_f,"data/data_final.xlsx")
 ```
 
 ####################### à faire ensuite pour créer le data avec le poids
 
 ```{r}
-BDD_f <- read_excel("./data/data_final.xlsx", col_types = c("numeric","date","text","text","text","text","text","text","text","numeric","numeric","text","text"), na = "")
+BDD_f <- read_excel("data/data_final.xlsx", col_types = c("numeric","date","text","text","text","text","text","text","text","numeric","numeric","text","text"), na = "")
 BDD_f <- BDD_f %>% mutate(Lake_capture = as.factor(Lake_capture),
-                          Method_capture =as.factor(Methode_capture),
+                          Method_capture =as.factor(Method_capture),
                           Session_capture = as.factor(Session_capture),
                           Passage_net = as.factor(Passage_net),
                           Obs_status = as.factor(Obs_status),
@@ -598,7 +610,7 @@ BDD_f <- BDD_f %>% mutate (Year = as.factor(format(Date,"%Y")))
 ## ajout des tailles des juveniles
 
 # création d'un tableau donnant la taille moyenne par année et par lac
-juv_ws <- BDD_f %>% filter(Tag_id == "juvenile" & Species == "gardon" & Method_capture != "Nasse") %>%
+juv_ws <- BDD_f %>% filter(Tag_id == "juvenile" & Species == "roach" & Method_capture != "creel") %>%
   group_by(Year, Lake_capture) %>%
   summarise (mean_size = mean(Size, na.rm =TRUE),
              sd_size = sd(Size, na.rm =TRUE), 
@@ -611,8 +623,8 @@ juv_ws <- BDD_f %>% filter(Tag_id == "juvenile" & Species == "gardon" & Method_c
 
 BDD_juv <- BDD_f %>% filter (Tag_id == "juvenile" & 
                                is.na(Weight) & 
-                               Species == "gardon" & 
-                               Method_capture != "Nasse" )
+                               Species == "roach" & 
+                               Method_capture != "creel" )
 
 for (i in 1:nrow(BDD_juv)){
   r = BDD_juv[i,]
@@ -631,7 +643,7 @@ BDD_f <- BDD_f %>% mutate(Date = as.Date(BDD_f$Date))
 
 ## ajout des tailles et poids 2022
 
-w <- BDD_f %>% filter(Tag_id !="juvenile" & !is.na(Tag_id) & Method_capture %in% c("Chalut","Vidange"))
+w <- BDD_f %>% filter(Tag_id !="juvenile" & Tag_id != "no_tag" & Method_capture %in% c("trawl","draining"))
 w <- w %>% filter (Year == "2021" | Year == "2022")
 w <- w %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Weight) %>% filter(is.na(`2022`) & !is.na(`2021`))
 
@@ -640,7 +652,7 @@ for (i in 1:nrow(w)){
   BDD_f[which(BDD_f$Tag_id == r$Tag_id & BDD_f$Year == "2022"),]$Weight <- r$`2021`
 }
 
-s <- BDD_f %>% filter(Tag_id !="juvenile" & !is.na(Tag_id) & Method_capture %in% c("Chalut","Vidange"))
+s <- BDD_f %>% filter(Tag_id !="juvenile" & Tag_id != "no_tag" & Method_capture %in% c("trawl","draining"))
 s <- s %>% filter (Year == "2021" | Year == "2022")
 s <- s %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Size) %>% filter(is.na(`2022`) & !is.na(`2021`))
 
@@ -648,17 +660,26 @@ for (i in 1:nrow(s)){
   r = s[i,]
   BDD_f[which(BDD_f$Tag_id == r$Tag_id & BDD_f$Year == "2022"),]$Size <- r$`2021`
 }
+# ajout des tailles et poids des juvébniles de perches
+
+BDD_juv_pech <- BDD_f %>% filter(Tag_id == "juvenile" & Species == "perch")
+for (i in BDD_juv_pech$Index){
+  BDD_f[which(BDD_f$Index == i),]$Weight <- 5
+  BDD_f[which(BDD_f$Index == i),]$Size <- 83
+}
 
 BDD_f <- BDD_f[,1:13]
-write_xlsx(BDD_f, "./data/data_test.xlsx")
+
+
+write_xlsx(BDD_f, "data/data_final_ws_norm.xlsx")
 ```
 
 ###### pour faire le tableau avec la moyenne sans la variabilité offerte par la loi normale
 
 ```{r}
-BDD_f <- read_excel("./data/data_final.xlsx",col_types = c("numeric","date","text","text","text","text","text","text","text","numeric","numeric","text","text"), na = "")
+BDD_f <- read_excel("data/data_final.xlsx",col_types = c("numeric","date","text","text","text","text","text","text","text","numeric","numeric","text","text"), na = "")
 BDD_f <- BDD_f %>% mutate(Lake_capture = as.factor(Lake_capture),
-                          Method_capture =as.factor(Methode_capture),
+                          Method_capture =as.factor(Method_capture),
                           Session_capture = as.factor(Session_capture),
                           Passage_net = as.factor(Passage_net),
                           Obs_status = as.factor(Obs_status),
@@ -672,7 +693,7 @@ BDD_f <- BDD_f %>% mutate (Year = as.factor(format(Date,"%Y")))
 ## ajout des tailles des juveniles
 
 # création d'un tableau donnant la taille moyenne par année et par lac
-juv_ws <- BDD_f %>% filter(Tag_id == "juvenile" & Species == "gardon" & Method_capture != "Nasse") %>%
+juv_ws <- BDD_f %>% filter(Tag_id == "juvenile" & Species == "roach" & Method_capture != "creel") %>%
   group_by(Year, Lake_capture) %>%
   summarise (mean_size = mean(Size, na.rm =TRUE),
              median_size =median(Size, na.rm =TRUE), 
@@ -685,8 +706,8 @@ juv_ws <- BDD_f %>% filter(Tag_id == "juvenile" & Species == "gardon" & Method_c
 
 BDD_juv <- BDD_f %>% filter (Tag_id == "juvenile" & 
                                is.na(Weight) & 
-                               Species == "gardon" & 
-                               Method_capture != "Nasse" )
+                               Species == "roech" & 
+                               Method_capture != "creel" )
 for (i in 1:nrow(BDD_juv)){
   r = BDD_juv[i,]
   y = r$Year
@@ -701,7 +722,7 @@ for (i in 1:nrow(BDD_juv)){
 
 ## ajout des tailles et poids 2022
 
-w <- BDD_f %>% filter(Tag_id !="juvenile" & !is.na(Tag_id) & Method_capture %in% c("Chalut","Vidange"))
+w <- BDD_f %>% filter(Tag_id !="juvenile" & Tag_id != "no_tag" & Method_capture %in% c("trawl","draining"))
 w <- w %>% filter (Year == "2021" | Year == "2022")
 w <- w %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Weight) %>% filter(is.na(`2022`) & !is.na(`2021`))
 
@@ -710,7 +731,7 @@ for (i in 1:nrow(w)){
   BDD_f[which(BDD_f$Tag_id == r$Tag_id & BDD_f$Year == "2022"),]$Weight <- r$`2021`
 }
 
-s <- BDD_f %>% filter(Tag_id !="juvenile" & !is.na(Tag_id) & Method_capture %in% c("Chalut","Vidange"))
+s <- BDD_f %>% filter(Tag_id !="juvenile" & Tag_id != "no_tag" & Method_capture %in% c("trawl","draining"))
 s <- s %>% filter (Year == "2021" | Year == "2022")
 s <- s %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Size) %>% filter(is.na(`2022`) & !is.na(`2021`))
 
@@ -721,7 +742,7 @@ for (i in 1:nrow(s)){
 
 BDD_f <- BDD_f %>% mutate(Date = as.Date(BDD_f$Date))
 BDD_f <- BDD_f[,1:13]
-write_xlsx(BDD_f, "./data/data_test.xlsx")
+write_xlsx(BDD_f, "data/data_final_ws.xlsx")
 
 ```
 
