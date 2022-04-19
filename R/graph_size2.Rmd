@@ -1,0 +1,42 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+ 
+
+```{r}
+ggplot(subset(BDD_g, Tag_id %in% subset(BDD_a, Year == "2016" & Size > 120)$Tag_id), aes(x = Year, y  = Size, color = Treatment))+
+  geom_line(aes(group = Tag_id))+
+  geom_point()
+
+ggplot(BDD_a, aes(x = Year, y  = Size, color = Treatment))+
+  geom_line(aes(group = Tag_id))+
+  geom_point()+
+  facet_wrap(~ Treatment)
+
+ggplot(BDD_p %>% filter(Year == "2022"))+
+  geom_bar(aes(x = Treatment, fill = Treatment))
+
+ggplot(BDD_g %>% filter (Tag_year == "2016"), aes(x = Year, y  = Size, color = Treatment))+
+  geom_line(aes(group = Tag_id))+
+  geom_point()
+
+ggplot(BDD_p , aes(x = Year, y  = Size, color = Treatment))+
+  #geom_line(aes(group = Tag_id))+
+  geom_point()+
+  facet_wrap(~ Treatment)
+
+ggplot(BDD_g %>% filter(Tag_year == "2016" & Year == "2016"))+
+  geom_density(aes(x = Size))
+
+ggplot(BDD_g)+
+  geom_histogram(aes(x = Size, color = Tag_year), binwidth = 2)+
+  facet_wrap(~ Lake)
+
+
+```
+```{r}
+ggplot(BDD_p %>% filter(Tag_year == "2016" & Year == "2022"))+
+  geom_density(aes(x = Size, color = Treatment))
+```
+
