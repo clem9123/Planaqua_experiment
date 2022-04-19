@@ -2,15 +2,6 @@
 # importation des library
 library(tidyverse)
 library(readxl)
-library(writexl)
-library(lme4)
-library(GGally)
-library(ggalluvial)
-library(flexplot)
-library(coefplot)
-library(sjmisc)
-library(sjPlot)
-library(stats)
 
 # importation des donn?es et mise en forme des colonnes
 BDD_f <- read_excel("./data/data_final_ws_norm.xlsx", col_types = c("numeric","date","text","text","text","text","text","text","text","numeric","numeric","text","text"), na = "")
