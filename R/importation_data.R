@@ -66,3 +66,5 @@ BDD_n <- BDD_g %>% group_by(Year, Lake, Nutrients, Perch, Treatment) %>%
                                nb_juv = sum(Tag_id == "juvenile", na.rm = T),
                                biomasse = sum(Weight, na.rm =T)) %>%
                      ungroup()
+
+BDD_a <- BDD_g %>% filter(Tag_id != "juvenile" & Tag_id != "no_tag")
