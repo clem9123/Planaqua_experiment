@@ -51,9 +51,13 @@ f <- Size~Linf*(1-exp(-K*(Year-t0)))
 
 initLake <- mapply(rep, svCom ,c(16,16,1))
 fLake <- Size~Linf[Lake]*(1-exp(-K[Lake]*(Year-t0)))
+
+initKLind <- mapply(rep, svCom, c(1926,1926,1))
+fKLind <- Size~Linf[Tag_id]*(1-exp(-K[Tag_id]*(Year-t0)))
 ```
 
 ```{r}
+fitKLind <- nls(fKLind, data, initKLind)
 fitKL <- nls(fKL, data, initKL)
 fitK <- nls(fK, data, initK)
 fitL <- nls(fL, data, initL)
