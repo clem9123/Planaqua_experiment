@@ -1,0 +1,27 @@
+---
+title: "R Notebook"
+output: 
+  html_notebook: 
+    fig_width: 16
+    toc_depth: 5
+---
+
+
+```{r}
+print(CJS_treatment)
+autocorr.plot(CJS_treatment, ask = F)
+traceplot(CJS_treatment, ask = F)
+```
+
+```{r}
+print(CJS_treatment_age)
+autocorr.plot(CJS_treatment_age, ask = F)
+traceplot(CJS_treatment_age, ask = F)
+```
+
+```{r}
+print(CJS_treatment_maturity)
+autocorr.plot(CJS_treatment_maturity, ask = F)
+traceplot(CJS_treatment_maturity, ask = F)
+```
+
