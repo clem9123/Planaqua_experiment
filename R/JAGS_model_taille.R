@@ -509,8 +509,8 @@ model_g_Ktrla_Ltrla <- function ()
   for(tr in 1:4){
     Linf[tr] ~ dunif (130,250)
     K[tr] ~ dunif(0,10)
-    pKla[tr] ~ dunif(0,1)
-    pLla[tr] ~ dunif(0,1)
+    pKla[tr] ~ dunif(0,10)
+    pLla[tr] ~ dunif(0,10)
   }
   for (la in 1:16){
     Linfla[la] ~ dnorm (Linf[Lake_treatment[la,2]], pLla[Lake_treatment[la,2]])

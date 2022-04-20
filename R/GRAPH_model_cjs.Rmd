@@ -18,10 +18,81 @@ print(CJS_treatment_age)
 autocorr.plot(CJS_treatment_age, ask = F)
 traceplot(CJS_treatment_age, ask = F)
 ```
+```{r}
+
+tbl = data.frame()
+for (i in 1:4){
+  for (j in 1:6){
+    x = as.mcmc(CJS_treatment_age)[[1]][,paste("phi[", as.character(i), ",", as.character(j), "]", sep = "")]
+    tbl <- rbind(tbl,data.frame(x,i,j))
+  }
+}
+
+colnames(tbl) <- c("phi","Treatment","Age")
+tbl <- tbl %>% mutate(Treatment = factor(Treatment)) %>% mutate(Age = factor(Age))
+
+ggplot(tbl)+
+  geom_density(aes( x = phi, color = Treatment))+
+  facet_wrap(~ Age)
+
+ggplot(tbl)+
+  geom_density(aes( x = phi, color = Age))+
+  facet_wrap(~ Treatment)
+
+tbl = data.frame()
+for (i in 1:5){
+  x = as.mcmc(CJS_treatment_age)[[1]][,paste("p[", as.character(i),"]", sep = "")]
+  tbl <- rbind(tbl,data.frame(x,i))
+}
+
+colnames(tbl) <- c("p","Age")
+tbl <- tbl %>% mutate(Age = factor(Age))
+
+
+ggplot(tbl)+
+  geom_density(aes( x = p, color = Age))
+
+ggplot(tbl)+
+  geom_boxplot(aes(y = p, color = Age))
+```
+
 
 ```{r}
 print(CJS_treatment_maturity)
 autocorr.plot(CJS_treatment_maturity, ask = F)
 traceplot(CJS_treatment_maturity, ask = F)
+```
+
+```{r}
+tbl = data.frame()
+for (i in 1:4){
+  for (j in 1:2){
+    x = as.mcmc(CJS_treatment_maturity)[[1]][,paste("phim[", as.character(i), ",", as.character(j), "]", sep = "")]
+    tbl <- rbind(tbl,data.frame(x,i,j))
+  }
+}
+
+colnames(tbl) <- c("phi","Treatment","Maturity")
+tbl <- tbl %>% mutate(Treatment = factor(Treatment)) %>% mutate(Maturity = factor(Maturity))
+
+ggplot(tbl)+
+  geom_density(aes( x = phi, color = Treatment))+
+  facet_wrap(~ Maturity)
+
+ggplot(tbl)+
+  geom_density(aes( x = phi, color = Maturity))+
+  facet_wrap(~ Treatment)
+
+```
+
+```{r}
+ggplot(BDD_a)+# %>% filter(Year %in% c("2016","2017")))+
+  geom_density(aes(x = Size, color = Year))
+```
+
+```{r}
+print(CJS_taille)
+autocorr.plot(CJS_taille, ask = F)
+traceplot(CJS_taille, ask = F)
 ```
 
