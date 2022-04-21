@@ -453,7 +453,7 @@ DIC_WAIC %>% arrange(dic)
 ```
 
 ```{r}
-data.frame(Model_g_Kla_Lla_2016[[2]]$mean, Model_g_Kla_Lla_t0i_2016[[2]]$mean)
+data.frame(Model_g_Kla_Lla_2016[[2]]$mean, Model_g_Ktrla_Ltrla_2016[[2]]$mean)
 
 param <- data.frame(rbind(as.mcmc(Model_g_Kla_Lla_2016)[[1]],as.mcmc(Model_g_Kla_Lla_2016)[[2]],as.mcmc(Model_g_Kla_Lla_2016)[[3]],as.mcmc(Model_g_Kla_Lla_2016)[[4]]))
 
@@ -563,10 +563,10 @@ ggplot(BDD_a %>% filter (Tag_year == "2016"), aes (x = Year, y = Size))+
   facet_wrap(~ factor(Lake, c(1,8,3,6,11,14,9,16,2,7,4,5,12,13,10,15)))+
   labs(title = "Model_g_Kla_Lla_2016")
 
-t0 = 1.5
+t0 = 2015 - Model_g_Ktrla_Ltrla_2016[[2]]$mean$t0
 
-K = Model_g_Kla_Lla_t0i_2016[[2]]$mean$K
-Linf = Model_g_Kla_Lla_t0i_2016[[2]]$mean$Linf
+K = Model_g_Ktrla_Ltrla_2016[[2]]$mean$Kla
+Linf = Model_g_Ktrla_Ltrla_2016[[2]]$mean$Linfla
 
 predict <- rbind(data.frame(x = 1:8, y = -30+ Linf[1]*(1-exp(-K[1]*(1:8+t0))), Lake = "1"),
                  data.frame(x = 1:8, y = Linf[2]*(1-exp(-K[2]*(1:8+t0))), Lake = "2"),
@@ -589,7 +589,7 @@ ggplot(BDD_a %>% filter (Tag_year == "2016"), aes (x = Year, y = Size))+
   geom_line(aes(group = Tag_id, color = Lake))+
   geom_point(data = predict, aes(x = x, y = y))+
   facet_wrap(~ factor(Lake, c(1,8,3,6,11,14,9,16,2,7,4,5,12,13,10,15)))+
-  labs(title = "Model_g_Kla_Lla_t0i_2016")
+  labs(title = "Model_g_Ktrla_Ltrla_2016")
 
 
 #ggplot()+
@@ -697,11 +697,19 @@ s
 ```
 
 ```{r}
-s_bis <- s %>% pivot_longer(cols = 2:8) %>% na.omit() %>% mutate (Lake = factor(Lake))
+s_bis <- s %>% pivot_longer(cols = 2:8) %>% na.omit() %>% mutate (Lake = factor(Lake)) %>% mutate(Treatment = factor(Treatment))
 
 ggplot(s_bis)+
   geom_line(aes(x = name, y = value, group = Tag_id, color = Lake))+
   facet_wrap(~Lake)
+
+ggplot(s_bis)+
+  geom_line(aes(x = name, y = value, group = Tag_id, color = Treatment))+
+   scale_color_manual(values = c("1" = "red",
+                                "2"="blue",
+                                "3"="green",
+                                "4"="black"))+
+  facet_wrap(~Treatment)
 
 ggplot(BDD_a)+
   geom_line(aes(x = Year, y = Size, group = Tag_id, color = Lake))+

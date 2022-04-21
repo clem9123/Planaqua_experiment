@@ -6,6 +6,18 @@ output:
     toc_depth: 5
 ---
 
+```{r}
+print(CJS_0)
+autocorr.plot(CJS_0, ask = F)
+traceplot(CJS_0, ask = F)
+```
+
+```{r}
+print(CJS_1)
+autocorr.plot(CJS_1, ask = F)
+traceplot(CJS_1, ask = F)
+```
+
 
 ```{r}
 print(CJS_treatment)
@@ -34,6 +46,9 @@ tbl <- tbl %>% mutate(Treatment = factor(Treatment)) %>% mutate(Age = factor(Age
 ggplot(tbl)+
   geom_density(aes( x = phi, color = Treatment))+
   facet_wrap(~ Age)
+
+ggplot(tbl)+
+  geom_boxplot(aes( y = phi, color = Age))
 
 ggplot(tbl)+
   geom_density(aes( x = phi, color = Age))+
@@ -83,11 +98,19 @@ ggplot(tbl)+
   geom_density(aes( x = phi, color = Maturity))+
   facet_wrap(~ Treatment)
 
-```
+tbl = data.frame()
+for (j in 1:2){
+    x = as.mcmc(CJS_treatment_maturity)[[1]][,paste("pm[", as.character(j), "]", sep = "")]
+    tbl <- rbind(tbl,data.frame(x,j))
+}
 
-```{r}
-ggplot(BDD_a)+# %>% filter(Year %in% c("2016","2017")))+
-  geom_density(aes(x = Size, color = Year))
+colnames(tbl) <- c("p","Maturity")
+
+tbl <- tbl %>% mutate(Maturity = factor(Maturity))
+
+ggplot(tbl)+
+  geom_density(aes( x = p, color = Maturity))
+
 ```
 
 ```{r}
@@ -95,4 +118,46 @@ print(CJS_taille)
 autocorr.plot(CJS_taille, ask = F)
 traceplot(CJS_taille, ask = F)
 ```
+
+```{r}
+
+taille <- BDD_a$Size
+p <- 1/(1+exp(-0.003*taille))
+phi <- invlogit(0.003*taille+1)
+df = data.frame(taille,phi,p)
+
+ggplot(df)+
+  geom_point(aes(x = taille, y = phi))+
+  geom_point(aes(x = taille, y = p), color = "red")
+
+```
+
+
+```{r}
+print(CJS_2)
+autocorr.plot(CJS_2, ask = F)
+traceplot(CJS_2, ask = F)
+```
+
+```{r}
+print(CJS_3)
+autocorr.plot(CJS_3, ask = F)
+traceplot(CJS_3, ask = F)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

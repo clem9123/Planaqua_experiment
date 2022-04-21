@@ -1,6 +1,5 @@
 
 ################## data
-
 tr <- BDD_a %>% group_by(Tag_id, Treatment) %>% summarize() %>% ungroup()
 mooved <- tr[duplicated(tr$Tag_id),]$Tag_id
 tr <- tr %>% filter ( !duplicated(tr$Tag_id))
@@ -214,7 +213,8 @@ jags.data <- list(y = s[2:7],
                   Treatment = s$Treatment,
                   nind = nrow(s),
                   noccas = 6,
-                  ni = 100000)
+                  ni = 100000,
+                  Lake_treatment = Lake_treatment)
 
 ################## Model 5
 
@@ -509,8 +509,8 @@ model_g_Ktrla_Ltrla <- function ()
   for(tr in 1:4){
     Linf[tr] ~ dunif (130,250)
     K[tr] ~ dunif(0,10)
-    pKla[tr] ~ dunif(0,10)
-    pLla[tr] ~ dunif(0,10)
+    pKla[tr] ~ dunif(0,100)
+    pLla[tr] ~ dunif(0,100)
   }
   for (la in 1:16){
     Linfla[la] ~ dnorm (Linf[Lake_treatment[la,2]], pLla[Lake_treatment[la,2]])
@@ -536,6 +536,7 @@ Model_g_Ktrla_Ltrla_2016 <- jags.parallel(data = jags.data,
 #autocorr.plot(Model_g_Ktr_Ltr_t0i)
 
 save(Model_g_Ktrla_Ltrla_2016, file = "R/object/Model_g_Ktrla_Ltrla_2016.RData")
+
 
 ################### Model 13
 # 2016 avec Lake variable et t0
