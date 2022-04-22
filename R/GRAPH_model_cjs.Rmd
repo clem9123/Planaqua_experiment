@@ -145,7 +145,7 @@ rjags::load.module('dic')
 WAIC = data.frame()
 
 for (Model in list_model){
-  recompile(Model)
+  #recompile(CJS_3)
   samples <- jags.samples(Model$model[[1]], 
                           c("WAIC", "deviance"), type ="mean", n.iter = 200)
 
