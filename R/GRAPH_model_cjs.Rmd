@@ -113,6 +113,57 @@ ggplot(tbl)+
 
 ```
 
+
+```{r}
+print(CJS_3)
+autocorr.plot(CJS_3, ask = F)
+traceplot(CJS_3, ask = F)
+```
+
+```{r}
+list_model = list(CJS_0,CJS_1,CJS_3, CJS_treatment, CJS_treatment_age, CJS_treatment_maturity) # CJS_taille1, CJS_taille2
+nom_model = c("CJS_0","CJS_1","CJS_3", "CJS_treatment", "CJS_treatment_age", "CJS_treatment_maturity")
+variable_model = c("p(~1)phi(~1)","p(~t+i)phi(~t+i)","p(~1)phi(~1)n(~t)","p(~1)phi(~tr)","p(~age)phi(~tr+age)","p(~mat)phi(~tr+mat)")
+deviance = c()
+dic = c()
+pD = c()
+for (model in list_model){
+  deviance <- append(deviance, model[[2]]$mean$deviance)
+  dic <- append(dic, model[[2]]$DIC)
+  pD <- append(pD, model[[2]]$pD)
+}
+DIC <- data.frame(nom_model, deviance, variable_model, dic, pD)
+
+colnames(DIC) <- c("model", "deviance", "variable","dic", "pD")
+
+DIC %>% arrange(dic)
+```
+
+```{r}
+
+rjags::load.module('dic')
+WAIC = data.frame()
+
+for (Model in list_model){
+  recompile(Model)
+  samples <- jags.samples(Model$model[[1]], 
+                          c("WAIC", "deviance"), type ="mean", n.iter = 200)
+
+  samples$p_waic <- samples$WAIC
+  samples$waic <- samples$deviance + samples$p_waic
+  tmp <- sapply(samples, sum)
+  waic <- round(c(waic = tmp[["waic"]], 
+                p_waic = tmp[["p_waic"]]),1)
+  WAIC <- rbind (WAIC,waic)
+}
+
+colnames(WAIC) <- c("waic", "p_waic")
+
+DIC_WAIC <- cbind (DIC,WAIC)
+DIC_WAIC %>% arrange(waic)
+```
+
+
 ```{r}
 print(CJS_taille)
 autocorr.plot(CJS_taille, ask = F)
@@ -133,17 +184,28 @@ ggplot(df)+
 ```
 
 
-```{r}
-print(CJS_2)
-autocorr.plot(CJS_2, ask = F)
-traceplot(CJS_2, ask = F)
-```
 
-```{r}
-print(CJS_3)
-autocorr.plot(CJS_3, ask = F)
-traceplot(CJS_3, ask = F)
-```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

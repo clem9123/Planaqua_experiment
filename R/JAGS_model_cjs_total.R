@@ -370,7 +370,7 @@ cjs_3 <- function(){
     z[i,1] <- ifelse(f[i]==1,1,0)
     for (t in 2:noccas){
       # determine the state alive/dead
-      z[i,t] ~ dbern(phi* z[i,t-1] + n[t-1]*(1-z[i,t-1])) #(1-max(z[i,(1:(t-1))]))) 
+      z[i,t] ~ dbern(phi* z[i,t-1] + n[t-1]*(1-max(z[i,(1:(t-1))]))) #(1-max(z[i,(1:(t-1))]))) 
       # determine the capture status
       y[i,t] ~ dbern(p * z[i,t])
     }
