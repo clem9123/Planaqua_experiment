@@ -1,7 +1,7 @@
 ################# data
+s <- s2
 
-
-tr <- BDD_a %>% group_by(Tag_id, Treatment) %>% summarize() %>% ungroup()
+tr <- BDD_a %>% filter(Year != "2022") %>% group_by(Tag_id, Treatment) %>% summarize() %>% ungroup()
 mooved <- tr[duplicated(tr$Tag_id),]$Tag_id
 tr <- tr %>% filter ( !duplicated(tr$Tag_id))
 tr <- tr %>% mutate (Treatment = ifelse(Tag_id %in% mooved, NA, Treatment))
@@ -15,11 +15,11 @@ t <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, v
 t <- merge(t,tr)
 t <- merge(t,la)
 
-t <- data.frame(t$Tag_id, apply(t[2:8],2, function(x) ifelse(is.na(x),0,1)), t$Treatment, t$Lake)
+t <- data.frame(t$Tag_id, apply(t[2:7],2, function(x) ifelse(is.na(x),0,1)), t$Treatment, t$Lake)
 t <- na.omit(t)
 
-set.seed(10)
-t <- t[sample(1:nrow(t), 100),]
+#set.seed(10)
+#t <- t[sample(1:nrow(t), 100),]
 
 s <- s %>% filter (Tag_id %in% t$t.Tag_id)
 t <- t %>% arrange(t.Tag_id)

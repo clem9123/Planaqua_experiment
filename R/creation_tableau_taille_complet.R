@@ -59,3 +59,4 @@ for (i in 1:nrow(s)){
   }
 }
 
+s2 <- s
