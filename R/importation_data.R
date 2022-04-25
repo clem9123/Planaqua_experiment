@@ -36,9 +36,9 @@ BDD_f <- BDD_f %>% mutate(Log_weight = log(Weight))
 BDD_f <- BDD_f %>% mutate(Log_size = log(Size))
 
 # Ajout de la colonne Tag_year
-BDD_f <- BDD_f %>% group_by(Tag_id) %>% 
-  mutate(Tag_year = ifelse(Tag_id %in%  c("juvenile","no_tag"), NA, min(as.character(Year)))) %>% 
-  ungroup()
+#BDD_f <- BDD_f %>% group_by(Tag_id) %>% 
+#  mutate(Tag_year = ifelse(Tag_id %in%  c("juvenile","no_tag"), NA, min(as.character(Year)))) %>% 
+#  ungroup()
 
 # creation du tableau roach adulte pris dans les trawls lors des sessions classiques
 # ajout de la colonne annee tag
@@ -46,13 +46,19 @@ BDD_f <- BDD_f %>% group_by(Tag_id) %>%
 
 BDD_g <- BDD_f %>% filter(Species == "roach" & !(Method_capture %in% c("creel")) &
                             !(Session_capture %in% c("B","Z")))
+
+#Ajout de la colonne Tag_year 
+BDD_g <- BDD_g %>% group_by(Tag_id) %>% 
+  mutate(Tag_year = ifelse(Tag_id %in%  c("juvenile","no_tag"), NA, min(as.character(Year)))) %>% 
+  ungroup()
+
+# remettre les bonnes captures
 BDD_g <- BDD_g %>% mutate (Obs_status = case_when(Tag_year %in% c("no_tag","juvenile")~ "capture",
                                                   Year == Tag_year ~ "capture",
                                                   Year != Tag_year ~ "recapture"))
 
 
-BDD_p <- BDD_f %>% filter(Species == "perch" & !(Method_capture %in% c("creel")) &
-                            !(Session_capture %in% c("B","Z")))
+BDD_p <- BDD_g %>% filter(Species == "perch" )
 BDD_p <- BDD_p %>% mutate (Obs_status = case_when(Tag_year %in% c("no_tag","juvenile")~ "capture",
                                                   Year == Tag_year ~ "capture",
                                                   Year != Tag_year ~ "recapture"))
@@ -70,3 +76,4 @@ BDD_n <- BDD_g %>% group_by(Year, Lake, Nutrients, Perch, Treatment) %>%
                      ungroup()
 
 BDD_a <- BDD_g %>% filter(Tag_id != "juvenile" & Tag_id != "no_tag")
+

@@ -190,9 +190,44 @@ ggplot(df)+
 ```
 
 
+```{r}
+print(CJS_0)
+autocorr.plot(CJS_0, ask = F)
+traceplot(CJS_0, ask = F)
+```
 
 
+```{r}
+print(CJS_0_2022)
+autocorr.plot(CJS_0_2022, ask = F)
+traceplot(CJS_0_2022, ask = F)
+```
 
+```{r}
+print(CJS_group_taille)
+autocorr.plot(CJS_group_taille, ask = F)
+traceplot(CJS_group_taille, ask = F)
+
+tbl = data.frame()
+for (i in 1:6){
+  tbl <- rbind(tbl, 
+               data.frame(as.mcmc(CJS_group_taille)[[1]][,paste("p[",as.character(i),"]", sep = "")],
+                          as.mcmc(CJS_group_taille)[[1]][,paste("phi[",as.character(i),"]", sep = "")],
+                          i))
+}
+colnames(tbl) <- c("p","phi","taille")
+tbl <- tbl %>% mutate(taille = factor (taille))
+
+ggplot(tbl)+
+  geom_boxplot(aes(x = taille , y = phi, color = taille))
+
+ggplot(tbl)+
+  geom_boxplot(aes(x = taille , y = p, color = taille))
+```
+
+```{r}
+table(unlist(s_group))
+```
 
 
 

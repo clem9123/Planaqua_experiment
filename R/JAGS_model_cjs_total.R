@@ -1,4 +1,5 @@
 ################# data
+library(arules)
 s <- s2
 
 tr <- BDD_a %>% filter(Year != "2022") %>% group_by(Tag_id, Treatment) %>% summarize() %>% ungroup()
@@ -18,12 +19,15 @@ t <- merge(t,la)
 t <- data.frame(t$Tag_id, apply(t[2:7],2, function(x) ifelse(is.na(x),0,1)), t$Treatment, t$Lake)
 t <- na.omit(t)
 
-#set.seed(10)
-#t <- t[sample(1:nrow(t), 100),]
+set.seed(1234)
+t <- t[sample(1:nrow(t), 100),]
 
 s <- s %>% filter (Tag_id %in% t$t.Tag_id)
 t <- t %>% arrange(t.Tag_id)
 s <- s %>% arrange(Tag_id)
+
+s_group <- data.frame(apply(s[2:7], 2, function(x) discretize(x,method = "fixed",breaks = c(0,100,125,150,175,200,300), labels= c(1,2,3,4,5,6))))
+s_group [] <- apply(s_group, 2, as.numeric)
 
 CH <- as.matrix(t[2:7])
 
@@ -42,18 +46,19 @@ z.inits <- function(ch){
 }
 
 jags.data <- list(y = CH,
-                  size = as.matrix(s[2:7]),
+                  size = as.matrix(s[2:7]*10^-2),
+                  size_group = s_group,
                   Treatment = t$t.Treatment,
                   f = apply(CH, 1, get.first), 
                   nind = nrow(CH), 
                   noccas = ncol(CH),
-                  ni = 10000,
+                  ni = 1000,
                   zi = z.inits(CH))
 
 ############################ Model 1 phi(~1)p(~1)
 
 inits <- function(){
-  list(phi = runif(0,1), p = runif(0,1), z = zi)}
+  list(phi = runif(1,0,1), p = runif(1,0,1), z = zi)}
 
 
 parameters <- c("phi", "p")
@@ -254,3 +259,35 @@ CJS_treatment_maturity <- jags.parallel(data = jags.data,
 
 save(CJS_treatment_maturity, file = "R/object/CJS_treatment_maturity.RData")
 
+######################################## Model taille discrete
+
+
+inits <- function(){
+  list(phi= runif(6,0.4,0.8), p = runif(6,0.2,0.8))
+}
+
+parameters = c("phi", "p")
+
+cjs_group_taille <- function() {
+  #likelihood
+  for (i in 1:nind){
+    z[i,f[i]] <- 1
+    for (t in (f[i]+1):noccas){
+      z[i,t] ~ dbern(phi[size_group[i,t]]*z[i,t-1])
+      y[i,t] ~ dbern(p[size_group[i,t]]*z[i,t])
+    }
+  }
+  #prior
+  for (gs in 1:6){
+    p[gs] ~ dunif(0,1)
+    phi[gs] ~ dunif(0,1)
+  }
+}
+
+CJS_group_taille <- jags.parallel(data = jags.data,
+                                  inits = inits,
+                                  parameters.to.save = parameters,
+                                  model.file = cjs_group_taille,
+                                  n.chains = 4,
+                                  jags.seed = 143,
+                                  n.iter = ni)

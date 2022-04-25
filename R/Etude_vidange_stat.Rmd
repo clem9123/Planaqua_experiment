@@ -340,8 +340,9 @@ summary(model_pc)
 
 ```{r}
 t <- BDD_vid %>% filter(Year == "2022") %>% mutate(catch_2021 = as.numeric(catch_2021),
-                                                     Size_2 = Size^2)
-model_pc <- glmer(catch_2021 ~ Size + Size_2 + (1|Lake), family = "binomial", t)
+                                                   Size = 10^-2*Size,
+                                                   Size_2 = Size^2)
+model_pc <- glm(catch_2021 ~ Size + Size_2 + Treatment, family = "binomial", t)
 summary(model_pc)
 ```
 
@@ -350,14 +351,14 @@ summary(model_pc)
 x = t$Size[!is.na(t$Size)]
 ggplot()+
   geom_point(aes(y=invlogit(predict(model_pc)), x = t$Size[!is.na(t$Size)]))+
-  geom_point(aes(y=invlogit(0.07*x-0.00025*x^2-2), x = x), color = "blue")+
-  geom_point(aes(y=invlogit(0.05*x-0.0004*x^2-3), x = x), color = "red")+
-  geom_point(aes(y=invlogit(0.08*x-0.0004*x^2+2), x = x), color = "red")
+  geom_point(aes(y=invlogit(8*x-3.7*x^2-2), x = x), color = "blue")+
+  geom_point(aes(y=invlogit(5*x-4*x^2-3), x = x), color = "red")+
+  geom_point(aes(y=invlogit(8*x-4*x^2+2), x = x), color = "red")
 
 
-ggplot()+
-  geom_point(aes(y=invlogit(0.08*x-0.0004*x^2-2), x = x))+
-  geom_point(aes(y=invlogit(0.08*x-0.0003*x^2-2), x = x))
+#ggplot()+
+#  geom_point(aes(y=invlogit(0.08*x-0.0004*x^2-2), x = x))+
+#  geom_point(aes(y=invlogit(0.08*x-0.0003*x^2-2), x = x))
 ```
 
 ```{r}
@@ -374,8 +375,9 @@ BDD_vid_survie %>% filter(Year == "2021") %>% cbind(p_survie)
 
 ```{r}
 t <- BDD_vid %>% filter(Year == "2021") %>% mutate(survie = as.numeric(survie),
+                                                   Size = 10^-2*Size,
                                                    Size_2 = Size^2)
-model_phi <- glmer(survie ~ Size + Size_2 + (1|Lake), family = "binomial", t)
+model_phi <- glm(survie ~ Size + Size_2 + Treatment, family = "binomial", t)
 summary(model_phi)
 ```
 
@@ -388,10 +390,10 @@ anova(model_phi, model_phi2)
 x = t$Size[!is.na(t$Size)]
 ggplot()+
   geom_point(aes(y=invlogit(predict(model_phi)), x = t$Size[!is.na(t$Size)]))+
-  geom_point(aes(y=invlogit(0.11*x-0.00025*x^2-7), x = x), color = "red")+
-  geom_point(aes(y=invlogit(0.02*x+5), x = x), color = "blue")+
-  geom_point(aes(y=invlogit(0.04*x), x = x), color = "green")+
-  geom_point(aes(y=invlogit(0.11*x+5), x = x), color = "violet")
+  geom_point(aes(y=invlogit(12*x-3.3*x^2-7.5), x = x), color = "red")+
+  geom_point(aes(y=invlogit(12*x-3.3*x^2-7.8), x = x), color = "blue")+
+  geom_point(aes(y=invlogit(12*x-3.3*x^2-9.3), x = x), color = "green")+
+  geom_point(aes(y=invlogit(12*x-3.3*x^2-5.2), x = x), color = "violet")
 ```
 ```{r}
 summary(model_phi2)
@@ -401,4 +403,3 @@ summary(model_phi2)
 
 ```
 
-C:/Users/sandrine/Documents/IEES_stage/code_et_donnee/Etude_vidange.Rmd
