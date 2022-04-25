@@ -11,6 +11,14 @@ library(R2jags)
 # Importation de tous les models
 
 ```{r}
+ggplot(BDD_g, aes(x = Year, y = Size))+
+  geom_point(aes(color = Treatment))+
+  geom_line(data = BDD_a, aes(group = Tag_id, color = Treatment))+
+  facet_wrap (~Treatment)
+```
+
+
+```{r}
 # Model avec tous les poissons
 
 

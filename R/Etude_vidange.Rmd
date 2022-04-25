@@ -1,0 +1,335 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+BDD_vid <- BDD_j %>% filter (Year %in% c(2021,2022))
+BDD_vid <- BDD_vid %>% mutate (catch_2021 = case_when(Year == "2021" ~ TRUE,
+                                      Tag_id %in% subset(BDD_vid, Year == "2021")$Tag_id ~ TRUE,
+                                      TRUE ~ FALSE))
+
+#BDD_aux <- BDD_vid %>% filter(Tag_id != "juvenile") %>% mutate(ranges = cut(Weight,seq(0, 200, 5)))
+```
+
+```{r}
+BDD_vid <- BDD_vid %>% mutate(taille = case_when(Tag_id == "juvenile" ~ "juv",
+                                         Weight < 20 ~ "0-20",
+                                         Weight < 25 ~ "20-25",
+                                         Weight < 35 ~ "25-35",
+                                         Weight < 50 ~ "35-50",
+                                         Weight < 70 ~ "50-70",
+                                         Weight < 95 ~ "70-95",
+                                         Weight >= 95 ~ "95+"))
+#BDD_vid <- BDD_vid %>% mutate(taille = case_when(Tag_id == "juvenile" ~ "juv",
+#                                         Weight < 20 ~ "tres_petit",
+#                                         Perch == FALSE & Weight < 50 ~ "petit",
+#                                         Perch == FALSE & Weight > 110 ~ "gros",
+#                                         Perch == FALSE ~ "moyen",
+# 
+#                                         Perch == TRUE & Weight < 50 ~ "petit",
+#                                         Perch == TRUE & Weight > 110 ~ "gros",
+#                                         Perch == TRUE ~ "moyen")) %>%
+#              mutate(taille = factor (taille, levels=c("juv","tres_petit","petit","moyen","gros")))
+```
+
+
+```{r}
+summary(BDD_vid)
+```
+
+```{r}
+ggplot(BDD_vid)+
+  geom_bar(aes(x = Year, fill = Tag_year))
+
+ggplot(BDD_vid)+
+  geom_density(aes(x = Weight, color = Year))
+
+ggplot(BDD_vid)+
+  geom_density(aes(x = Weight, color = Lake))+
+  facet_wrap(~Year)
+
+ggplot(BDD_vid)+
+  geom_density(aes(x = Weight, color = Lake))+
+  facet_wrap(~Year, scales="free_y")
+
+ggplot(BDD_vid)+
+  geom_density(aes(x = Weight, color = Year))+
+  facet_wrap(~Lake, scales="free_y")
+
+ggplot(BDD_vid)+
+  geom_density(aes(x = Weight, color = Year))+
+  facet_wrap(~Lake)
+```
+
+locmodes(subset(BDD_vid, Lake=="8" & Year =="2022")$Weight, mod0=5,display=TRUE)
+
+mod4 <- densityMclust(subset(BDD_vid, Lake=="15" & Year =="2022")$Weight)
+ggplot(subset(BDD_vid, Lake=="15" & Year =="2022"))+
+  geom_density(aes(x = Weight))
+
+```{r}
+ggplot(BDD_vid)+
+  geom_density(aes(x = Weight, color = Year))+
+  facet_wrap(~Perch)
+ggplot(BDD_vid)+
+  geom_density(aes(x = Weight, color = Year))
+```
+
+```{r}
+ggplot(BDD_vid)+
+  geom_bar(aes(x=Year, fill = catch_2021))
+
+```
+
+```{r}
+ggplot(BDD_vid%>% filter(Tag_id != "juvenile"))+
+  geom_bar(aes(x=Year, fill = catch_2021))
+```
+
+
+
+```{r}
+ggplot(BDD_vid)+
+  geom_density(mapping = aes(x=Weight, color = Year))+
+  facet_wrap (~taille, scale = "free_y")
+```
+
+```{r}
+ggplot(BDD_vid %>% filter(taille %in% c("70-95")))+
+  geom_bar(aes(x=Year, fill = catch_2021))+
+  facet_wrap(~Lake)#, scales = "free_y")
+```
+
+```{r}
+BDD_vid %>% filter(!(taille %in% c(NA,"juv"))) %>% group_by(Year,Lake_capture) %>% 
+            summarise(nb_catch_recatch = sum(catch_2021),
+                      nb_nouv = sum(!catch_2021),
+                      proba_capt = (1-nb_nouv/(nb_catch_recatch+nb_nouv))) %>%
+            filter(Year == "2022")
+```
+
+taux de mortalité et de capture calculés, est ce que ca dépend des lacs et des années
+je pourrais pas savoir pour les années mais pour les lacs oui
+
+```{r}
+BDD_vid_n <- BDD_vid %>% group_by(taille,Lake,Year) %>% summarise(nb_catch_recatch = sum(catch_2021), n_nouv = sum(!catch_2021))
+```
+```{r}
+BDD_vid <- BDD_vid %>% mutate(taille = case_when(Tag_id == "juvenile" ~ "juv",
+                                         Weight < 20 ~ "0-20",
+                                         #Weight < 25 ~ "20-25",
+                                         Weight < 35 ~ "20-35",
+                                         #Weight < 50 ~ "35-50",
+                                         Weight < 90 ~ "35-80",
+                                         #Weight < 95 ~ "70-95",
+                                         Weight >= 90 ~ "95+"))
+
+
+BDD_vid_n <- BDD_vid %>% filter(!(taille %in% c(NA,"juv"))) %>% group_by(taille,Year,Lake_capture,Treatment) %>% summarise(nb_catch_recatch = sum(catch_2021), nb_nouv = sum(!catch_2021), proba_capt =(1-nb_nouv/(nb_catch_recatch+nb_nouv))) %>% filter(Year == "2022")
+```
+
+```{r}
+ggplot (BDD_vid %>% filter(Year=="2022"))+
+  geom_bar(aes(x=factor(Lake,levels = c(1,8,11,14,3,6,9,16,2,7,12,13,4,5,10,15)), fill =Treatment), position = "dodge")+
+  facet_wrap(~taille, scale = "free_y")
+
+ggplot (BDD_vid %>% filter(Year=="2021"))+
+  geom_bar(aes(x=factor(Lake,levels = c(1,8,11,14,3,6,9,16,2,7,12,13,4,5,10,15)), fill =Treatment), position = "dodge")+
+  facet_wrap(~taille, scale = "free_y")
+```
+
+```{r}
+ggplot(BDD_vid_n)+
+  geom_point(aes(x=factor(Lake_capture,levels = c(1,8,11,14,3,6,9,16,2,7,12,13,4,5,10,15)), y = proba_capt, size = nb_catch_recatch + nb_nouv), color = "blue")+
+  facet_wrap(~taille)
+
+ggplot(BDD_vid_n)+
+  geom_point(aes(x=taille, y = proba_capt, size = nb_catch_recatch + nb_nouv), color = "blue")+
+  facet_wrap(~Lake_capture)
+```
+Test statistiques sur la significance of the results
+
+Mon hypothese : la proba de peche est influencée par la taille des poissons
+J'aiùmerai que cela ne change pas par lac mais apperement si 
+  donc je vais mle mettre en random effect parce que c'est comme une repetition d'experience, variing intercept (mais j'aimerai bien le supprimer en vrai) pas possible
+  
+Mon gros probleme c'est quel range de taille est ce que je choisis, il faut qu'il y ai assez de poisson mais qu'il soit à peit près égaux en probabilité de catch ors j'ipmagine que dans la réalité ce sont toutes deux des variables continus mais je ne peux calculer la probabilité de catch qu'avec une discretisation des tailles -> Aaaaaaaahhhhrg
+
+  
+lmer (proba_catch ~ taille + (1|Lake_capture))  
+
+```{r}
+mod <- lmer(proba_capt ~ taille +(1|Lake_capture), BDD_vid_n %>% filter (nb_catch_recatch + nb_nouv > 10), REML = F)
+
+icc(mod)
+summary(mod)
+plot_model(mod, type = "est", show.p =T)
+plot_model(mod, type = "pred", show.data = TRUE)
+ggplot(BDD_vid_n %>% filter (nb_catch_recatch + nb_nouv > 10))+
+  geom_point(aes(x = taille, y = proba_capt, size = nb_catch_recatch + nb_nouv))
+
+modbis <- lm(proba_capt ~ taille, BDD_vid_n %>% filter (nb_catch_recatch + nb_nouv > 10))
+summary(modbis)
+plot_model(modbis, type = "est", show.p =T)
+
+anova(mod,modbis)
+
+visualize(mod, plot = "model")
+```
+
+
+
+```{r}
+N_catch <- BDD_a %>% filter(Year != "2022" & Year != "2021") %>% group_by(Tag_id) %>% summarise(n_catch = n())
+BDD_aux <- merge(BDD_aux, N_catch, all=TRUE)
+
+
+BDD_aux2 <- BDD_aux  %>% filter (50<Weight &Weight < 70) %>% group_by(n_catch,Year) %>% summarise(nb_catch_recatch = sum(catch_2021), n_nouv = sum(!catch_2021), proba_capt <-n_nouv/n_catch_recatch)
+```
+
+
+
+```{r}
+ggplot(BDD_aux %>% filter ( 50<Weight &Weight < 70 ))+
+  geom_bar(aes(x=Year, fill = catch_2021))+
+  facet_wrap(~n_catch)
+
+ggplot(BDD_aux %>% filter ( 50<Weight &Weight < 70 ))+
+  geom_bar(aes(x=Year, fill = as.factor(n_catch)))+
+  facet_wrap(~catch_2021, scales = "free_y")
+```
+
+
+
+Choix de la taille des groupes
+
+```{r}
+ggplot(BDD_vid)+
+  geom_histogram(aes(x= Weight, fill =taille), binwidth = 10)
+```
+
+```{r}
+ggplot(BDD_vid %>% filter(Year =="2022"))+
+  geom_histogram(aes(x= Weight, fill =catch_2021), binwidth = 1)
+```
+
+
+
+```{r}
+#Tagué en 2020, rattrapé en 2021
+ggplot(BDD_j %>% filter (Year %in% c("2016","2017")))+
+  geom_bar( aes(x = Year, fill = Tag_year))
+
+ggplot(BDD_j %>% filter (Year %in% c("2016","2017")))+
+  geom_bar( aes(x = Year, fill = Tag_year))+
+  facet_wrap(~ Lake)
+
+ggplot(BDD_j %>% filter (Tag_year %in% c("2016")))+
+  geom_bar( aes(x = Year))+
+  facet_wrap(~Lake)
+
+ggplot(BDD_j %>% filter (Tag_year %in% c("2016")))+
+  geom_bar(stat= "identity", aes(x = Year, y = Weight))+
+  facet_wrap(~Lake)
+
+aux
+ggplot(aux)+
+  geom_bar(stat= "identity", aes(x = Year, y = mw))+
+  facet_wrap(~Lake)
+```
+
+```{r}
+aux <- BDD_j %>% filter (Tag_year %in% c("2016")) %>% group_by(Lake, Year) %>% summarise (mw = mean(Weight), nb = n(), nb_corrigé = case_when (mean(Weight) < 25 ~ nb*1.1,
+                                                                                                                                               mean(Weight) < 35 ~ nb*1.5,
+                                                                                                                                               mean(Weight) < 50 ~ nb*1.17,
+                                                                                                                                               mean(Weight) < 70 ~ nb*1.26,
+                                                                                                                                               mean(Weight) < 95 ~ nb*1.46,
+                                                                                                                                               mean(Weight) >= 95 ~ nb*1.76))
+
+aux2 <- BDD_j %>% ungroup %>% filter (Tag_year %in% c("2016")) %>% mutate(taille = case_when(Tag_id == "juvenile" ~ "juv",
+                                                                                             Weight < 25 ~ "0-25",
+                                                                                             Weight < 35 ~ "25-35",
+                                                                                             Weight < 50 ~ "35-50",
+                                                                                             Weight < 70 ~ "50-70",
+                                                                                             Weight < 95 ~ "70-95",
+                                                                                             Weight >= 95 ~ "95+"))
+table(aux2$taille)
+aux2 <- aux2 %>% ungroup () %>% filter (Tag_id != "juvenile") %>% group_by(Lake, Year, taille) %>% summarise (nb = n())
+
+aux2 <- aux2 %>% mutate(nb_corrigé = case_when (Year == "2016" ~ nb*1,
+                                                Year == "2022" ~ nb*1,
+                                                taille == "0-25" ~ nb*1.1,
+                                                taille == "25-35" ~ nb*1.5,
+                                                taille == "35-50" ~ nb*1.17,
+                                                taille == "50-70" ~ nb*1.26,
+                                                taille == "70-95" ~ nb*1.46,
+                                                taille == "95+" ~ nb*1.76))
+
+aux2
+aux2 <- aux2 %>% ungroup() %>% group_by(Lake,Year) %>% summarise(nb = sum(nb), nb_c = sum(nb_corrigé))
+aux2
+```
+
+```{r}
+ggplot(aux)+
+  geom_bar(stat= "identity", aes(x = Year, y = mw))+
+  facet_wrap(~Lake)
+
+ggplot(aux)+
+  geom_bar(stat= "identity", aes(x = Year, y = nb))+
+  facet_wrap(~Lake)
+
+ggplot(aux)+
+  geom_bar(stat= "identity", aes(x = Year, y = nb_corrigé))+
+  facet_wrap(~Lake)
+
+ggplot(aux2)+
+  geom_bar(stat= "identity", aes(x = Year, y = nb))+
+  facet_wrap(~Lake)
+
+ggplot(aux2)+
+  geom_bar(stat= "identity", aes(x = Year, y = nb_c))+
+  facet_wrap(~Lake)
+```
+
+```{r}
+aux2 %>% filter (Lake == "3")
+t <- BDD_j %>% filter (Lake == "3")
+```
+
+
+```{r}
+ggplot(BDD_j %>% filter(Tag_year == "2017" & Year == "2017"))+
+  geom_bar(aes(x = Weight))
+```
+
+```{r}
+ggplot(BDD_j %>% filter (Year == Tag_year | Tag_year == "juvenile"))+
+  geom_density( aes(x = Weight, color = Year))
+
+ggplot(BDD_j %>% filter (Tag_year == "2016"))+
+  geom_density( aes(x = Weight, color = Year))
+
+ggplot(BDD_j %>% filter (Tag_year == "2019"))+
+  geom_density( aes(x = Weight, color = Year))
+```
+
+```{r}
+ggplot(BDD_a %>% filter (Tag_id %in% sample(subset(BDD_a, Tag_year =="2017" & Year == "2017")$Tag_id, 10, replace = FALSE, prob = NULL) ))+
+  geom_point(aes(x = Weight, y = Tag_id, color = Year))+
+  geom_line(aes(x = Weight, y= Tag_id, group =Tag_id))
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+

@@ -165,9 +165,15 @@ DIC_WAIC %>% arrange(waic)
 
 
 ```{r}
-print(CJS_taille)
-autocorr.plot(CJS_taille, ask = F)
-traceplot(CJS_taille, ask = F)
+print(CJS_taille2)
+autocorr.plot(CJS_taille2, ask = F)
+traceplot(CJS_taille2, ask = F)
+```
+
+```{r}
+print(CJS_taille2)
+autocorr.plot(CJS_taille2, ask = F)
+traceplot(CJS_taille2, ask = F)
 ```
 
 ```{r}

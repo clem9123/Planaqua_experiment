@@ -36,7 +36,9 @@ BDD_f <- BDD_f %>% mutate(Log_weight = log(Weight))
 BDD_f <- BDD_f %>% mutate(Log_size = log(Size))
 
 # Ajout de la colonne Tag_year
-BDD_f <- BDD_f %>% mutate(Tag_year = ifelse(Tag_id ==  "no_tag", NA, min(as.character(Year))))
+BDD_f <- BDD_f %>% group_by(Tag_id) %>% 
+  mutate(Tag_year = ifelse(Tag_id %in%  c("juvenile","no_tag"), NA, min(as.character(Year)))) %>% 
+  ungroup()
 
 # creation du tableau roach adulte pris dans les trawls lors des sessions classiques
 # ajout de la colonne annee tag
