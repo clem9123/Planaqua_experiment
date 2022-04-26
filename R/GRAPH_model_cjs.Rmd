@@ -164,6 +164,10 @@ DIC_WAIC %>% arrange(waic)
 ```
 
 
+
+############ N'importe quoi à partir d'ici
+
+
 ```{r}
 print(CJS_taille2)
 autocorr.plot(CJS_taille2, ask = F)
@@ -230,6 +234,35 @@ table(unlist(s_group))
 ```
 
 
+```{r}
+print(CJS_group_taille_tr)
+autocorr.plot(CJS_group_taille_tr, ask = F)
+traceplot(CJS_group_taille_tr, ask = F)
+
+tbl_p = data.frame()
+tbl_phi = data.frame()
+for (i in 1:6){
+  tbl_p <- rbind(tbl_p, 
+               data.frame(as.mcmc(CJS_group_taille_tr)[[1]][,paste("p[",as.character(i),"]", sep = "")],i))
+  for (j in 1:4){
+    tbl_phi <- rbind(tbl_phi, 
+               data.frame(as.mcmc(CJS_group_taille_tr)[[1]][,paste("phi[",as.character(i),",",as.character(j),"]", sep = "")],i,j))
+  }
+}
+colnames(tbl_phi) <- c("phi","taille","treatment")
+tbl_phi <- tbl_phi %>% mutate(taille = factor (taille),
+                              treatment = factor(treatment))
+colnames(tbl_p) <- c("p","taille")
+tbl_p <- tbl_p %>% mutate(taille = factor (taille))
+
+head(tbl_p)
+ggplot(tbl_phi)+
+  geom_violin(aes(y = phi, x = treatment, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_p)+
+  geom_violin(aes(x = taille , y = p, color = taille))
+```
 
 
 

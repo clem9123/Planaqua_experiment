@@ -1,4 +1,5 @@
 ################# data
+library(R2jags)
 library(arules)
 s <- s2
 
@@ -19,14 +20,18 @@ t <- merge(t,la)
 t <- data.frame(t$Tag_id, apply(t[2:7],2, function(x) ifelse(is.na(x),0,1)), t$Treatment, t$Lake)
 t <- na.omit(t)
 
-set.seed(1234)
-t <- t[sample(1:nrow(t), 100),]
+set.seed(632)
+t <- t[sample(1:nrow(t), 200),]
 
 s <- s %>% filter (Tag_id %in% t$t.Tag_id)
 t <- t %>% arrange(t.Tag_id)
 s <- s %>% arrange(Tag_id)
 
-s_group <- data.frame(apply(s[2:7], 2, function(x) discretize(x,method = "fixed",breaks = c(0,100,125,150,175,200,300), labels= c(1,2,3,4,5,6))))
+size_break <- c(0,100,125,150,175,200,300)
+s_group <- data.frame(apply(s[2:7], 2, 
+    function(x) discretize(x,method = "fixed",
+                           breaks = size_break, 
+                           labels= c(1:(length(size_break)-1)))))
 s_group [] <- apply(s_group, 2, as.numeric)
 
 CH <- as.matrix(t[2:7])
@@ -49,10 +54,12 @@ jags.data <- list(y = CH,
                   size = as.matrix(s[2:7]*10^-2),
                   size_group = s_group,
                   Treatment = t$t.Treatment,
+                  Lake = t$t.Lake,
                   f = apply(CH, 1, get.first), 
                   nind = nrow(CH), 
                   noccas = ncol(CH),
                   ni = 1000,
+                  n_size = length(size_break)-1,
                   zi = z.inits(CH))
 
 ############################ Model 1 phi(~1)p(~1)
@@ -259,11 +266,13 @@ CJS_treatment_maturity <- jags.parallel(data = jags.data,
 
 save(CJS_treatment_maturity, file = "R/object/CJS_treatment_maturity.RData")
 
+
+
 ######################################## Model taille discrete
 
 
 inits <- function(){
-  list(phi= runif(6,0.4,0.8), p = runif(6,0.2,0.8))
+  list(phi= runif(n_size,0,1), p = runif(n_size,0,1), z =zi) #
 }
 
 parameters = c("phi", "p")
@@ -273,21 +282,100 @@ cjs_group_taille <- function() {
   for (i in 1:nind){
     z[i,f[i]] <- 1
     for (t in (f[i]+1):noccas){
-      z[i,t] ~ dbern(phi[size_group[i,t]]*z[i,t-1])
-      y[i,t] ~ dbern(p[size_group[i,t]]*z[i,t])
+      z[i,t] ~ dbern(phi[size_group[i,t]]*z[i,t-1])#
+      y[i,t] ~ dbern(p[size_group[i,t]]*z[i,t])#
     }
   }
   #prior
-  for (gs in 1:6){
+  for (gs in 1:n_size){
     p[gs] ~ dunif(0,1)
     phi[gs] ~ dunif(0,1)
   }
 }
+
 
 CJS_group_taille <- jags.parallel(data = jags.data,
                                   inits = inits,
                                   parameters.to.save = parameters,
                                   model.file = cjs_group_taille,
                                   n.chains = 4,
-                                  jags.seed = 143,
                                   n.iter = ni)
+
+######################################## Model taille discrete
+
+
+inits <- function(){
+  list(p= runif(n_size,0.1,0.9), 
+       phi = matrix(ncol = 4, runif(4*n_size,0.1,0.9)),
+       z = zi)
+}
+
+parameters = c("phi", "p")
+
+cjs_group_taille_tr <- function() {
+  #likelihood
+  for (i in 1:nind){
+    z[i,f[i]] <- 1
+    for (t in (f[i]+1):noccas){
+      z[i,t] ~ dbern(phi[size_group[i,t-1], Treatment[i]]*z[i,t-1])
+      y[i,t] ~ dbern(p[size_group[i,t]]*z[i,t])
+    }
+  }
+  #prior
+  for (gs in 1:n_size){
+      p[gs] ~ dunif(0,1)
+    
+    for (tr in 1:4){
+      phi[gs,tr] ~ dunif(0,1)
+    }
+  }
+}
+
+CJS_group_taille_tr <- jags.parallel(data = jags.data,
+                                       inits = inits,
+                                       parameters.to.save = parameters,
+                                       model.file = cjs_group_taille_tr,
+                                       n.chains = 4,
+                                       n.iter = ni)
+######################################## Model taille discrete
+
+
+inits <- function(){
+  list(p= array(rep(runif(1,0.1,0.9), n_size*noccas*16), c(n_size,noccas,16)), 
+       phi = matrix(ncol = 4, runif(4*n_size,0.1,0.9)),
+       z = zi)
+}
+
+parameters = c("phi", "p")
+
+cjs_group_taille_tr_p <- function() {
+  #likelihood
+  for (i in 1:nind){
+    z[i,f[i]] <- 1
+    for (t in (f[i]+1):noccas){
+      z[i,t] ~ dbern(phi[size_group[i,t-1], Treatment[i]]*z[i,t-1])
+      y[i,t] ~ dbern(p[size_group[i,t],t, Lake[i]]*z[i,t])
+    }
+  }
+  #prior
+  for (gs in 1:n_size){
+    for (t in 1:noccas){
+      for (l in 1:16){
+        p[gs,t,l] ~ dunif(0,1)
+      }
+    }
+    
+    for (tr in 1:4){
+      phi[gs,tr] ~ dunif(0,1)
+    }
+  }
+}
+
+CJS_group_taille_tr_p <- jags.parallel(data = jags.data,
+                                  inits = inits,
+                                  parameters.to.save = parameters,
+                                  model.file = cjs_group_taille_tr_p,
+                                  n.chains = 4,
+                                  n.iter = ni)
+
+###################################### 
