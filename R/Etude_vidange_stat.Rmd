@@ -42,6 +42,29 @@ summary(BDD_vid)
 ```
 
 ```{r}
+BDD_vid <- merge(BDD_vid,BDD_vid %>% group_by(Lake, Year) %>% summarize(density = n()))
+```
+
+```{r}
+size_break <- c(0,100,125,150,175,200,300)
+BDD_vid <- BDD_vid %>% mutate(s_group = discretize(BDD_vid$Size,method = "fixed",
+                           breaks = size_break, 
+                           labels= c(1:(length(size_break)-1))))
+head(BDD_vid)
+```
+
+```{r}
+size_break <- c(0,175,300)
+BDD_p_bis <- BDD_p %>% mutate(s_group = discretize(BDD_p$Size,method = "fixed",
+                           breaks = size_break, 
+                           labels= c("NPperch","NGperch")))
+Density <- BDD_p_bis %>% filter (s_group == "NPperch") %>% group_by(Year,Lake) %>% summarize(NPperch = n())
+Density <- Density %>% merge(BDD_p_bis %>% filter (s_group == "NGperch") %>% group_by(Year,Lake) %>% summarize(NGperch = n()), all = T, fill = 0)
+Density <- Density %>% merge(BDD_g %>% gr)
+head(Density)
+```
+
+```{r}
 ggplot(BDD_vid)+
   geom_bar(aes(x = Year, fill = Tag_year))
 
@@ -342,7 +365,7 @@ summary(model_pc)
 t <- BDD_vid %>% filter(Year == "2022") %>% mutate(catch_2021 = as.numeric(catch_2021),
                                                    Size = 10^-2*Size,
                                                    Size_2 = Size^2)
-model_pc <- glm(catch_2021 ~ Size + Size_2 + Treatment, family = "binomial", t)
+model_pc <- glmer(catch_2021 ~ Size + Size_2 + density + (1|Lake), family = "binomial", t)
 summary(model_pc)
 ```
 
@@ -397,6 +420,27 @@ ggplot()+
 ```
 ```{r}
 summary(model_phi2)
+```
+
+```{r}
+t <- BDD_vid %>% filter(Year == "2021") %>% mutate(survie = as.numeric(survie),
+                                                   Size = Size,
+                                                   Size_2 = Size^2)
+model_phi <- glm(survie ~ Size + density, family = "binomial", t)
+summary(model_phi)
+```
+
+```{r}
+ggplot(BDD_vid %>% filter(Year == "2022"))+
+  geom_point(aes(x = Lake,y = density, color = s_group))+
+  facet_wrap(~Treatment)
+
+
+ggplot(BDD_vid %>% filter (Year == "2022") %>% group_by(Lake, Treatment, s_group) %>% summarize(density = n()))+
+  geom_col(stat = "identity",position = "fill",aes (y = density,  x = Lake, fill = s_group))+
+  facet_wrap(~Treatment, scales = "free_x")+
+  scale_fill_brewer(palette = "Paired")+
+  theme_bw ()
 ```
 
 ```{r}
