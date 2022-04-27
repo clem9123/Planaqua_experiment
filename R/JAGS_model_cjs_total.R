@@ -58,7 +58,7 @@ jags.data <- list(y = CH,
                   f = apply(CH, 1, get.first), 
                   nind = nrow(CH), 
                   noccas = ncol(CH),
-                  ni = 5000,
+                  ni = 500,
                   n_size = length(size_break)-1,
                   zi = z.inits(CH))
 
@@ -494,7 +494,7 @@ inits <- function(){
 
 parameters = c("phi", "p")
 
-cjs_group_taille_trcorrect <- function() {
+cjs_group_taille_trtcorrect <- function() {
   #likelihood
   for (i in 1:nind){
     z[i,f[i]] <- 1
@@ -522,11 +522,63 @@ cjs_group_taille_trcorrect <- function() {
   }
 }
 
-CJS_group_taille_trcorrect <- jags.parallel(data = jags.data,
+CJS_group_taille_trtcorrect <- jags.parallel(data = jags.data,
                                               inits = inits,
                                               parameters.to.save = parameters,
-                                              model.file = cjs_group_taille_trcorrect,
+                                              model.file = cjs_group_taille_trtcorrect,
                                               n.chains = 4,
                                               n.iter = ni)
+
+save(CJS_group_taille_trtcorrect, file = "R/object/CJS_group_taille_trtcorrect.RData")
+
+######################################## Model taille discrete
+
+
+inits <- function(){
+  list(p= runif(n_size), 
+       phi = array(rep(runif(1,0.1,0.9), n_size*4), c(n_size,4)),
+       z = zi)
+}
+
+parameters = c("phi", "p","N")
+
+cjs_group_taille_trcorrect <- function() {
+  #likelihood
+  for (i in 1:nind){
+    z[i,f[i]] <- 1
+    for (t in (f[i]+1):noccas){
+      z[i,t] ~ dbern(phi_aux[size_group[i,t-1],t-1, Treatment[i]]*z[i,t-1])
+      y[i,t] ~ dbern(p[size_group[i,t]]*z[i,t])
+    }
+  }
+  #prior and constraints
+  for (gs in 1:n_size){
+    p[gs] ~ dunif(0,1)
+  }
+  for (gs in 1:n_size){
+    for (tr in 1:4){
+      phi[gs, tr] ~ dunif(0,1)
+    }
+    for (t in 1:2){
+      phi_aux[gs,t,1] <- phi[gs,1]
+      phi_aux[gs,t,3] <- phi[gs,1]
+      
+      phi_aux[gs,t,2] <- phi[gs,1]
+      phi_aux[gs,t,4] <- phi[gs,3]
+    }
+    for (t in 3:(noccas-1)){
+      for (tr in 1:4){
+        phi_aux[gs,t,tr] <- phi[gs,tr]
+      }
+    }
+  }
+}
+
+CJS_group_taille_trcorrect <- jags.parallel(data = jags.data,
+                                            inits = inits,
+                                            parameters.to.save = parameters,
+                                            model.file = cjs_group_taille_trcorrect,
+                                            n.chains = 4,
+                                            n.iter = ni)
 
 save(CJS_group_taille_trcorrect, file = "R/object/CJS_group_taille_trcorrect.RData")

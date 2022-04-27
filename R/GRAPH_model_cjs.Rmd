@@ -359,12 +359,12 @@ for (i in 1:6){
   for (t in 1:5){
     for (l in 1:16){
       tbl_p2 <- rbind(tbl_p2, 
-               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][1:1000,paste("p[",as.character(i),",",as.character(t),",",as.character(l),"]", sep = "")],i,t,l))
+               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][,paste("p[",as.character(i),",",as.character(t),",",as.character(l),"]", sep = "")],i,t,l))
     }
   
     for (tr in 1:4){
     tbl_phi2 <- rbind(tbl_phi2, 
-               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][1:1000,paste("phi[",as.character(i),",",as.character(t),",",as.character(tr),"]", sep = "")],i,t,tr))
+               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][,paste("phi[",as.character(i),",",as.character(t),",",as.character(tr),"]", sep = "")],i,t,tr))
     }
   }
 }
@@ -404,25 +404,24 @@ tbl_phi2 = data.frame()
 #for (n in 1:4){
 for (i in 1:4){
   tbl_p2 <- rbind(tbl_p2, 
-               data.frame(as.mcmc(CJS_group_taille_trcorrect)[[1]][1:200,paste("p[",as.character(i),"]", sep = "")],i))
+               data.frame(as.mcmc(CJS_group_taille_trcorrect)[[1]][,paste("p[",as.character(i),"]", sep = "")],i))
   for (t in 1:5){
     for (tr in 1:4){
     tbl_phi2 <- rbind(tbl_phi2, 
-               data.frame(as.mcmc(CJS_group_taille_trcorrect)[[1]][1:200,paste("phi[",as.character(i),",",as.character(t),",",as.character(tr),"]", sep = "")],i,t,tr))
+               data.frame(as.mcmc(CJS_group_taille_trcorrect)[[1]][,paste("phi[",as.character(i),",",as.character(tr),"]", sep = "")],i,tr)) #",",as.character(t),
     }
   }
 }
 #}
-colnames(tbl_phi2) <- c("phi","taille","year","treatment")
+colnames(tbl_phi2) <- c("phi","taille","treatment")
 tbl_phi2 <- tbl_phi2 %>% mutate(taille = factor (taille),
-                              treatment = factor(treatment),
-                              year = factor(year))
+                              treatment = factor(treatment))
 colnames(tbl_p2) <- c("p","taille")
 tbl_p2 <- tbl_p2 %>% mutate(taille = factor (taille))
 
 
 ggplot(tbl_phi2)+
-  geom_violin(aes(y = phi, x = year, color = treatment))+
+  geom_violin(aes(y = phi, x = treatment, color = treatment))+
   facet_wrap(~taille)
 
 ggplot(tbl_phi2)+
