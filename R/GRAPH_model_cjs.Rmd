@@ -266,7 +266,7 @@ ggplot(tbl_p)+
 
 ```{r}
 print(CJS_group_taille_tr_p)
-autocorr.plot(CJS_group_taille_tr, ask = F)
+#autocorr.plot(CJS_group_taille_tr, ask = F)
 #traceplot(CJS_group_taille_tr, ask = F)
 
 tbl_p = data.frame()
@@ -275,13 +275,13 @@ for (i in 1:6){
   for (t in 1:6){
     for (l in 1:16){
       tbl_p <- rbind(tbl_p, 
-               data.frame(as.mcmc(CJS_group_taille_tr_p)[[1]][,paste("p[",as.character(i),",",as.character(t),",",as.character(l),"]", sep = "")],i,t,l))
+               data.frame(as.mcmc(CJS_group_taille_tr_p)[[1]][1:200,paste("p[",as.character(i),",",as.character(t),",",as.character(l),"]", sep = "")],i,t,l))
     }
   }
   
   for (j in 1:4){
     tbl_phi <- rbind(tbl_phi, 
-               data.frame(as.mcmc(CJS_group_taille_tr_p)[[1]][,paste("phi[",as.character(i),",",as.character(j),"]", sep = "")],i,j))
+               data.frame(as.mcmc(CJS_group_taille_tr_p)[[1]][1:200,paste("phi[",as.character(i),",",as.character(j),"]", sep = "")],i,j))
   }
 }
 colnames(tbl_phi) <- c("phi","taille","treatment")
@@ -359,12 +359,12 @@ for (i in 1:6){
   for (t in 1:5){
     for (l in 1:16){
       tbl_p2 <- rbind(tbl_p2, 
-               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][,paste("p[",as.character(i),",",as.character(t),",",as.character(l),"]", sep = "")],i,t,l))
+               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][1:200,paste("p[",as.character(i),",",as.character(t),",",as.character(l),"]", sep = "")],i,t,l))
     }
   
     for (tr in 1:4){
     tbl_phi2 <- rbind(tbl_phi2, 
-               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][,paste("phi[",as.character(i),",",as.character(t),",",as.character(tr),"]", sep = "")],i,t,tr))
+               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][1:200,paste("phi[",as.character(i),",",as.character(t),",",as.character(tr),"]", sep = "")],i,t,tr))
     }
   }
 }

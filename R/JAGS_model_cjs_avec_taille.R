@@ -119,7 +119,7 @@ CJS_taille1 <- jags.parallel(data = jags.data,
 #autocorr.plot(CJS_taille, ask = F)
 #traceplot(CJS_taille, ask = F)
 
-#save(CJS_taille2, file = "R/object/CJS_taille2.RData")
+save(CJS_taille1, file = "R/object/CJS_taille1.RData")
 
 ##################### Model phi(~taille)p(~taille)
 
@@ -174,6 +174,8 @@ CJS_taille3 <- jags.parallel(data = jags.data,
                              model.file = cjs_taille3,
                              n.chains = 3,
                              n.iter = ni)
+
+save(CJS_taille3, file = "R/object/CJS_taille3.RData")
 
 ##################### Model phi(~taille)p(~taille)
 

@@ -58,7 +58,7 @@ jags.data <- list(y = CH,
                   f = apply(CH, 1, get.first), 
                   nind = nrow(CH), 
                   noccas = ncol(CH),
-                  ni = 100,
+                  ni = 5000,
                   n_size = length(size_break)-1,
                   zi = z.inits(CH))
 
@@ -408,7 +408,7 @@ cjs_group_taille_trt_p <- function() {
   }
   #prior
   for (gs in 1:n_size){
-    for (t in 1:noccas-1){
+    for (t in 1:(noccas-1)){
       for (tr in 1:4){
       phi[gs,t,tr] ~ dunif(0,1)
       }
