@@ -236,8 +236,8 @@ table(unlist(s_group))
 
 ```{r}
 print(CJS_group_taille_tr)
-autocorr.plot(CJS_group_taille_tr, ask = F)
-traceplot(CJS_group_taille_tr, ask = F)
+#autocorr.plot(CJS_group_taille_tr, ask = F)
+#traceplot(CJS_group_taille_tr, ask = F)
 
 tbl_p = data.frame()
 tbl_phi = data.frame()
@@ -264,8 +264,135 @@ ggplot(tbl_p)+
   geom_violin(aes(x = taille , y = p, color = taille))
 ```
 
+```{r}
+print(CJS_group_taille_tr_p)
+autocorr.plot(CJS_group_taille_tr, ask = F)
+#traceplot(CJS_group_taille_tr, ask = F)
+
+tbl_p = data.frame()
+tbl_phi = data.frame()
+for (i in 1:6){
+  for (t in 1:6){
+    for (l in 1:16){
+      tbl_p <- rbind(tbl_p, 
+               data.frame(as.mcmc(CJS_group_taille_tr_p)[[1]][,paste("p[",as.character(i),",",as.character(t),",",as.character(l),"]", sep = "")],i,t,l))
+    }
+  }
+  
+  for (j in 1:4){
+    tbl_phi <- rbind(tbl_phi, 
+               data.frame(as.mcmc(CJS_group_taille_tr_p)[[1]][,paste("phi[",as.character(i),",",as.character(j),"]", sep = "")],i,j))
+  }
+}
+colnames(tbl_phi) <- c("phi","taille","treatment")
+tbl_phi <- tbl_phi %>% mutate(taille = factor (taille),
+                              treatment = factor(treatment))
+colnames(tbl_p) <- c("p","taille","year","Lake")
+tbl_p <- tbl_p %>% mutate(taille = factor (taille),
+                          year = factor(year),
+                          Lake = factor(Lake))
 
 
+ggplot(tbl_phi)+
+  geom_boxplot(aes(y = phi, x = treatment, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_p)+
+  geom_boxplot(aes(x = year , y = p))+
+  facet_wrap(~Lake)
+```
+
+```{r}
+print(CJS_group_taille_trt_p)
+#autocorr.plot(CJS_group_taille_tr_p_t, ask = F)
+#traceplot(CJS_group_taille_tr_p_t, varname = c("phi"),ask = F)
+
+tbl_p2 = data.frame()
+tbl_phi2 = data.frame()
+for (i in 1:6){
+  for (t in 1:5){
+    for (l in 1:16){
+      tbl_p2 <- rbind(tbl_p2, 
+               data.frame(as.mcmc(CJS_group_taille_trt_p)[[1]][1:200,paste("p[",as.character(i),",",as.character(t),",",as.character(l),"]", sep = "")],i,t,l))
+    }
+  
+    for (tr in 1:4){
+    tbl_phi2 <- rbind(tbl_phi2, 
+               data.frame(as.mcmc(CJS_group_taille_trt_p)[[1]][1:200,paste("phi[",as.character(i),",",as.character(t),",",as.character(tr),"]", sep = "")],i,t,tr))
+    }
+  }
+}
+colnames(tbl_phi2) <- c("phi","taille","year","treatment")
+tbl_phi2 <- tbl_phi2 %>% mutate(taille = factor (taille),
+                              treatment = factor(treatment),
+                              year = factor(year))
+colnames(tbl_p2) <- c("p","taille","year","Lake")
+tbl_p2 <- tbl_p2 %>% mutate(taille = factor (taille),
+                          year = factor(year),
+                          Lake = factor(Lake))
+
+
+ggplot(tbl_phi2 %>% filter(year != "1"))+
+  geom_violin(aes(y = phi, x = year, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_phi2%>% filter(year %in% c("4","5","6")))+
+  geom_density(aes(x = phi, color = taille))
+
+ggplot(tbl_phi2%>% filter(year %in% c("4","5","6")))+
+  geom_density(aes(x = phi, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_p2%>% filter(year != 1))+
+  geom_boxplot(aes(x = year , y = p))+
+  facet_wrap(~Lake)
+```
+
+```{r}
+print(CJS_group_taille_trcorrect_p)
+#autocorr.plot(CJS_group_taille_tr_p_t, ask = F)
+#traceplot(CJS_group_taille_tr_p_t, varname = c("phi"),ask = F)
+
+tbl_p2 = data.frame()
+tbl_phi2 = data.frame()
+for (i in 1:6){
+  for (t in 1:5){
+    for (l in 1:16){
+      tbl_p2 <- rbind(tbl_p2, 
+               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][,paste("p[",as.character(i),",",as.character(t),",",as.character(l),"]", sep = "")],i,t,l))
+    }
+  
+    for (tr in 1:4){
+    tbl_phi2 <- rbind(tbl_phi2, 
+               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][,paste("phi[",as.character(i),",",as.character(t),",",as.character(tr),"]", sep = "")],i,t,tr))
+    }
+  }
+}
+colnames(tbl_phi2) <- c("phi","taille","year","treatment")
+tbl_phi2 <- tbl_phi2 %>% mutate(taille = factor (taille),
+                              treatment = factor(treatment),
+                              year = factor(year))
+colnames(tbl_p2) <- c("p","taille","year","Lake")
+tbl_p2 <- tbl_p2 %>% mutate(taille = factor (taille),
+                          year = factor(year),
+                          Lake = factor(Lake))
+
+
+ggplot(tbl_phi2)+
+  geom_violin(aes(y = phi, x = year, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_phi2%>% filter(year %in% c("4","5","6")))+
+  geom_density(aes(x = phi, color = taille))
+
+ggplot(tbl_phi2%>% filter(year %in% c("4","5","6")))+
+  geom_density(aes(x = phi, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_p2%>% filter(year != 1))+
+  geom_boxplot(aes(x = year , y = p))+
+  facet_wrap(~Lake)
+```
 
 
 
