@@ -7,12 +7,26 @@ output: html_notebook
 ```{r}
 ggplot(subset(BDD_g, Tag_id %in% subset(BDD_a, Year == "2016" & Size > 120)$Tag_id), aes(x = Year, y  = Size, color = Treatment))+
   geom_line(aes(group = Tag_id))+
-  geom_point()
+  geom_point+
+  color_brewer_scale(palette ="Set2")
 
-ggplot(BDD_a, aes(x = Year, y  = Size, color = Treatment))+
-  geom_line(aes(group = Tag_id))+
+ggplot(BDD_g, aes(x = Year, y  = Size, color = Treatment))+
+  geom_line(data = BDD_a, aes(group = Tag_id))+
   geom_point()+
-  facet_wrap(~ Treatment)
+  geom_point(data = BDD_g %>% filter (Tag_id %in% c("juvenile")), aes(color = "juvenile"))+
+  scale_colour_manual(values = c("1" = "indianred1","2" = "deepskyblue2","3" = "chartreuse3","4" = "mediumorchid3","juvenile"="grey"))+
+  facet_wrap(~ Treatment)+
+  labs ( x = "Size (mm)", y = "Year")
+  #labs(title = "Evolution of roachs size by year of capture")
+
+ggplot(BDD_g)+
+  geom_bar(aes(x = Year, fill = Tag_year),position = position_stack(reverse = TRUE))+
+  scale_fill_brewer(palette = "YlOrBr", direction = -1)
+
+ggplot(BDD_g %>% filter (Year == "2022"))+
+  geom_bar(aes(x = Lake, fill = Tag_year),position = position_stack(reverse = TRUE))+
+  scale_fill_brewer(palette = "YlOrBr", direction = -1)+
+  facet_wrap(~Treatment, scales= "free_x")
 
 ggplot(BDD_p %>% filter(Year == "2022"))+
   geom_bar(aes(x = Treatment, fill = Treatment))
@@ -38,5 +52,16 @@ ggplot(BDD_g)+
 ```{r}
 ggplot(BDD_p %>% filter(Tag_year == "2016" & Year == "2022"))+
   geom_density(aes(x = Size, color = Treatment))
+```
+
+
+```{r}
+colnames(BDD_g)
+head(BDD_g %>% select(Date, Lake, Tag_id, Obs_status, Size, Weight, Treatment))
+```
+
+```{r}
+nrow(BDD_g %>% filter (Tag_year == "2017" & Year == "2017"))
+nrow(BDD_g %>% filter (Tag_year == "2016" & Year == "2016"))
 ```
 

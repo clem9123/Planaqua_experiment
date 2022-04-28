@@ -437,10 +437,10 @@ ggplot(BDD_vid %>% filter(Year == "2022"))+
 
 
 ggplot(BDD_vid %>% filter (Year == "2022") %>% group_by(Lake, Treatment, s_group) %>% summarize(density = n()))+
-  geom_col(stat = "identity",position = "fill",aes (y = density,  x = Lake, fill = s_group))+
+  geom_col(stat = "identity",aes (y = density,  x = Lake, fill = s_group))+ #,position = "fill"
   facet_wrap(~Treatment, scales = "free_x")+
-  scale_fill_brewer(palette = "Paired")+
-  theme_bw ()
+  scale_fill_brewer(palette = "YlOrBr")#+
+  #theme_be ()
 ```
 
 ```{r}

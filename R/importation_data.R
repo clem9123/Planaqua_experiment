@@ -49,8 +49,8 @@ BDD_g <- BDD_f %>% filter(Species == "roach" & !(Method_capture %in% c("creel"))
 
 #Ajout de la colonne Tag_year 
 BDD_g <- BDD_g %>% group_by(Tag_id) %>% 
-  mutate(Tag_year = ifelse(Tag_id %in%  c("juvenile","no_tag"), NA, min(as.character(Year)))) %>% 
-  ungroup()
+  mutate(Tag_year = ifelse(Tag_id == "juvenile", "juvenile", min(as.character(Year)))) %>% 
+  ungroup() %>% mutate(Tag_year = ifelse(Tag_id == "no_tag","2022", Tag_year))
 
 # remettre les bonnes captures
 BDD_g <- BDD_g %>% mutate (Obs_status = case_when(Tag_year %in% c("no_tag","juvenile")~ "capture",
@@ -61,7 +61,7 @@ BDD_g <- BDD_g %>% mutate (Obs_status = case_when(Tag_year %in% c("no_tag","juve
 BDD_p <- BDD_f %>% filter(Species == "perch" & !(Method_capture %in% c("creel")) &
                       !(Session_capture %in% c("B","Z")))
 BDD_p <- BDD_p %>% group_by(Tag_id) %>% 
-  mutate(Tag_year = ifelse(Tag_id %in%  c("juvenile","no_tag"), NA, min(as.character(Year)))) %>% 
+  mutate(Tag_year = ifelse(Tag_id %in%  c("juvenile","no_tag"), "juvenile", min(as.character(Year)))) %>% 
   ungroup()
 
 BDD_p <- BDD_p %>% mutate (Obs_status = case_when(Tag_year %in% c("no_tag","juvenile")~ "capture",
