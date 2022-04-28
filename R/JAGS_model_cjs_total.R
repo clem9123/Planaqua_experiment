@@ -20,8 +20,8 @@ t <- merge(t,la)
 t <- data.frame(t$Tag_id, apply(t[2:7],2, function(x) ifelse(is.na(x),0,1)), t$Treatment, t$Lake)
 t <- na.omit(t)
 
-#set.seed(632)
-#t <- t[sample(1:nrow(t), 500),]
+set.seed(632)
+t <- t[sample(1:nrow(t), 500),]
 
 s <- s %>% filter (Tag_id %in% t$t.Tag_id)
 t <- t %>% arrange(t.Tag_id)
@@ -58,7 +58,7 @@ jags.data <- list(y = CH,
                   f = apply(CH, 1, get.first), 
                   nind = nrow(CH), 
                   noccas = ncol(CH),
-                  ni = 10000,
+                  ni = 1000,
                   n_size = length(size_break)-1,
                   zi = z.inits(CH))
 
@@ -294,16 +294,16 @@ cjs_group_taille <- function() {
 }
 
 
-CJS_group_taille <- jags.parallel(data = jags.data,
+CJS_group_taille <- jags(data = jags.data,
                                   inits = inits,
                                   parameters.to.save = parameters,
                                   model.file = cjs_group_taille,
-                                  n.chains = 4,
-                                  n.iter = ni)
+                                  n.chains = 2,
+                                  n.iter = 500)
 
 save(CJS_group_taille, file = "R/object/CJS_group_taille.RData")
 
-######################################## Model taille discrete
+######################################## Model taille discrete 1
 
 
 inits <- function(){
@@ -333,12 +333,12 @@ cjs_group_taille_tr <- function() {
   }
 }
 
-CJS_group_taille_tr <- jags.parallel(data = jags.data,
+CJS_group_taille_tr <- jags(data = jags.data,
                                        inits = inits,
                                        parameters.to.save = parameters,
                                        model.file = cjs_group_taille_tr,
-                                       n.chains = 4,
-                                       n.iter = ni)
+                                       n.chains = 2,
+                                       n.iter = 500)
 
 save(CJS_group_taille_tr, file = "R/object/CJS_group_taille_tr.RData")
 
@@ -540,7 +540,7 @@ inits <- function(){
        z = zi)
 }
 
-parameters = c("phi", "p","N")
+parameters = c("phi", "p")
 
 cjs_group_taille_trcorrect <- function() {
   #likelihood
@@ -621,7 +621,7 @@ CJS_group_taille_ltcorrect <- jags.parallel(data = jags.data,
                                              parameters.to.save = parameters,
                                              model.file = cjs_group_taille_ltcorrect,
                                              n.chains = 4,
-                                             n.iter = 10000)
+                                             n.iter = ni)
 
 save(CJS_group_taille_ltcorrect, file = "R/object/CJS_group_taille_ltcorrect.RData")
 

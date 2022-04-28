@@ -23,47 +23,47 @@ ggplot(BDD_g, aes(x = Year, y = Size))+
 
 
 
-variable_model <-  c("t0 ~ i",
-           "L ~ tr, t0 ~ i",
-           "K ~ tr, t0 ~ i",
-           "K ~ tr, L ~ tr, t0 ~ i",
-           
-           "2016 : K ~ la, L ~ la, t0 ~ i",
-           
-           "2016 : t0 ~ i",
-           "2016 : L ~ tr, t0 ~ i",
-           "2016 : K ~ tr, t0 ~ i",
-           "2016 : K ~ tr, L ~ tr, t0 ~ i",
-           
-           "2016 : K ~ tr, L ~ tr",
-           "2016 : K ~ la, L ~ la",
-           "2016 : K ~ tr + (1|la), L ~ tr + (1|la)",
-           "2016 : K ~ tr + (1|la), L ~ tr + (1|la), t0 ~ i")
+variable_model <-  c(#("t0 ~ i",
+                    # "L ~ tr, t0 ~ i",
+                    # "K ~ tr, t0 ~ i",
+                    # "K ~ tr, L ~ tr, t0 ~ i",
+                    # 
+                    # "2016 : K ~ la, L ~ la, t0 ~ i",
+                    # 
+                    # "2016 : t0 ~ i",
+                    # "2016 : L ~ tr, t0 ~ i",
+                    # "2016 : K ~ tr, t0 ~ i",
+                    # "2016 : K ~ tr, L ~ tr, t0 ~ i",
+                     
+                     "2016 : K ~ tr, L ~ tr",
+                     "2016 : K ~ la, L ~ la",
+                     "2016 : K ~ tr + (1|la), L ~ tr + (1|la)",
+                     "2016 : K ~ tr + (1|la), L ~ tr + (1|la), t0 ~ i")
 
-nom_model <- c ("Model_g_t0i", 
-                   "Model_g_Ltr_t0i", 
-                   "Model_g_Ktr_t0i", 
-                    "Model_g_Ktr_Ltr_t0i",
-                    
-                    "Model_g_Kla_Lla_t0i_2016",
-                    
-                    "Model_g_t0i_2016",
-                    "Model_g_Ltr_t0i_2016",
-                    "Model_g_Ktr_t0i_2016", 
-                    "Model_g_Ktr_Ltr_t0i_2016",
+nom_model <- c (#"Model_g_t0i", 
+                #"Model_g_Ltr_t0i", 
+                #"Model_g_Ktr_t0i", 
+                #"Model_g_Ktr_Ltr_t0i",
+                #
+                #"Model_g_Kla_Lla_t0i_2016",
+                #
+                #"Model_g_t0i_2016",
+                #"Model_g_Ltr_t0i_2016",
+                #"Model_g_Ktr_t0i_2016", 
+                #"Model_g_Ktr_Ltr_t0i_2016",
                     
                     # "Model_g_2016",
                     
-                    "Model_g_Ktr_Ltr_2016",
+                "Model_g_Ktr_Ltr_2016",
                     # "Model_g_Ktr_2016",
                     # "Model_g_Ltr_2016",
                     
                     # "Model_g_Lla_2016",
                     # "Model_g_Kla_2016",
-                    "Model_g_Kla_Lla_2016",
-                    
-                    "Model_g_Ktrla_Ltrla_2016",
-                    "Model_g_Ktrla_Ltrla_t0i_2016")
+                "Model_g_Kla_Lla_2016",
+                
+                "Model_g_Ktrla_Ltrla_2016",
+                "Model_g_Ktrla_Ltrla_t0i_2016")
 
 
 load ("object/Model_g_t0i.RData")
@@ -87,26 +87,26 @@ load("object/Model_g_Ktr_Ltr_2016.RData")
 load("object/Model_g_Ktrla_Ltrla_2016.RData")
 load("object/Model_g_Kla_Lla_2016.RData")
 
-list_model <- list (Model_g_t0i, 
-                    Model_g_Ltr_t0i, 
-                    Model_g_Ktr_t0i, 
-                    Model_g_Ktr_Ltr_t0i,
+list_model <- list (#Model_g_t0i, 
+                    #Model_g_Ltr_t0i, 
+                    #Model_g_Ktr_t0i, 
+                    #Model_g_Ktr_Ltr_t0i,
                     
-                    Model_g_Kla_Lla_t0i_2016,
+                    #Model_g_Kla_Lla_t0i_2016,
                     
-                    Model_g_t0i_2016,
-                    Model_g_Ltr_t0i_2016,
-                    Model_g_Ktr_t0i_2016, 
-                    Model_g_Ktr_Ltr_t0i_2016,
+                    #Model_g_t0i_2016,
+                    #Model_g_Ltr_t0i_2016,
+                    #Model_g_Ktr_t0i_2016, 
+                    #Model_g_Ktr_Ltr_t0i_2016,
                     
-                    # Model_g_2016
+                      # Model_g_2016
                     
                     Model_g_Ktr_Ltr_2016,
-                    # Model_g_Ktr_2016,
-                    # Model_g_Ltr_2016,
+                      # Model_g_Ktr_2016,
+                      # Model_g_Ltr_2016,
                     
-                    # Model_g_Lla_2016,
-                    # Model_g_Kla_2016,
+                      # Model_g_Lla_2016,
+                      # Model_g_Kla_2016,
                     Model_g_Kla_Lla_2016,
                     
                     Model_g_Ktrla_Ltrla_2016,
@@ -344,6 +344,10 @@ ggplot(param)+
   geom_density(aes(x = Kla.13.), color = "black")+
   geom_density(aes(x = Kla.10.), color = "black")+
   geom_density(aes(x = Kla.15.), color = "black")
+```
+
+```{r}
+ 
 ```
 
 ```{r}

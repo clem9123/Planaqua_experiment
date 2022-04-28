@@ -365,12 +365,13 @@ summary(model_pc)
 t <- BDD_vid %>% filter(Year == "2022") %>% mutate(catch_2021 = as.numeric(catch_2021),
                                                    Size = 10^-2*Size,
                                                    Size_2 = Size^2)
-model_pc <- glmer(catch_2021 ~ Size + Size_2 + density + (1|Lake), family = "binomial", t)
+model_pc <- glmer(catch_2021 ~ Size + Size_2 + (1|Lake), family = "binomial", t)
 summary(model_pc)
 ```
 
 
 ```{r}
+save(BDD_vid, file = "object/BDD_vid.RData")
 x = t$Size[!is.na(t$Size)]
 ggplot()+
   geom_point(aes(y=invlogit(predict(model_pc)), x = t$Size[!is.na(t$Size)]))+

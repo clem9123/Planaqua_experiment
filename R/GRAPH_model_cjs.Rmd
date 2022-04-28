@@ -213,7 +213,7 @@ autocorr.plot(CJS_group_taille, ask = F)
 traceplot(CJS_group_taille, ask = F)
 
 tbl = data.frame()
-for (i in 1:6){
+for (i in 1:3){
   tbl <- rbind(tbl, 
                data.frame(as.mcmc(CJS_group_taille)[[1]][,paste("p[",as.character(i),"]", sep = "")],
                           as.mcmc(CJS_group_taille)[[1]][,paste("phi[",as.character(i),"]", sep = "")],
@@ -223,10 +223,10 @@ colnames(tbl) <- c("p","phi","taille")
 tbl <- tbl %>% mutate(taille = factor (taille))
 
 ggplot(tbl)+
-  geom_boxplot(aes(x = taille , y = phi, color = taille))
+  geom_violin(aes(x = taille , y = phi, color = taille))
 
 ggplot(tbl)+
-  geom_boxplot(aes(x = taille , y = p, color = taille))
+  geom_violin(aes(x = taille , y = p, color = taille))
 ```
 
 ```{r}
@@ -241,7 +241,7 @@ print(CJS_group_taille_tr)
 
 tbl_p = data.frame()
 tbl_phi = data.frame()
-for (i in 1:6){
+for (i in 1:4){
   tbl_p <- rbind(tbl_p, 
                data.frame(as.mcmc(CJS_group_taille_tr)[[1]][,paste("p[",as.character(i),"]", sep = "")],i))
   for (j in 1:4){
@@ -359,12 +359,12 @@ for (i in 1:6){
   for (t in 1:5){
     for (l in 1:16){
       tbl_p2 <- rbind(tbl_p2, 
-               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][,paste("p[",as.character(i),",",as.character(t),",",as.character(l),"]", sep = "")],i,t,l))
+               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][1:200,paste("p[",as.character(i),",",as.character(t),",",as.character(l),"]", sep = "")],i,t,l))
     }
   
     for (tr in 1:4){
     tbl_phi2 <- rbind(tbl_phi2, 
-               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][,paste("phi[",as.character(i),",",as.character(t),",",as.character(tr),"]", sep = "")],i,t,tr))
+               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][1:200,paste("phi[",as.character(i),",",as.character(t),",",as.character(tr),"]", sep = "")],i,t,tr))
     }
   }
 }
@@ -523,6 +523,11 @@ ggplot(tbl_p3)+
 ```
 
 
+```{r}
+ggplot(BDD_a)+
+  geom_density(aes(x = Size, color = Year))+
+  facet_wrap(~Tag_year)
+```
 
 
 
