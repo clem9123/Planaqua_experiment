@@ -582,3 +582,47 @@ CJS_group_taille_trcorrect <- jags.parallel(data = jags.data,
                                             n.iter = ni)
 
 save(CJS_group_taille_trcorrect, file = "R/object/CJS_group_taille_trcorrect.RData")
+
+######################################## Model taille discrete
+
+
+inits <- function(){
+  list(p= runif(n_size), 
+       phi = array(rep(runif(1,0.1,0.9), n_size*(noccas-1)*16), c(n_size,(noccas-1),16)),
+       z = zi)
+}
+
+parameters = c("phi", "p")
+
+cjs_group_taille_ltcorrect <- function() {
+  #likelihood
+  for (i in 1:nind){
+    z[i,f[i]] <- 1
+    for (t in (f[i]+1):noccas){
+      z[i,t] ~ dbern(phi[size_group[i,t-1],t-1, Treatment[i]]*z[i,t-1])
+      y[i,t] ~ dbern(p[size_group[i,t]]*z[i,t])
+    }
+  }
+  #prior
+  for (gs in 1:n_size){
+    p[gs] ~ dunif(0,1)
+  }
+  for (gs in 1:n_size){
+    for (t in 1:(noccas-1)){
+      for (tr in 1:16){
+        phi[gs,t,tr] ~ dunif(0,1)
+      }
+    }
+  }
+}
+
+CJS_group_taille_ltcorrect <- jags.parallel(data = jags.data,
+                                             inits = inits,
+                                             parameters.to.save = parameters,
+                                             model.file = cjs_group_taille_ltcorrect,
+                                             n.chains = 4,
+                                             n.iter = 10000)
+
+save(CJS_group_taille_ltcorrect, file = "R/object/CJS_group_taille_ltcorrect.RData")
+
+######################################## Model taille discrete
