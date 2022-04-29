@@ -37,8 +37,8 @@ variable_model <-  c(#("t0 ~ i",
                      
                      "2016 : K ~ tr, L ~ tr",
                      "2016 : K ~ la, L ~ la",
-                     "2016 : K ~ tr + (1|la), L ~ tr + (1|la)",
-                     "2016 : K ~ tr + (1|la), L ~ tr + (1|la), t0 ~ i")
+                     "2016 : K ~ tr + (1|la), L ~ tr + (1|la)")#,
+                     #"2016 : K ~ tr + (1|la), L ~ tr + (1|la), t0 ~ i")
 
 nom_model <- c (#"Model_g_t0i", 
                 #"Model_g_Ltr_t0i", 
@@ -62,8 +62,8 @@ nom_model <- c (#"Model_g_t0i",
                     # "Model_g_Kla_2016",
                 "Model_g_Kla_Lla_2016",
                 
-                "Model_g_Ktrla_Ltrla_2016",
-                "Model_g_Ktrla_Ltrla_t0i_2016")
+                "Model_g_Ktrla_Ltrla_2016")#,
+                #"Model_g_Ktrla_Ltrla_t0i_2016")
 
 
 load ("object/Model_g_t0i.RData")
@@ -109,8 +109,8 @@ list_model <- list (#Model_g_t0i,
                       # Model_g_Kla_2016,
                     Model_g_Kla_Lla_2016,
                     
-                    Model_g_Ktrla_Ltrla_2016,
-                    Model_g_Ktrla_Ltrla_t0i_2016)
+                    Model_g_Ktrla_Ltrla_2016)#,
+                    #Model_g_Ktrla_Ltrla_t0i_2016)
 
 ```
 
@@ -311,20 +311,21 @@ ggplot()+
 ggplot(param)+
   geom_density(aes(x = Linfla.1.), color = "red")+
   geom_density(aes(x = Linfla.8.), color = "red")+
-  geom_density(aes(x = Linfla.3.), color = "red")+
-  geom_density(aes(x = Linfla.6.), color = "red")+
-  geom_density(aes(x = Linfla.11.), color = "blue")+
-  geom_density(aes(x = Linfla.14.), color = "blue")+
+  geom_density(aes(x = Linfla.11.), color = "red")+
+  geom_density(aes(x = Linfla.14.), color = "red")+
+  geom_density(aes(x = Linfla.3.), color = "blue")+
+  geom_density(aes(x = Linfla.6.), color = "blue")+
   geom_density(aes(x = Linfla.9.), color = "blue")+
   geom_density(aes(x = Linfla.16.), color = "blue")+
   geom_density(aes(x = Linfla.2.), color = "green")+
   geom_density(aes(x = Linfla.7.), color = "green")+
-  geom_density(aes(x = Linfla.4.), color = "green")+
-  geom_density(aes(x = Linfla.5.), color = "green")+
-  geom_density(aes(x = Linfla.12.), color = "black")+
-  geom_density(aes(x = Linfla.13.), color = "black")+
+  geom_density(aes(x = Linfla.12.), color = "green")+
+  geom_density(aes(x = Linfla.13.), color = "green")+
+  geom_density(aes(x = Linfla.4.), color = "black")+
+  geom_density(aes(x = Linfla.5.), color = "black")+
   geom_density(aes(x = Linfla.10.), color = "black")+
-  geom_density(aes(x = Linfla.15.), color = "black")
+  geom_density(aes(x = Linfla.15.), color = "black")+
+  labs( x = "Linf", y = "probability density", title = "Model_g_Ktrla_Ltrla_2016")
   
 
 ggplot(param)+
@@ -343,7 +344,8 @@ ggplot(param)+
   geom_density(aes(x = Kla.12.), color = "black")+
   geom_density(aes(x = Kla.13.), color = "black")+
   geom_density(aes(x = Kla.10.), color = "black")+
-  geom_density(aes(x = Kla.15.), color = "black")
+  geom_density(aes(x = Kla.15.), color = "black")+
+  labs( x = "K", y = "probability density", title = "Model_g_Ktrla_Ltrla_2016")
 ```
 
 ```{r}
@@ -360,21 +362,39 @@ ggplot(param)+
   geom_density(aes(x = Linf.1.), color = "red")+
   geom_density(aes(x = Linf.2.), color = "blue")+
   geom_density(aes(x = Linf.3.), color = "green")+
-  geom_density(aes(x = Linf.4.), color = "black")
+  geom_density(aes(x = Linf.4.), color = "black")+
+  labs( x = "Linf", y = "probability density", title = "Model_g_Ktr_Ltr_2016")
 ggplot(param)+
   geom_density(aes(x = K.1.), color = "red")+
   geom_density(aes(x = K.2.), color = "blue")+
   geom_density(aes(x = K.3.), color = "green")+
-  geom_density(aes(x = K.4.), color = "black")
+  geom_density(aes(x = K.4.), color = "black")+
+  labs( x = "K", y = "probability density", title = "Model_g_Ktr_Ltr_2016")
 
-K = Model_g_Ktr_Ltr_2016[[2]]$mean$K
-Linf = Model_g_Ktr_Ltr_2016[[2]]$mean$Linf
+ggplot(param)+
+  geom_pointrange(aes(x =1, y = mean(Linf.1.), ymin = quantile(Linf.1.,0.125), ymax = quantile(Linf.1.,0.975)), color = "red")+
+  geom_pointrange(aes(x =2, y = mean(Linf.2.), ymin = quantile(Linf.2.,0.125), ymax = quantile(Linf.2.,0.975)), color = "blue")+
+  geom_pointrange(aes(x =3, y = mean(Linf.3.), ymin = quantile(Linf.3.,0.125), ymax = quantile(Linf.3.,0.975)), color = "green")+
+  geom_pointrange(aes(x =4, y = mean(Linf.4.), ymin = quantile(Linf.4.,0.125), ymax = quantile(Linf.4.,0.975)), color = "black")
+ggplot(param)+
+  geom_pointrange(aes(x =1, y = mean(K.1.), ymin = quantile(K.1.,0.125), ymax = quantile(K.1.,0.975)), color = "red")+
+  geom_pointrange(aes(x =2, y = mean(K.2.), ymin = quantile(K.2.,0.125), ymax = quantile(K.2.,0.975)), color = "blue")+
+  geom_pointrange(aes(x =3, y = mean(K.3.), ymin = quantile(K.3.,0.125), ymax = quantile(K.3.,0.975)), color = "green")+
+  geom_pointrange(aes(x =4, y = mean(K.4.), ymin = quantile(K.4.,0.125), ymax = quantile(K.4.,0.975)), color = "black")
+
+K = c(mean(param$K.1.),mean(param$K.2.),mean(param$K.3.),mean(param$K.4.))
+Linf = c(mean(param$Linf.1.),mean(param$Linf.2.),mean(param$Linf.3.),mean(param$Linf.4.))
 
 ggplot()+
   geom_point(aes(x = 1:8, y = K[1]*Linf[1]*exp(-K[1]*(1:8+1.3))), color = "red")+
   geom_point(aes(x = 1:8, y = K[2]*Linf[2]*exp(-K[2]*(1:8+1.3))), color = "blue")+
   geom_point(aes(x = 1:8, y = K[3]*Linf[3]*exp(-K[3]*(1:8+1.3))), color = "green")+
-  geom_point(aes(x = 1:8, y = K[4]*Linf[4]*exp(-K[4]*(1:8+1.3))))
+  geom_point(aes(x = 1:8, y = K[4]*Linf[4]*exp(-K[4]*(1:8+1.3))))+
+  labs( x = "Time (year)", y = "Mean growth", title = "Model_g_Ktr_Ltr_2016")
+```
+
+```{r}
+
 ```
 
 ```{r}
@@ -387,39 +407,42 @@ param <- data.frame(rbind(as.mcmc(Model_g_Kla_Lla_2016)[[1]],as.mcmc(Model_g_Kla
 ggplot(param)+
   geom_density(aes(x = Linf.1.), color = "red")+
   geom_density(aes(x = Linf.8.), color = "red")+
-  geom_density(aes(x = Linf.3.), color = "red")+
-  geom_density(aes(x = Linf.6.), color = "red")+
-  geom_density(aes(x = Linf.11.), color = "blue")+
-  geom_density(aes(x = Linf.14.), color = "blue")+
+  geom_density(aes(x = Linf.11.), color = "red")+
+  geom_density(aes(x = Linf.14.), color = "red")+
+  geom_density(aes(x = Linf.3.), color = "blue")+
+  geom_density(aes(x = Linf.6.), color = "blue")+
   geom_density(aes(x = Linf.9.), color = "blue")+
   geom_density(aes(x = Linf.16.), color = "blue")+
   geom_density(aes(x = Linf.2.), color = "green")+
   geom_density(aes(x = Linf.7.), color = "green")+
-  geom_density(aes(x = Linf.4.), color = "green")+
-  geom_density(aes(x = Linf.5.), color = "green")+
-  geom_density(aes(x = Linf.12.), color = "black")+
-  geom_density(aes(x = Linf.13.), color = "black")+
+  geom_density(aes(x = Linf.12.), color = "green")+
+  geom_density(aes(x = Linf.13.), color = "green")+
+  geom_density(aes(x = Linf.4.), color = "black")+
+  geom_density(aes(x = Linf.5.), color = "black")+
   geom_density(aes(x = Linf.10.), color = "black")+
-  geom_density(aes(x = Linf.15.), color = "black")
+  geom_density(aes(x = Linf.15.), color = "black")+
+  labs( x = "Linf", y = "probability density", title = "Model_g_Kla_Lla_2016")
   
 
 ggplot(param)+
   geom_density(aes(x = K.1.), color = "red")+
   geom_density(aes(x = K.8.), color = "red")+
-  geom_density(aes(x = K.3.), color = "red")+
-  geom_density(aes(x = K.6.), color = "red")+
-  geom_density(aes(x = K.11.), color = "blue")+
-  geom_density(aes(x = K.14.), color = "blue")+
+  geom_density(aes(x = K.11.), color = "red")+
+  geom_density(aes(x = K.14.), color = "red")+
+  geom_density(aes(x = K.6.), color = "blue")+
+  geom_density(aes(x = K.3.), color = "blue")+
   geom_density(aes(x = K.9.), color = "blue")+
   geom_density(aes(x = K.16.), color = "blue")+
   geom_density(aes(x = K.2.), color = "green")+
   geom_density(aes(x = K.7.), color = "green")+
-  geom_density(aes(x = K.4.), color = "green")+
-  geom_density(aes(x = K.5.), color = "green")+
-  geom_density(aes(x = K.12.), color = "black")+
-  geom_density(aes(x = K.13.), color = "black")+
+  geom_density(aes(x = K.12.), color = "green")+
+  geom_density(aes(x = K.13.), color = "green")+
+  geom_density(aes(x = K.4.), color = "black")+
+  geom_density(aes(x = K.5.), color = "black")+
   geom_density(aes(x = K.10.), color = "black")+
-  geom_density(aes(x = K.15.), color = "black")
+  geom_density(aes(x = K.15.), color = "black")+
+  labs( x = "K", y = "probability density", title = "Model_g_Kla_Lla_2016")
+
 ```
 
 # Tous les DIC des models sur 2016
@@ -428,13 +451,15 @@ ggplot(param)+
 # le danger c'est que j'ai fait tourner ceux sans la avec les poissons qui ont changés de lac mais pas de traitement donc ça peut modifier le R2 (l'augmenter plutôt) ça c'est réglé
 # maintenant comment est-ce qu'il prends en compte les effecte random et les autres ?
 
+deviance = c()
 dic = c()
 for (model in list_model){
   dic <- append(dic, model[[2]]$DIC)
+  deviance <- append(deviance, model[[2]]$mean$deviance)
 }
-DIC <- data.frame(nom_model, variable_model, dic)
+DIC <- data.frame(nom_model, variable_model, deviance, dic)
 
-colnames(DIC) <- c("model", "variable","dic")
+colnames(DIC) <- c("model", "variable","deviance","dic")
 
 DIC
 ```
@@ -444,7 +469,7 @@ DIC
 rjags::load.module('dic')
 WAIC = data.frame()
 for (Model in list_model){
-recompile(Model)
+  recompile(Model)
 samples <- jags.samples(Model$model[[1]], c("WAIC", "deviance"), type = "mean", n.iter = 200)
 
 samples$p_waic <- samples$WAIC

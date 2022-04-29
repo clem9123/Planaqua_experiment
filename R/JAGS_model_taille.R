@@ -15,8 +15,8 @@ s <- s %>% merge(la) %>% merge(tr)
 
 s <- s %>% filter (!is.na(Treatment) & !is.na(Lake))
 
-set.seed(1234)
-s <- s[sample(1:nrow(s), 200),]
+#set.seed(1234)
+#s <- s[sample(1:nrow(s), 500),]
 
 get.first <- function(x) min(which(!is.na(x)))
 f <- apply(s, 1, get.first)
@@ -25,10 +25,11 @@ jags.data <- list(y = s[2:7],
                   f = f,
                   Lake = s$Lake,
                   Treatment = s$Treatment,
-                  Lake_treatment = data.frame(Lake_treatment$Lake, Lake_treatment$Treatment),
+                  Lt = data.frame(Lake = as.numeric(as.character(Lake_treatment$Lake)), 
+                                  Treatment = as.numeric(as.character(Lake_treatment$Treatment))),
                   nind = nrow(s),
                   noccas = 6,
-                  ni = 100)
+                  ni = 1000)
 
 ################## Model 1
 
@@ -592,47 +593,3 @@ Model_g_Ktrla_Ltrla_t0i_2016 <- jags.parallel(data = jags.data,
 
 save(Model_g_Ktrla_Ltrla_t0i_2016, file = "R/object/Model_g_Ktrla_Ltrla_t0i_2016.RData")
 
-#################### Model 14
-# 2016 avec Lake variable et pas t0
-
-inits <- function(){
-  list(t0 = runif(1, 2010, 2016), 
-       K = runif(4,0,10), 
-       Kla = runif(16,0,10),
-       sdKla = runif(4,0,20),
-       Linf = runif(4,130,250), 
-       Linfla = runif(16,0,10),
-       sdLla = runif(4,0,100),
-       sd = runif(1,0,20))}
-
-parameters = c("K","Linf","sd","Kla","Linfla", "sdKla", "sdLla","t0")
-
-model_g_Ktrla_Ltrla <- function ()
-{
-  #Priors
-  sd ~ dunif(0,20)
-  t0 ~ dunif(2010,2016)
-  for(tr in 1:4){
-    Linf[tr] ~ dunif (130,250)
-    K[tr] ~ dunif(0,10)
-    sdKla[tr] ~ dunif(0,20)
-    sdLla[tr] ~ dunif(0,100)
-  }
-  for (la in 1:16){
-    Linfla[la] ~ dnorm (Linf[Lake_treatment[la,2]], 1/(sdLla[Lake_treatment[la,2]]^2))
-    Kla[la] ~ dnorm (K[Lake_treatment[la,2]], 1/(sdKla[Lake_treatment[la,2]]^2))
-  }
-  #Likelihood
-  for (i in 1:nind){
-    for (t in f[i]:noccas){
-      y[i,t] ~ dnorm(Linfla[Lake[i]]*(1-exp(-Kla[Lake[i]]*(2015+t-t0))), 1/(sd^2))
-    } # t
-  } # i
-} # func
-
-Model_g_Ktrla_Ltrla_2016 <- jags.parallel(data = jags.data,
-                                          inits = inits,
-                                          parameters.to.save = parameters,
-                                          model.file = model_g_Ktrla_Ltrla,
-                                          n.chains = 4,
-                                          n.iter = ni)
