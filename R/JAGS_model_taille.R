@@ -15,8 +15,8 @@ s <- s %>% merge(la) %>% merge(tr)
 
 s <- s %>% filter (!is.na(Treatment) & !is.na(Lake))
 
-#set.seed(1234)
-#s <- s[sample(1:nrow(s), 500),]
+set.seed(1234)
+s <- s[sample(1:nrow(s), 500),]
 
 get.first <- function(x) min(which(!is.na(x)))
 f <- apply(s, 1, get.first)

@@ -20,14 +20,14 @@ t <- merge(t,la)
 t <- data.frame(t$Tag_id, apply(t[2:7],2, function(x) ifelse(is.na(x),0,1)), t$Treatment, t$Lake)
 t <- na.omit(t)
 
-set.seed(632)
-t <- t[sample(1:nrow(t), 500),]
+#set.seed(632)
+#t <- t[sample(1:nrow(t), 500),]
 
 s <- s %>% filter (Tag_id %in% t$t.Tag_id)
 t <- t %>% arrange(t.Tag_id)
 s <- s %>% arrange(Tag_id)
 
-size_break <- c(0,120,140,180,300)
+size_break <- c(0,120,180,300)
 s_group <- data.frame(apply(s[2:7], 2, 
     function(x) discretize(x,method = "fixed",
                            breaks = size_break, 
@@ -38,6 +38,7 @@ CH <- as.matrix(t[2:7])
 
 get.first <- function(x) min(which(x!=0))
 f <- apply(CH, 1, get.first)
+fs <- apply(s_group, 1, function(x) first(na.omit(x)))
 
 z.inits <- function(ch){
   state <- ch
@@ -50,16 +51,17 @@ z.inits <- function(ch){
   return(state)
 }
 
-jags.data <- list(y = CH,
-                  size = as.matrix(s[2:7]*10^-2),
+jags.data <- list(#y = CH,
+                  n_size = length(size_break)-1,
+                  size = as.matrix(s[2:7]),
                   size_group = s_group,
+                  #fs = fs,
                   Treatment = t$t.Treatment,
-                  Lake = t$t.Lake,
+                  #Lake = t$t.Lake,
                   f = apply(CH, 1, get.first), 
                   nind = nrow(CH), 
                   noccas = ncol(CH),
-                  ni = 1000,
-                  n_size = length(size_break)-1,
+                  ni = 100,
                   zi = z.inits(CH))
 
 ############################ Model 1 phi(~1)p(~1)
@@ -319,6 +321,8 @@ cjs_group_taille_tr <- function() {
   for (i in 1:nind){
     z[i,f[i]] <- 1
     for (t in (f[i]+1):noccas){
+      growth[i,t] ~ dbern(g[s[i,t-1]])
+      s[i,t] <- s[i,t-1] + growth[i,t]
       z[i,t] ~ dbern(phi[size_group[i,t-1], Treatment[i]]*z[i,t-1])
       y[i,t] ~ dbern(p[size_group[i,t]]*z[i,t])
     }
@@ -333,12 +337,56 @@ cjs_group_taille_tr <- function() {
   }
 }
 
-CJS_group_taille_tr <- jags(data = jags.data,
+CJS_group_taille_tr <- jags.parallel(data = jags.data,
                                        inits = inits,
                                        parameters.to.save = parameters,
                                        model.file = cjs_group_taille_tr,
                                        n.chains = 2,
                                        n.iter = 500)
+
+save(CJS_group_taille_tr, file = "R/object/CJS_group_taille_tr.RData")
+
+######################################## Model taille discrete + growth
+
+
+inits <- function(){
+  list(p= runif(n_size,0.1,0.9), 
+       phi = matrix(ncol = 4, runif(4*n_size,0.1,0.9)),
+       g = runif(3,0,1),
+       z = zi)}
+
+parameters = c("phi", "p","g")
+
+cjs_group_taille_tr <- function() {
+  #likelihood
+  for (i in 1:nind){
+    z[i,f[i]] <- 1
+    for (t in (f[i]+1):noccas){
+      growth[i,t] ~ dbern(g[size_group[i,t-1]])
+      size_group[i,t] <- size_group[i,t-1] + growth[i,t]
+      z[i,t] ~ dbern(phi[size_group[i,t], Treatment[i]]*z[i,t-1])
+      y[i,t] ~ dbern(p[size_group[i,t]]*z[i,t])
+    }
+  }
+  #prior
+  for (gs in 1:2){
+    g[gs] ~ dunif(0,1)
+  }
+  g[3] <- 0
+  for (gs in 1:n_size){
+    p[gs] ~ dunif(0,1)
+    for (tr in 1:4){
+      phi[gs,tr] ~ dunif(0,1)
+    }
+  }
+}
+
+CJS_group_taille_tr <- jags.parallel(data = jags.data,
+                            inits = inits,
+                            parameters.to.save = parameters,
+                            model.file = cjs_group_taille_tr,
+                            n.chains = 2,
+                            n.iter = 500)
 
 save(CJS_group_taille_tr, file = "R/object/CJS_group_taille_tr.RData")
 
@@ -625,4 +673,114 @@ CJS_group_taille_ltcorrect <- jags.parallel(data = jags.data,
 
 save(CJS_group_taille_ltcorrect, file = "R/object/CJS_group_taille_ltcorrect.RData")
 
-######################################## Model taille discrete
+######################################## Model taille discrete grandissement
+
+taille <- function(){
+  # Likelihood
+  for (i in 1:nind){
+    for (t in (f[i]+1):noccas){
+      size_group[i,t] ~ dcat(g[size_group[i,t-1], 1:3])
+    }
+  }
+  # prior
+  g[1,1] <- Pg[4]
+  g[1,2] <- Pg[1]
+  g[1,3] <- Pg[3]
+  g[2,1] <- Pg[5]
+  g[2,2] <- Pg[6]
+  g[2,3] <- Pg[2]
+  g[3,1] <- Pg[7]
+  g[3,2] <- Pg[8]
+  g[3,3] <- Pg[9]
+  for (i in 1:9){
+    Pg[i] ~ dunif(0,1)
+  }
+  
+}
+
+inits = function(){
+  list(Pg = runif(9,0,1))
+}
+
+parameters = c("g")
+
+Taille <- jags.parallel(data = jags.data,
+                        inits = inits,
+                        parameters.to.save = parameters,
+                        model.file = taille,
+                        n.chains = 2,
+                        n.iter = 500)
+
+
+####################################################"""
+##################################################""
+
+
+taille <- function(){
+  # Likelihood
+  for (i in 1:nind){
+    for (t in (f[i]+1):noccas){
+      size_group[i,t] ~ dcat(g[size_group[i,t-1], 1:3])
+    }
+  }
+  # prior
+  g[1,1] ~ dunif(0,1)
+  g[1,2] ~ dunif(0,1)
+  g[1,3] ~ dunif(0,1)
+  g[2,1] ~ dunif(0,1)
+  g[2,2] ~ dunif(0,1)
+  g[2,3] ~ dunif(0,1)
+  g[3,1] ~ dunif(0,1)
+  g[3,2] ~ dunif(0,1)
+  g[3,3] ~ dunif(0,1)
+  
+}
+
+inits = function(){
+  list(g = matrix(ncol = 3,runif(9,0,1)))
+}
+
+parameters = c("g")
+
+Taille <- jags.parallel(data = jags.data,
+                        inits = inits,
+                        parameters.to.save = parameters,
+                        model.file = taille,
+                        n.chains = 2,
+                        n.iter = 500)
+
+#####################################################""
+#####################################################
+
+taille <- function(){
+  # Likelihood
+  for (i in 1:nind){
+    for (t in (f[i]+1):noccas){
+      size_group[i,t] ~ dcat(g[size_group[i,t-1], 1:3])
+    }
+  }
+  # prior
+  g[1,1] ~ dunif(0,1)
+  g[1,2] ~ dunif(0,1)
+  g[1,3] ~ dunif(0,1)
+  g[2,1] ~ dunif(0,1)
+  g[2,2] ~ dunif(0,1)
+  g[2,3] ~ dunif(0,1)
+  g[3,1] ~ dunif(0,1)
+  g[3,2] ~ dunif(0,1)
+  g[3,3] ~ dunif(0,1)
+  
+}
+
+inits = function(){
+  list(g = matrix(ncol = 3,runif(9,0,1)))
+}
+
+parameters = c("g")
+
+Taille <- jags.parallel(data = jags.data,
+                        inits = inits,
+                        parameters.to.save = parameters,
+                        model.file = taille,
+                        n.chains = 2,
+                        n.iter = 500)

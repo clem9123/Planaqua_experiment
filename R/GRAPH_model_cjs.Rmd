@@ -529,8 +529,22 @@ ggplot(BDD_a)+
   facet_wrap(~Tag_year)
 ```
 
+```{r}
+print(Taille)
+traceplot(Taille, ask = F)
+autocorr.plot(Taille, ask = F)
+```
 
+```{r}
+ggplot(BDD_a %>% filter (Year == "2022"))+
+  geom_density(aes(x = Size, color = Treatment))
+```
 
+```{r}
+print(Model_multi)
+traceplot(Model_multi, ask = F)
+autocorr.plot(Model_multi, ask = F)
+```
 
 
 

@@ -1,6 +1,7 @@
 ################# data
 library(arules)
 s <- s2
+s <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Size)
 
 tr <- BDD_a %>% filter(Year != "2022") %>% group_by(Tag_id, Treatment) %>% summarize() %>% ungroup()
 mooved <- tr[duplicated(tr$Tag_id),]$Tag_id
@@ -19,8 +20,8 @@ t <- merge(t,la)
 t <- data.frame(t$Tag_id, apply(t[2:7],2, function(x) ifelse(is.na(x),0,1)), t$Treatment, t$Lake)
 t <- na.omit(t)
 
-#set.seed(123)
-#t <- t[sample(1:nrow(t), 1000),]
+set.seed(3112)
+t <- t[sample(1:nrow(t), 500),]
 
 s <- s %>% filter (Tag_id %in% t$t.Tag_id)
 t <- t %>% arrange(t.Tag_id)
@@ -46,13 +47,13 @@ z.inits <- function(ch){
 }
 
 jags.data <- list(y = CH,
-                  size = as.matrix(s[2:7]*10^-2),
+                  size = as.matrix(s[2:7]),
                   size_group = s_group,
                   Treatment = t$t.Treatment,
                   f = apply(CH, 1, get.first), 
                   nind = nrow(CH), 
                   noccas = ncol(CH),
-                  ni = 100000,
+                  ni = 100,
                   zi = z.inits(CH))
 
 
@@ -114,7 +115,7 @@ CJS_taille1 <- jags.parallel(data = jags.data,
                              parameters.to.save = parameters,
                              model.file = cjs_taille1,
                              n.chains = 3,
-                             n.iter = ni)
+                             n.iter = 500)
 #print(CJS_taille)
 #autocorr.plot(CJS_taille, ask = F)
 #traceplot(CJS_taille, ask = F)

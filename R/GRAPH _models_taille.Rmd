@@ -753,3 +753,31 @@ ggplot(BDD_a)+
   facet_wrap(~Lake)
 ```
 
+```{r}
+s_bis <- s %>% pivot_longer(cols = 2:8) %>% na.omit() %>% mutate (Lake = factor(Lake)) %>% mutate(Treatment = factor(Treatment))
+
+ggplot(s_bis)+
+  geom_line(aes(x = name, y = value, group = Tag_id, color = Lake))+
+  facet_wrap(~Lake)
+
+ggplot(s_bis)+
+  geom_line(aes(x = name, y = value, group = Tag_id, color = Treatment))+
+   scale_color_manual(values = c("1" = "red",
+                                "2"="blue",
+                                "3"="green",
+                                "4"="black"))+
+  facet_wrap(~Treatment)
+```
+
+```{r}
+print(CJS_taille1)
+traceplot(CJS_taille1, ask = F)
+autocorr.plot(CJS_taille1, ask = F)
+```
+
+```{r}
+print(Taille1)
+traceplot(Taille1, ask = F)
+autocorr.plot(Taille1, ask = F)
+```
+

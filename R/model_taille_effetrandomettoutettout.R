@@ -9,7 +9,7 @@ inits <- function(){
        Linf = runif(4,130,250), 
        Linfla = runif(16,0,10),
        sdLla = runif(4,0,100),
-       sd = runif(1,0,20))}
+       sd = runif(1,0,20))} # un peu bloqué
 
 parameters = c("K","Linf","sd","Kla","Linfla", "sdKla", "sdLla","t0")
 
@@ -41,7 +41,7 @@ Model_g_Ktrla_Ltrla_2016 <- jags.parallel(data = jags.data,
                                           parameters.to.save = parameters,
                                           model.file = model_g_Ktrla_Ltrla,
                                           n.chains = 4,
-                                          n.iter = 5000)
+                                          n.iter = ni)
 
 #################### Model 14
 # 2016 avec Lake variable et pas t0
@@ -58,7 +58,7 @@ inits <- function(){
 
 parameters = c("K","Linf","sd","Kla","Linfla", "sdKla", "sdLla","t0")
 
-model_g_Ktrla_Ltrla <- function ()
+model_g_Ktrla_Ltrla1 <- function ()
 {
   #Priors
   sd ~ dunif(0,20)
@@ -82,7 +82,7 @@ model_g_Ktrla_Ltrla <- function ()
   } # i
 } # func
 
-Model_g_Ktrla_Ltrla_2016 <- jags.parallel(data = jags.data,
+Model_g_Ktrla_Ltrla_20162 <- jags.parallel(data = jags.data,
                                           inits = inits,
                                           parameters.to.save = parameters,
                                           model.file = model_g_Ktrla_Ltrla,
