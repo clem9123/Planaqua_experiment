@@ -129,24 +129,24 @@ f <- apply(s_group, 1, get.first)
 #  return(state)
 #}
 
-zinit <- s_group
-for (i in 1:nrow(s_group)) {
-  for (j in 1:ncol(s_group)) {
-    if (j > f[i] & s_group[i,j]==4) {zinit[i,j] <- zinit[i,j-1]}
+  zinit <- s_group
+  for (i in 1:nrow(s_group)) {
+    for (j in 1:ncol(s_group)) {
+      if (j > f[i] & s_group[i,j]==4) {zinit[i,j] <- zinit[i,j-1]}
+    }
   }
-}
-for (i in 1:nrow(s_group)) {
-  for (j in 1:ncol(s_group)) {    
-    if (j <= f[i]) {zinit[i,j] <- NA}
+  for (i in 1:nrow(s_group)) {
+    for (j in 1:ncol(s_group)) {    
+      if (j <= f[i]) {zinit[i,j] <- NA}
+    }
   }
-}
-for (i in 1:nrow(s_group)) {
-  if (f[i]<4){
-  for (j in (f[i]+2):ncol(zinit)) {
-    if (zinit[i,j]<zinit[i,j-1]) {zinit[i,j] <- zinit[i,j-1]}
-  }
-}}
-zinit <- as.matrix(zinit)
+  for (i in 1:nrow(s_group)) {
+    if (f[i]<5){
+    for (j in (f[i]+2):ncol(zinit)) {
+      if (zinit[i,j]<zinit[i,j-1]) {zinit[i,j] <- zinit[i,j-1]}
+    }
+  }}
+  zinit <- as.matrix(zinit)
 
 jags.data <- list(y = s_group,
                   zi = zinit,
@@ -203,13 +203,13 @@ multievent <- function(){
   gamma[1,2] <- phi1 * psi12
   gamma[1,3] <- phi1 * psi13
   gamma[1,4] <- (1-phi1)
-  gamma[2,1] <- phi2 * psi21
-  gamma[2,2] <- phi2 * (1-psi23-psi21)
+  gamma[2,1] <- 0
+  gamma[2,2] <- phi2 * (1-psi23)
   gamma[2,3] <- phi2 * psi23
   gamma[2,4] <- (1-phi2)
-  gamma[3,1] <- phi3 * psi31
-  gamma[3,2] <- phi3 * psi32
-  gamma[3,3] <- phi3 * (1-psi31-psi32)
+  gamma[3,1] <- 0
+  gamma[3,2] <- 0
+  gamma[3,3] <- phi3
   gamma[3,4] <- (1-phi3)
   gamma[4,1] <- 0
   gamma[4,2] <- 0
@@ -217,13 +217,13 @@ multievent <- function(){
   gamma[4,4] <- 1
   
   # probabilities of y(t) given z(t)
-  omega[1,1] <- p1
-  omega[1,2] <- 0
-  omega[1,3] <- 0
+  omega[1,1] <- p1 * (1-2 * erreur)
+  omega[1,2] <- p1 * erreur
+  omega[1,3] <- p1 * erreur
   omega[1,4] <- 1-p1
   omega[2,1] <- p2 * erreur
   omega[2,2] <- p2 * (1-erreur)
-  omega[2,3] <- 0
+  omega[2,3] <- p2 * erreur
   omega[2,4] <- 1-p2
   omega[3,1] <- p3 * erreur
   omega[3,2] <- p3 * erreur
@@ -252,7 +252,7 @@ inits = function(){
        p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
        psi12 = runif(1,0,0.5),psi23 = runif(1,0,0.5),
        psi32 = runif(1,0,0.5),psi21 = runif(1,0,0.5), psi31 = dunif(1,0,0.5), psi13 = runif(1,0,0.5),
-       erreur = runif(1,0,0.4),
+       erreur = runif(1,0,0.1),
        z = zi)}
 
 parameters = c("phi1","phi2","phi3",

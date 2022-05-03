@@ -1,9 +1,6 @@
 ---
 title: "R Notebook"
 output: 
-  html_notebook: 
-    fig_width: 16
-    toc_depth: 5
 ---
 
 ```{r}
