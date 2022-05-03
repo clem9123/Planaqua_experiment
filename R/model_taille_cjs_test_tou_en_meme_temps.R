@@ -100,7 +100,7 @@ s <- merge(s,la)
 
 s <- s %>% filter(!is.na(Lake))
 
-#set.seed(2)
+#set.seed(30)
 #s <- s[sample(1:nrow(s), 200),]
 
 size_break <- c(0,120,180,300)
@@ -133,9 +133,19 @@ zinit <- s_group
 for (i in 1:nrow(s_group)) {
   for (j in 1:ncol(s_group)) {
     if (j > f[i] & s_group[i,j]==4) {zinit[i,j] <- zinit[i,j-1]}
+  }
+}
+for (i in 1:nrow(s_group)) {
+  for (j in 1:ncol(s_group)) {    
     if (j <= f[i]) {zinit[i,j] <- NA}
   }
 }
+for (i in 1:nrow(s_group)) {
+  if (f[i]<4){
+  for (j in (f[i]+2):ncol(zinit)) {
+    if (zinit[i,j]<zinit[i,j-1]) {zinit[i,j] <- zinit[i,j-1]}
+  }
+}}
 zinit <- as.matrix(zinit)
 
 jags.data <- list(y = s_group,
@@ -143,7 +153,8 @@ jags.data <- list(y = s_group,
                   f = f,
                   fs = fs,
                   nind = nrow(s_group),
-                  noccas = ncol(s_group))
+                  noccas = ncol(s_group),
+                  ni = 1000)
 
 multievent <- function(){
   
@@ -169,57 +180,59 @@ multievent <- function(){
   # -------------------------------------------------
   
   # priors
-  phi1 ~ dunif(0, 1)
-  phi2 ~ dunif(0, 1)
+  phi1 ~ dunif(0,1)
+  phi2 ~ dunif(0,1)
   phi3 ~ dunif(0,1)
   
-  psi12 ~ dunif(0, 1)
-  psi23 ~ dunif(0, 1)
+  psi12 ~ dunif(0,1)
+  psi23 ~ dunif(0,1)
   
+  psi13 ~ dunif(0,1)
   psi32 ~ dunif(0,1)
   psi21 ~ dunif(0,1)
   psi31 ~ dunif(0,1)
   
-  p1 ~ dunif(0, 1)
-  p2 ~ dunif(0, 1)
+  p1 ~ dunif(0,1)
+  p2 ~ dunif(0,1)
   p3 ~ dunif(0,1)
   
+  erreur ~ dunif(0,1)
+  
   # probabilities of state z(t+1) given z(t)
-  gamma[1,1] <- phi1 * (1-psi12)
+  gamma[1,1] <- phi1 * (1-psi12-psi13)
   gamma[1,2] <- phi1 * psi12
-  gamma[1,3] <- 0
+  gamma[1,3] <- phi1 * psi13
   gamma[1,4] <- (1-phi1)
   gamma[2,1] <- phi2 * psi21
   gamma[2,2] <- phi2 * (1-psi23-psi21)
   gamma[2,3] <- phi2 * psi23
   gamma[2,4] <- (1-phi2)
-  gamma[3,1] <- psi31
+  gamma[3,1] <- phi3 * psi31
   gamma[3,2] <- phi3 * psi32
-  gamma[3,3] <- phi3 * (1-psi32)
+  gamma[3,3] <- phi3 * (1-psi31-psi32)
   gamma[3,4] <- (1-phi3)
   gamma[4,1] <- 0
   gamma[4,2] <- 0
   gamma[4,3] <- 0
   gamma[4,4] <- 1
-    
+  
   # probabilities of y(t) given z(t)
   omega[1,1] <- p1
   omega[1,2] <- 0
   omega[1,3] <- 0
   omega[1,4] <- 1-p1
-  omega[2,1] <- 0
-  omega[2,2] <- p2
+  omega[2,1] <- p2 * erreur
+  omega[2,2] <- p2 * (1-erreur)
   omega[2,3] <- 0
   omega[2,4] <- 1-p2
-  omega[3,1] <- 0
-  omega[3,2] <- 0
-  omega[3,3] <- p3
+  omega[3,1] <- p3 * erreur
+  omega[3,2] <- p3 * erreur
+  omega[3,3] <- p3 * (1- 2*erreur)
   omega[3,4] <- 1-p3
   omega[4,1] <- 0
   omega[4,2] <- 0
   omega[4,3] <- 0
   omega[4,4] <- 1
-  
   
   # likelihood 
   for (i in 1:nind){
@@ -227,7 +240,7 @@ multievent <- function(){
     z[i,f[i]] <- fs[i]
     for (t in (f[i]+1):noccas){
       # z(t) given z(t-1)
-      z[i,t] ~ dcat(gamma[z[i,t-1],1:3])
+      z[i,t] ~ dcat(gamma[z[i,t-1],1:4])
       # y(t) given z(t)
       y[i,t] ~ dcat(omega[z[i,t],1:4])
     }
@@ -237,18 +250,58 @@ multievent <- function(){
 inits = function(){
   list(phi1 = runif(1,0,1),phi2 = runif(1,0,1),phi3 = runif(1,0,1),
        p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
-       psi12 = runif(1,0,1),psi23 = runif(1,0,1),
-       psi32 = runif(1,0,1),psi21 = runif(1,0,1), psi31 = dunif(1,0,1),
+       psi12 = runif(1,0,0.5),psi23 = runif(1,0,0.5),
+       psi32 = runif(1,0,0.5),psi21 = runif(1,0,0.5), psi31 = dunif(1,0,0.5), psi13 = runif(1,0,0.5),
+       erreur = runif(1,0,0.4),
        z = zi)}
 
 parameters = c("phi1","phi2","phi3",
                "p1","p2","p3",
                "psi12","psi21",
-               "psi32","psi21","psi31")
+               "psi32","psi21","psi31","psi13",
+               "erreur")
 
 Model_multi <- jags.parallel(data = jags.data,
                              inits = inits,
                              parameters.to.save = parameters,
                              model.file = multievent,
                              n.chains = 2,
-                             n.iter = 100)
+                             n.iter = ni)
+
+
+
+# probabilities of state z(t+1) given z(t)
+gamma[1,1] <- phi1 * (1-psi12-psi13)
+gamma[1,2] <- phi1 * psi12
+gamma[1,3] <- phi1 * psi13
+gamma[1,4] <- (1-phi1)
+gamma[2,1] <- phi2 * psi21
+gamma[2,2] <- phi2 * (1-psi23-psi21)
+gamma[2,3] <- phi2 * psi23
+gamma[2,4] <- (1-phi2)
+gamma[3,1] <- phi3 * psi31
+gamma[3,2] <- phi3 * psi32
+gamma[3,3] <- phi3 * (1-psi31-psi32)
+gamma[3,4] <- (1-phi3)
+gamma[4,1] <- 0
+gamma[4,2] <- 0
+gamma[4,3] <- 0
+gamma[4,4] <- 1
+
+# probabilities of y(t) given z(t)
+omega[1,1] <- p1
+omega[1,2] <- 0
+omega[1,3] <- 0
+omega[1,4] <- 1-p1
+omega[2,1] <- 0
+omega[2,2] <- p2
+omega[2,3] <- 0
+omega[2,4] <- 1-p2
+omega[3,1] <- p3 * erreur
+omega[3,2] <- 0
+omega[3,3] <- p3 * (1-erreur)
+omega[3,4] <- 1-p3
+omega[4,1] <- 0
+omega[4,2] <- 0
+omega[4,3] <- 0
+omega[4,4] <- 1
