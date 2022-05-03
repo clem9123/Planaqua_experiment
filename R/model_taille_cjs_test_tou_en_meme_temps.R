@@ -83,6 +83,9 @@ Taille <- jags.parallel(data = jags.data,
 
 #####################################
 #####################################
+
+old <- Sys.time()
+
 s <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Size)
 
 tr <- BDD_a %>% filter(Year != "2022") %>% group_by(Tag_id, Treatment) %>% summarize() %>% ungroup()
@@ -117,66 +120,63 @@ s_group <- data.frame(apply(s_group,2, function(x) ifelse(is.na(x),4,x)))
 get.first <- function(x) min(which(x!=4))
 f <- apply(s_group, 1, get.first)
 
+# création de zinit
 
-#z.inits <- function(ch){
-#  state <- ch
-#  state[] <- 1
-#  get.first <- function(x) min(which(x!=0))
-#  f <- apply(ch, 1, get.first)
-#  for (i in 1:nrow(ch)){
-#    state[i,1:(f[i])] <- NA
-#  }
-#  return(state)
-#}
-
-  zinit <- s_group
-  for (i in 1:nrow(s_group)) {
-    for (j in 1:ncol(s_group)) {
-      if (j > f[i] & s_group[i,j]==4) {zinit[i,j] <- zinit[i,j-1]}
-    }
+zinit <- s_group
+for (i in 1:nrow(s_group)) {
+  for (j in 1:ncol(s_group)) {
+    if (j > f[i] & s_group[i,j]==4) {zinit[i,j] <- zinit[i,j-1]}
   }
-  for (i in 1:nrow(s_group)) {
-    for (j in 1:ncol(s_group)) {    
-      if (j <= f[i]) {zinit[i,j] <- NA}
-    }
+}
+for (i in 1:nrow(s_group)) {
+  for (j in 1:ncol(s_group)) {    
+    if (j <= f[i]) {zinit[i,j] <- NA}
   }
-  for (i in 1:nrow(s_group)) {
-    if (f[i]<5){
-    for (j in (f[i]+2):ncol(zinit)) {
-      if (zinit[i,j]<zinit[i,j-1]) {zinit[i,j] <- zinit[i,j-1]}
-    }
-  }}
-  zinit <- as.matrix(zinit)
+}
+for (i in 1:nrow(s_group)) {
+  if (f[i]<5){
+  for (j in (f[i]+2):ncol(zinit)) {
+    if (zinit[i,j]<zinit[i,j-1]) {zinit[i,j] <- zinit[i,j-1]}
+  }
+}}
+zinit <- as.matrix(zinit)
 
+
+# mise en forme des données
 jags.data <- list(y = s_group,
                   zi = zinit,
                   f = f,
                   fs = fs,
                   nind = nrow(s_group),
                   noccas = ncol(s_group),
-                  ni = 1000)
+                  ni = 10000,
+                  Lake = s$Lake,
+                  Treatment = s$Treatment) 
 
 multievent <- function(){
   
   # -------------------------------------------------
   # Parameters:
-  # phiB: survival probability state B
-  # phiNB: survival probability state NB
-  # psiBNB: transition probability from B to NB
-  # psiNBB: transition probability from NB to B
-  # pB: recapture probability B
-  # pNB: recapture probability NB
-  # piB prob. of being in initial state breeder
+  # phi1 : survival for state 1
+  # phi2 : survival for state 2
+  # phi3 : survival for state 3
+  # p1 : capture probability for state 1
+  # p2 : capture probability for state 2
+  # p3 : capture probability for state 3
+  # psi12 : probability of growth from state 1 to 2
+  # psi23 : probability of growth from state 2 to 3
+  # error : probability of asserting a false state when captured
   # -------------------------------------------------
   # States (z):
-  # 1 alive B
-  # 2 alive NB
-  # 3 dead
+  # 1 = alive and size between 
+  # 2 = alive and size between
+  # 3 = alive and size between
+  # 4 = dead
   # Observations (y):  
-  # 1 = non-detected
-  # 2 = seen and ascertained as breeder
-  # 3 = seen and ascertained as non-breeder
-  # 4 = not ascertained
+  # 1 = detected and measured between
+  # 2 = detected and measured between
+  # 3 = detected and measured between
+  # 4 = not detected
   # -------------------------------------------------
   
   # priors
@@ -186,17 +186,13 @@ multievent <- function(){
   
   psi12 ~ dunif(0,1)
   psi23 ~ dunif(0,1)
-  
   psi13 ~ dunif(0,1)
-  psi32 ~ dunif(0,1)
-  psi21 ~ dunif(0,1)
-  psi31 ~ dunif(0,1)
   
   p1 ~ dunif(0,1)
   p2 ~ dunif(0,1)
   p3 ~ dunif(0,1)
   
-  erreur ~ dunif(0,1)
+  error ~ dunif(0,1)
   
   # probabilities of state z(t+1) given z(t)
   gamma[1,1] <- phi1 * (1-psi12-psi13)
@@ -217,17 +213,17 @@ multievent <- function(){
   gamma[4,4] <- 1
   
   # probabilities of y(t) given z(t)
-  omega[1,1] <- p1 * (1-2 * erreur)
-  omega[1,2] <- p1 * erreur
-  omega[1,3] <- p1 * erreur
+  omega[1,1] <- p1 * (1-2 * error)
+  omega[1,2] <- p1 * error
+  omega[1,3] <- p1 * error
   omega[1,4] <- 1-p1
-  omega[2,1] <- p2 * erreur
-  omega[2,2] <- p2 * (1-erreur)
-  omega[2,3] <- p2 * erreur
+  omega[2,1] <- p2 * error
+  omega[2,2] <- p2 * (1-error)
+  omega[2,3] <- p2 * error
   omega[2,4] <- 1-p2
-  omega[3,1] <- p3 * erreur
-  omega[3,2] <- p3 * erreur
-  omega[3,3] <- p3 * (1- 2*erreur)
+  omega[3,1] <- p3 * error
+  omega[3,2] <- p3 * error
+  omega[3,3] <- p3 * (1- 2*error)
   omega[3,4] <- 1-p3
   omega[4,1] <- 0
   omega[4,2] <- 0
@@ -236,7 +232,7 @@ multievent <- function(){
   
   # likelihood 
   for (i in 1:nind){
-    # latent state at first capture
+    # State at first capture
     z[i,f[i]] <- fs[i]
     for (t in (f[i]+1):noccas){
       # z(t) given z(t-1)
@@ -251,15 +247,14 @@ inits = function(){
   list(phi1 = runif(1,0,1),phi2 = runif(1,0,1),phi3 = runif(1,0,1),
        p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
        psi12 = runif(1,0,0.5),psi23 = runif(1,0,0.5),
-       psi32 = runif(1,0,0.5),psi21 = runif(1,0,0.5), psi31 = dunif(1,0,0.5), psi13 = runif(1,0,0.5),
-       erreur = runif(1,0,0.1),
+       error = runif(1,0,0.1),
        z = zi)}
 
 parameters = c("phi1","phi2","phi3",
                "p1","p2","p3",
-               "psi12","psi21",
-               "psi32","psi21","psi31","psi13",
-               "erreur")
+               "psi12",
+               "psi13",
+               "error")
 
 Model_multi <- jags.parallel(data = jags.data,
                              inits = inits,
@@ -268,40 +263,249 @@ Model_multi <- jags.parallel(data = jags.data,
                              n.chains = 2,
                              n.iter = ni)
 
+runtime1 = Sys.time() - old
 
+multievent_treatment <- function(){
+  
+  # -------------------------------------------------
+  # Parameters:
+  # phi1 : survival for state 1
+  # phi2 : survival for state 2
+  # phi3 : survival for state 3
+  # p1 : capture probability for state 1
+  # p2 : capture probability for state 2
+  # p3 : capture probability for state 3
+  # psi12 : probability of growth from state 1 to 2
+  # psi23 : probability of growth from state 2 to 3
+  # error : probability of asserting a false state when captured
+  # -------------------------------------------------
+  # States (z):
+  # 1 = alive and size between 
+  # 2 = alive and size between
+  # 3 = alive and size between
+  # 4 = dead
+  # Observations (y):  
+  # 1 = detected and measured between
+  # 2 = detected and measured between
+  # 3 = detected and measured between
+  # 4 = not detected
+  # -------------------------------------------------
+  
+  # priors
+  for (tr in 1:4){
+    phi1[tr] ~ dunif(0,1)
+    phi2[tr] ~ dunif(0,1)
+    phi3[tr] ~ dunif(0,1)
+    
+    psi12[tr] ~ dunif(0,1)
+    psi23[tr] ~ dunif(0,1)
+    psi13[tr] ~ dunif(0,1)
+  }
+  
+  p1 ~ dunif(0,1)
+  p2 ~ dunif(0,1)
+  p3 ~ dunif(0,1)
+    
+  error ~ dunif(0,1)
+  
+  # probabilities of state z(t+1) given z(t)
 
-# probabilities of state z(t+1) given z(t)
-gamma[1,1] <- phi1 * (1-psi12-psi13)
-gamma[1,2] <- phi1 * psi12
-gamma[1,3] <- phi1 * psi13
-gamma[1,4] <- (1-phi1)
-gamma[2,1] <- phi2 * psi21
-gamma[2,2] <- phi2 * (1-psi23-psi21)
-gamma[2,3] <- phi2 * psi23
-gamma[2,4] <- (1-phi2)
-gamma[3,1] <- phi3 * psi31
-gamma[3,2] <- phi3 * psi32
-gamma[3,3] <- phi3 * (1-psi31-psi32)
-gamma[3,4] <- (1-phi3)
-gamma[4,1] <- 0
-gamma[4,2] <- 0
-gamma[4,3] <- 0
-gamma[4,4] <- 1
+  for (tr in 1:4) {
+    gamma[1,1,tr] <- phi1[tr] * (1-psi12[tr]-psi13[tr])
+    gamma[1,2,tr] <- phi1[tr] * psi12[tr]
+    gamma[1,3,tr] <- phi1[tr] * psi13[tr]
+    gamma[1,4,tr] <- (1-phi1[tr])
+    gamma[2,1,tr] <- 0
+    gamma[2,2,tr] <- phi2[tr] * (1-psi23[tr])
+    gamma[2,3,tr] <- phi2[tr] * psi23[tr]
+    gamma[2,4,tr] <- (1-phi2[tr])
+    gamma[3,1,tr] <- 0
+    gamma[3,2,tr] <- 0
+    gamma[3,3,tr] <- phi3[tr]
+    gamma[3,4,tr] <- (1-phi3[tr])
+    gamma[4,1,tr] <- 0
+    gamma[4,2,tr] <- 0
+    gamma[4,3,tr] <- 0
+    gamma[4,4,tr] <- 1
+  }
+  
+  # probabilities of y(t) given z(t)
+  omega[1,1] <- p1 * (1-2 * error)
+  omega[1,2] <- p1 * error
+  omega[1,3] <- p1 * error
+  omega[1,4] <- 1-p1
+  omega[2,1] <- p2 * error
+  omega[2,2] <- p2 * (1-error)
+  omega[2,3] <- p2 * error
+  omega[2,4] <- 1-p2
+  omega[3,1] <- p3 * error
+  omega[3,2] <- p3 * error
+  omega[3,3] <- p3 * (1- 2*error)
+  omega[3,4] <- 1-p3
+  omega[4,1] <- 0
+  omega[4,2] <- 0
+  omega[4,3] <- 0
+  omega[4,4] <- 1
+  
+  # likelihood 
+  for (i in 1:nind){
+    # State at first capture
+    z[i,f[i]] <- fs[i]
+    for (t in (f[i]+1):noccas){
+      # z(t) given z(t-1)
+      z[i,t] ~ dcat(gamma[z[i,t-1],1:4,Treatment[i]])
+      # y(t) given z(t)
+      y[i,t] ~ dcat(omega[z[i,t],1:4])
+    }
+  }
+}
 
-# probabilities of y(t) given z(t)
-omega[1,1] <- p1
-omega[1,2] <- 0
-omega[1,3] <- 0
-omega[1,4] <- 1-p1
-omega[2,1] <- 0
-omega[2,2] <- p2
-omega[2,3] <- 0
-omega[2,4] <- 1-p2
-omega[3,1] <- p3 * erreur
-omega[3,2] <- 0
-omega[3,3] <- p3 * (1-erreur)
-omega[3,4] <- 1-p3
-omega[4,1] <- 0
-omega[4,2] <- 0
-omega[4,3] <- 0
-omega[4,4] <- 1
+inits = function(){
+  list(phi1 = runif(4,0,1),phi2 = runif(4,0,1),phi3 = runif(4,0,1),
+       p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
+       psi12 = runif(4,0,0.5),psi23 = runif(4,0,0.5), psi13 = runif(4,0,0.5),
+       error = runif(1,0,0.1),
+       z = zi)}
+
+parameters = c("phi1","phi2","phi3",
+               "p1","p2","p3",
+               "psi12","psi23",
+               "psi13",
+               "error")
+
+Model_multi_treatment <- jags.parallel(data = jags.data,
+                             inits = inits,
+                             parameters.to.save = parameters,
+                             model.file = multievent_treatment,
+                             n.chains = 2,
+                             n.iter = ni)
+
+runtime2 = Sys.time() - old - runtime1
+
+multievent_treatment_time <- function(){
+  
+  # -------------------------------------------------
+  # Parameters:
+  # phi1 : survival for state 1
+  # phi2 : survival for state 2
+  # phi3 : survival for state 3
+  # p1 : capture probability for state 1
+  # p2 : capture probability for state 2
+  # p3 : capture probability for state 3
+  # psi12 : probability of growth from state 1 to 2
+  # psi23 : probability of growth from state 2 to 3
+  # error : probability of asserting a false state when captured
+  # -------------------------------------------------
+  # States (z):
+  # 1 = alive and size between 
+  # 2 = alive and size between
+  # 3 = alive and size between
+  # 4 = dead
+  # Observations (y):  
+  # 1 = detected and measured between
+  # 2 = detected and measured between
+  # 3 = detected and measured between
+  # 4 = not detected
+  # -------------------------------------------------
+  
+  # priors
+  for (t in 1:(noccas-1)){
+    for (tr in 1:4){
+      phi1[tr,t] ~ dunif(0,1)
+      phi2[tr,t] ~ dunif(0,1)
+      phi3[tr,t] ~ dunif(0,1)
+      
+      psi12[tr,t] ~ dunif(0,1)
+      psi23[tr,t] ~ dunif(0,1)
+      psi13[tr,t] ~ dunif(0,1)
+    }
+  }
+
+  p1 ~ dunif(0,1)
+  p2 ~ dunif(0,1)
+  p3 ~ dunif(0,1)
+  
+  error ~ dunif(0,1)
+  
+  # probabilities of state z(t+1) given z(t)
+  for (t in 1:(noccas-1)){
+    for (tr in 1:4) {
+      gamma[1,1,tr,t] <- phi1[tr,t] * (1-psi12[tr,t]-psi13[tr,t])
+      gamma[1,2,tr,t] <- phi1[tr,t] * psi12[tr,t]
+      gamma[1,3,tr,t] <- phi1[tr,t] * psi13[tr,t]
+      gamma[1,4,tr,t] <- (1-phi1[tr,t])
+      gamma[2,1,tr,t] <- 0
+      gamma[2,2,tr,t] <- phi2[tr,t] * (1-psi23[tr,t])
+      gamma[2,3,tr,t] <- phi2[tr,t] * psi23[tr,t]
+      gamma[2,4,tr,t] <- (1-phi2[tr,t])
+      gamma[3,1,tr,t] <- 0
+      gamma[3,2,tr,t] <- 0
+      gamma[3,3,tr,t] <- phi3[tr,t]
+      gamma[3,4,tr,t] <- (1-phi3[tr,t])
+      gamma[4,1,tr,t] <- 0
+      gamma[4,2,tr,t] <- 0
+      gamma[4,3,tr,t] <- 0
+      gamma[4,4,tr,t] <- 1
+    }
+  }
+  
+  
+  # probabilities of y(t) given z(t)
+  omega[1,1] <- p1 * (1-2 * error)
+  omega[1,2] <- p1 * error
+  omega[1,3] <- p1 * error
+  omega[1,4] <- 1-p1
+  omega[2,1] <- p2 * error
+  omega[2,2] <- p2 * (1-error)
+  omega[2,3] <- p2 * error
+  omega[2,4] <- 1-p2
+  omega[3,1] <- p3 * error
+  omega[3,2] <- p3 * error
+  omega[3,3] <- p3 * (1- 2*error)
+  omega[3,4] <- 1-p3
+  omega[4,1] <- 0
+  omega[4,2] <- 0
+  omega[4,3] <- 0
+  omega[4,4] <- 1
+  
+  # likelihood 
+  for (i in 1:nind){
+    # State at first capture
+    z[i,f[i]] <- fs[i]
+    for (t in (f[i]+1):noccas){
+      # z(t) given z(t-1)
+      z[i,t] ~ dcat(gamma[z[i,t-1],1:4,Treatment[i],t-1])
+      # y(t) given z(t)
+      y[i,t] ~ dcat(omega[z[i,t],1:4])
+    }
+  }
+}
+
+inits = function(){
+  list(phi1 = matrix(ncol = 5, runif(20,0,1)),phi2 = matrix(ncol = 5, runif(20,0,1)),phi3 = matrix(ncol = 5, runif(20,0,1)),
+       p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
+       psi12 = matrix(ncol = 5, runif(20,0,0.9)),psi23 =matrix(ncol = 5, runif(20,0,1)), psi13 = matrix(ncol = 5, runif(20,0,0.1)),
+       error = runif(1,0,0.1),
+       z = zi)}
+
+parameters = c("phi1","phi2","phi3",
+               "p1","p2","p3",
+               "psi12","psi23",
+               "psi13",
+               "error")
+
+Model_multi_treatment_time <- jags.parallel(data = jags.data,
+                                       inits = inits,
+                                       parameters.to.save = parameters,
+                                       model.file = multievent_treatment_time,
+                                       n.chains = 2,
+                                       n.iter = ni)
+
+runtime3 = Sys.time() - old - runtime2 - runtime1
+runtimetot <- Sys.time() - old
+
+print(runtime1,
+      runtime2,
+      runtime3,
+      runtimetot)
+

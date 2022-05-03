@@ -540,9 +540,14 @@ ggplot(BDD_a %>% filter (Year == "2022"))+
 ```{r}
 print(Model_multi)
 traceplot(Model_multi, ask = F)
-autocorr.plot(Model_multi)
+autocorr.plot(Model_multi, ask = F)
 ```
 
+```{r}
+print(Model_multi_treatment)
+traceplot(Model_multi_treatment, ask = F)
+autocorr.plot(Model_multi_treatment, ask = F)
+```
 
 
 
