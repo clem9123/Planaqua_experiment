@@ -797,6 +797,151 @@ Model_multi_treatment_corrected2 <- jags.parallel(data = jags.data,
                                             n.iter = ni)
 save(Model_multi_treatment_corrected2, file = "R/object/Model_multi_treatment_corrected2.RData" )
 
+
+multievent_treatment_corrected3 <- function(){
+  
+  # -------------------------------------------------
+  # Parameters:
+  # phi1 : survival for state 1
+  # phi2 : survival for state 2
+  # phi3 : survival for state 3
+  # p1 : capture probability for state 1
+  # p2 : capture probability for state 2
+  # p3 : capture probability for state 3
+  # psi12 : probability of growth from state 1 to 2
+  # psi23 : probability of growth from state 2 to 3
+  # error : probability of asserting a false state when captured
+  # -------------------------------------------------
+  # States (z):
+  # 1 = alive and size between 
+  # 2 = alive and size between
+  # 3 = alive and size between
+  # 4 = dead
+  # Observations (y):  
+  # 1 = detected and measured between
+  # 2 = detected and measured between
+  # 3 = detected and measured between
+  # 4 = not detected
+  # -------------------------------------------------
+  
+  # priors
+  for (t in 1:2){
+    for (tr in 1:4){
+      phi1[tr,t] ~ dunif(0,1)
+      phi2[tr,t] ~ dunif(0,1)
+      phi3[tr,t] ~ dunif(0,1)
+      
+      psi12[tr,t] ~ dunif(0,1)
+      psi23[tr,t] ~ dunif(0,1)
+      psi13[tr,t] ~ dunif(0,1)
+    }
+  }
+  
+  for (t in 1:2){
+    for (tr in 1:4){
+      phi1_aux[tr,t] <- phi1[tr,1]
+      phi2_aux[tr,t] <- phi2[tr,1]
+      phi3_aux[tr,t] <- phi3[tr,1]
+      
+      psi12_aux[tr,t] <- psi12[tr,1]
+      psi23_aux[tr,t] <- psi23[tr,1]
+      psi13_aux[tr,t] <- psi13[tr,1]
+    }
+  }
+  
+  for (t in 3:(noccas-1)){
+    for (tr in 1:4){
+      phi1_aux[tr,t] <- phi1[tr,2]
+      phi2_aux[tr,t] <- phi2[tr,2]
+      phi3_aux[tr,t] <- phi3[tr,2]
+      
+      psi12_aux[tr,t] <- psi12[tr,2]
+      psi23_aux[tr,t] <- psi23[tr,2]
+      psi13_aux[tr,t] <- psi13[tr,2]
+    }
+  }
+  
+  p1 ~ dunif(0,1)
+  p2 ~ dunif(0,1)
+  p3 ~ dunif(0,1)
+  
+  error ~ dunif(0,1)
+  
+  # probabilities of state z(t+1) given z(t)
+  for (t in 1:(noccas-1)){
+    for (tr in 1:4) {
+      gamma[1,1,tr,t] <- phi1_aux[tr,t] * (1-psi12_aux[tr,t]-psi13_aux[tr,t])
+      gamma[1,2,tr,t] <- phi1_aux[tr,t] * psi12_aux[tr,t]
+      gamma[1,3,tr,t] <- phi1_aux[tr,t] * psi13_aux[tr,t]
+      gamma[1,4,tr,t] <- (1-phi1_aux[tr,t])
+      gamma[2,1,tr,t] <- 0
+      gamma[2,2,tr,t] <- phi2_aux[tr,t] * (1-psi23_aux[tr,t])
+      gamma[2,3,tr,t] <- phi2_aux[tr,t] * psi23_aux[tr,t]
+      gamma[2,4,tr,t] <- (1-phi2_aux[tr,t])
+      gamma[3,1,tr,t] <- 0
+      gamma[3,2,tr,t] <- 0
+      gamma[3,3,tr,t] <- phi3_aux[tr,t]
+      gamma[3,4,tr,t] <- (1-phi3_aux[tr,t])
+      gamma[4,1,tr,t] <- 0
+      gamma[4,2,tr,t] <- 0
+      gamma[4,3,tr,t] <- 0
+      gamma[4,4,tr,t] <- 1
+    }
+  }
+  
+  
+  # probabilities of y(t) given z(t)
+  omega[1,1] <- p1 * (1-2 * error)
+  omega[1,2] <- p1 * error
+  omega[1,3] <- p1 * error
+  omega[1,4] <- 1-p1
+  omega[2,1] <- p2 * error
+  omega[2,2] <- p2 * (1-error)
+  omega[2,3] <- p2 * error
+  omega[2,4] <- 1-p2
+  omega[3,1] <- p3 * error
+  omega[3,2] <- p3 * error
+  omega[3,3] <- p3 * (1- 2*error)
+  omega[3,4] <- 1-p3
+  omega[4,1] <- 0
+  omega[4,2] <- 0
+  omega[4,3] <- 0
+  omega[4,4] <- 1
+  
+  # likelihood 
+  for (i in 1:nind){
+    # State at first capture
+    z[i,f[i]] <- fs[i]
+    for (t in (f[i]+1):noccas){
+      # z(t) given z(t-1)
+      z[i,t] ~ dcat(gamma[z[i,t-1],1:4,Treatment[i],t-1])
+      # y(t) given z(t)
+      y[i,t] ~ dcat(omega[z[i,t],1:4])
+    }
+  }
+}
+
+inits = function(){
+  list(phi1 = matrix(ncol = 2, runif(8,0,1)),phi2 = matrix(ncol = 2, runif(8,0,1)),phi3 = matrix(ncol = 2, runif(8,0,1)),
+       p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
+       psi12 = matrix(ncol = 2, runif(8,0,0.5)),psi23 = matrix(ncol = 2, runif(8,0,0.5)), psi13 = matrix(ncol = 2, runif(8,0,0.5)),
+       error = runif(1,0,0.1),
+       z = zi)}
+
+parameters = c("phi1","phi2","phi3",
+               "p1","p2","p3",
+               "psi12","psi23",
+               "psi13",
+               "error")
+
+Model_multi_treatment_corrected3 <- jags.parallel(data = jags.data,
+                                                  inits = inits,
+                                                  parameters.to.save = parameters,
+                                                  model.file = multievent_treatment_corrected3,
+                                                  n.chains = 2,
+                                                  n.iter = ni)
+save(Model_multi_treatment_corrected3, file = "R/object/Model_multi_treatment_corrected3.RData" )
+
 runtimetot <- Sys.time() - old
 
 print(runtime1,
