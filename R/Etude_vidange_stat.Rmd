@@ -46,10 +46,10 @@ BDD_vid <- merge(BDD_vid,BDD_vid %>% group_by(Lake, Year) %>% summarize(density 
 ```
 
 ```{r}
-size_break <- c(0,100,125,150,175,200,300)
-BDD_vid <- BDD_vid %>% mutate(s_group = discretize(BDD_vid$Size,method = "fixed",
+size_break <- c(0,120,180,300)
+BDD_vid <- BDD_vid %>% mutate(s_group = factor(discretize(BDD_vid$Size,method = "fixed",
                            breaks = size_break, 
-                           labels= c(1:(length(size_break)-1))))
+                           labels= c(1:(length(size_break)-1)))))
 head(BDD_vid)
 ```
 
@@ -139,7 +139,7 @@ taux de mortalité et de capture calculés, est ce que ca dépend des lacs et de
 je pourrais pas savoir pour les années mais pour les lacs oui
 
 ```{r}
-BDD_vid_n <- BDD_vid %>% group_by(taille,Lake,Year) %>% summarise(nb_catch_recatch = sum(catch_2021), n_nouv = sum(!catch_2021))
+BDD_vid_n <- BDD_vid %>% group_by(s_group,Lake,Year) %>% summarise(nb_catch_recatch = sum(catch_2021), n_nouv = sum(!catch_2021))
 ```
 ```{r}
 BDD_vid <- BDD_vid %>% mutate(taille = case_when(Tag_id == "juvenile" ~ "juv",
@@ -445,6 +445,27 @@ ggplot(BDD_vid %>% filter (Year == "2022") %>% group_by(Lake, Treatment, s_group
 ```
 
 ```{r}
+ggplot(BDD_vid %>% filter(Year == "2022"))+
+  geom_bar(aes(x = Lake, fill = catch_2021))+
+  facet_wrap(~s_group)
 
+BDD_vid_n <- BDD_vid_n %>% mutate(prop = nb_catch_recatch/(nb_catch_recatch+n_nouv))
+
+ggplot(BDD_vid_n %>% filter(Year == "2022"))+
+  geom_bar(stat = "identity",aes(x = Lake,y = prop))+
+  facet_wrap(~s_group)
+
+BDD_vid_n_bis <- BDD_vid_n %>% filter(Year == "2022") %>% group_by(s_group) %>% summarize(nb_catch_recatch = sum(nb_catch_recatch),
+                                                                                          n_nouv = sum(n_nouv),
+                                                                                          prop = nb_catch_recatch/(nb_catch_recatch+n_nouv))
+
+ggplot(BDD_vid_n_bis)+
+  geom_bar(stat = "identity",aes(x = s_group,y = prop))
+```
+
+```{r}
+ggplot(BDD_n)+
+  geom_bar(aes(x= nb_adult))
+  facet_wrap(~g_size)
 ```
 

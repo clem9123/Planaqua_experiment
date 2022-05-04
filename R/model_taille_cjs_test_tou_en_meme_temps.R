@@ -644,7 +644,7 @@ Model_multi_treatment_time_corrected <- jags.parallel(data = jags.data,
                                             n.iter = ni)
 save(Model_multi_treatment_time_corrected, file = "R/object/Model_multi_treatment_time_corrected.RData")
 
-multievent_treatment_corrected <- function(){
+multievent_treatment_corrected2 <- function(){
   
   # -------------------------------------------------
   # Parameters:
@@ -671,46 +671,48 @@ multievent_treatment_corrected <- function(){
   # -------------------------------------------------
   
   # priors
-  for (tr in 1:4){
-    phi1[tr] ~ dunif(0,1)
-    phi2[tr] ~ dunif(0,1)
-    phi3[tr] ~ dunif(0,1)
-    
-    psi12[tr] ~ dunif(0,1)
-    psi23[tr] ~ dunif(0,1)
-    psi13[tr] ~ dunif(0,1)
+  for (t in 1:2){
+    for (tr in 1:4){
+      phi1[tr,t] ~ dunif(0,1)
+      phi2[tr,t] ~ dunif(0,1)
+      phi3[tr,t] ~ dunif(0,1)
+      
+      psi12[tr,t] ~ dunif(0,1)
+      psi23[tr,t] ~ dunif(0,1)
+      psi13[tr,t] ~ dunif(0,1)
+    }
   }
   
   for (t in 1:2){
     for (tr in c(2,4)){
-      phi1_aux[tr,t] <- phi1[tr]
-      phi2_aux[tr,t] <- phi2[tr]
-      phi3_aux[tr,t] <- phi3[tr]
+      phi1_aux[tr,t] <- phi1[tr,1]
+      phi2_aux[tr,t] <- phi2[tr,1]
+      phi3_aux[tr,t] <- phi3[tr,1]
       
-      psi12_aux[tr,t] <- psi12[tr]
-      psi23_aux[tr,t] <- psi23[tr]
-      psi13_aux[tr,t] <- psi13[tr]
+      psi12_aux[tr,t] <- psi12[tr,1]
+      psi23_aux[tr,t] <- psi23[tr,1]
+      psi13_aux[tr,t] <- psi13[tr,1]
     }
     for (tr in c(1,3)){
-      phi1_aux[tr,t] <- phi1[tr+1]
-      phi2_aux[tr,t] <- phi2[tr+1]
-      phi3_aux[tr,t] <- phi3[tr+1]
+      phi1_aux[tr,t] <- phi1[tr+1,1]
+      phi2_aux[tr,t] <- phi2[tr+1,1]
+      phi3_aux[tr,t] <- phi3[tr+1,1]
       
-      psi12_aux[tr,t] <- psi12[tr+1]
-      psi23_aux[tr,t] <- psi23[tr+1]
-      psi13_aux[tr,t] <- psi13[tr+1]
+      psi12_aux[tr,t] <- psi12[tr+1,1]
+      psi23_aux[tr,t] <- psi23[tr+1,1]
+      psi13_aux[tr,t] <- psi13[tr+1,1]
     }
   }
   
   for (t in 3:(noccas-1)){
     for (tr in 1:4){
-      phi1_aux[tr,t] <- phi1[tr]
-      phi2_aux[tr,t] <- phi2[tr]
-      phi3_aux[tr,t] <- phi3[tr]
+      phi1_aux[tr,t] <- phi1[tr,2]
+      phi2_aux[tr,t] <- phi2[tr,2]
+      phi3_aux[tr,t] <- phi3[tr,2]
       
-      psi12_aux[tr,t] <- psi12[tr]
-      psi23_aux[tr,t] <- psi23[tr]
-      psi13_aux[tr,t] <- psi13[tr]
+      psi12_aux[tr,t] <- psi12[tr,2]
+      psi23_aux[tr,t] <- psi23[tr,2]
+      psi13_aux[tr,t] <- psi13[tr,2]
     }
   }
   
@@ -775,9 +777,9 @@ multievent_treatment_corrected <- function(){
 }
 
 inits = function(){
-  list(phi1 = runif(4,0,1),phi2 = runif(4,0,1),phi3 = runif(4,0,1),
+  list(phi1 = matrix(ncol = 2, runif(8,0,1)),phi2 = matrix(ncol = 2, runif(8,0,1)),phi3 = matrix(ncol = 2, runif(8,0,1)),
        p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
-       psi12 = runif(4,0,0.5),psi23 = runif(4,0,0.5), psi13 = runif(4,0,0.5),
+       psi12 = matrix(ncol = 2, runif(8,0,0.5)),psi23 = matrix(ncol = 2, runif(8,0,0.5)), psi13 = matrix(ncol = 2, runif(8,0,0.5)),
        error = runif(1,0,0.1),
        z = zi)}
 
@@ -787,13 +789,13 @@ parameters = c("phi1","phi2","phi3",
                "psi13",
                "error")
 
-Model_multi_treatment_corrected <- jags.parallel(data = jags.data,
+Model_multi_treatment_corrected2 <- jags.parallel(data = jags.data,
                                             inits = inits,
                                             parameters.to.save = parameters,
-                                            model.file = multievent_treatment_corrected,
+                                            model.file = multievent_treatment_corrected2,
                                             n.chains = 2,
                                             n.iter = ni)
-save(Model_multi_treatment_corrected, file = "R/object/Model_multi_treatment_corrected.RData" )
+save(Model_multi_treatment_corrected2, file = "R/object/Model_multi_treatment_corrected2.RData" )
 
 runtimetot <- Sys.time() - old
 
