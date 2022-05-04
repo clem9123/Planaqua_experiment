@@ -7,8 +7,8 @@ output: html_notebook
 ```{r}
 ggplot(subset(BDD_g, Tag_id %in% subset(BDD_a, Year == "2016" & Size > 120)$Tag_id), aes(x = Year, y  = Size, color = Treatment))+
   geom_line(aes(group = Tag_id))+
-  geom_point()+
-  color_brewer_scale(palette ="Set2")
+  geom_point()#+
+  #color_brewer_scale(palette ="Set2")
 
 ggplot(BDD_g, aes(x = Year, y  = Size, color = Treatment))+
   geom_line(data = BDD_a, aes(group = Tag_id))+
@@ -63,5 +63,8 @@ head(BDD_g %>% select(Date, Lake, Tag_id, Obs_status, Size, Weight, Treatment))
 ```{r}
 nrow(BDD_g %>% filter (Tag_year == "2017" & Year == "2017"))
 nrow(BDD_g %>% filter (Tag_year == "2016" & Year == "2016"))
+```
+
+```{r}
 ```
 

@@ -70,15 +70,21 @@ BDD_p <- BDD_p %>% mutate (Obs_status = case_when(Tag_year %in% c("no_tag","juve
 
 # cr?ation d'un tableau avec les nombres de poisson par ann?e et lac avec les poids et taille moyenne
 
-BDD_n <- BDD_g %>% group_by(Year, Lake, Nutrients, Perch, Treatment) %>%
-                     summarise(Mean_logweight = mean(Log_weight, na.rm =T),
-                               Mean_logsize = mean (Log_size, na.rm =T),
-                               Mean_weight = mean(Weight, na.rm =T),
-                               Mean_size = mean (Size, na.rm =T),
-                               nb_poisson = n(),
-                               nb_juv = sum(Tag_id == "juvenile", na.rm = T),
-                               biomasse = sum(Weight, na.rm =T)) %>%
-                     ungroup()
+size_break <- c(0,120,180,1000)
+BDD_n <- BDD_f %>% mutate(s_group = factor(discretize(BDD_f$Size,method = "fixed",
+                                                      breaks = size_break, 
+                                                      labels= c(1:(length(size_break)-1))))) %>% 
+                   filter(Species %in% c("perch","roach") & !(Method_capture %in% c("creel")) & !(Session_capture %in% c("B","Z"))) %>% 
+                   group_by(Year, Lake, Nutrients, Perch, Treatment, Species,s_group) %>%
+                   summarise(Mean_logweight = mean(Log_weight, na.rm =T),
+                             Mean_logsize = mean (Log_size, na.rm =T),
+                             Mean_weight = mean(Weight, na.rm =T),
+                             Mean_size = mean (Size, na.rm =T),
+                             nb_poisson = n(),
+                             nb_juv = sum(Tag_id == "juvenile", na.rm = T),
+                             nb_adult = nb_poisson-nb_juv,
+                             biomasse = sum(Weight, na.rm =T)) %>%
+                   ungroup()
 
 BDD_a <- BDD_g %>% filter(Tag_id != "juvenile" & Tag_id != "no_tag")
 
