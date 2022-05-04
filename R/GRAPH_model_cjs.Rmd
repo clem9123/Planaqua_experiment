@@ -559,12 +559,12 @@ autocorr.plot(Model_multi_treatment_time, ask = F)
 tbl1_p = data.frame()
 tbl1_phi = data.frame()
 tbl1_psi12 = data.frame()
-#tbl1_psi23 = data.frame()
+tbl1_psi23 = data.frame()
 for (n in 1:2){
   tbl1_psi12 <- rbind(tbl1_psi12, 
                data.frame(as.mcmc(Model_multi)[[n]][,"psi12"]))
-  #tbl1_psi23 <- rbind(tbl1_psi23, 
-  #             data.frame(as.mcmc(Model_multi)[[n]][,"psi23"]))
+  tbl1_psi23 <- rbind(tbl1_psi23, 
+               data.frame(as.mcmc(Model_multi)[[n]][,"psi23"]))
   for (gs in 1:3){
     tbl1_p <- rbind(tbl1_p, 
                data.frame(as.mcmc(Model_multi)[[n]][,paste("p",as.character(gs), sep = "")],gs))
@@ -579,14 +579,19 @@ tbl1_phi <- tbl1_phi %>% mutate(size = factor (size))
 colnames(tbl1_p) <- c("p","size")
 tbl1_p <- tbl1_p %>% mutate(size = factor (size))
 
-colnames(tbl1_psi12) <- c("psi12")
-#colnames(tbl1_psi23) <- c("psi23")
+colnames(tbl1_psi12) <- c("psi")
+colnames(tbl1_psi23) <- c("psi")
+tbl1_psi <- rbind(data.frame(tbl1_psi12, c = "1"),data.frame(tbl1_psi23,c= "2"))
 
 ggplot(tbl1_phi)+
   geom_density(aes(x = phi, color = size))
 
 ggplot(tbl1_p)+
   geom_density(aes(x = p, color = size))
+
+ggplot(tbl1_psi)+
+  geom_density(aes(x = psi, color = c))
+
 ```
 
 ```{r}
@@ -1022,6 +1027,9 @@ p4 <- ggplot(tbl5_phi %>% filter (treatment == "4"), aes(color = size))+
 (p1+p2)/(p3+p4)
 ```
 
+```{r}
+
+```
 
 
 
