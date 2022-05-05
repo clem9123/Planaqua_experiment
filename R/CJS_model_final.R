@@ -730,12 +730,17 @@ multievent_treatment_corrected_abundance <- function(){
   # likelihood 
   for (i in 1:nind){
     # State at first capture
-    z[i,f[i]] <- fs[i]
-    for (t in 1:f[i]){
+    
+    for (t in 1:(f[i]-1)){
+      z[i,t] <- 0
       N1[i,t] <- ifelse(z[i,t] == 1, 1,0)
       N2[i,t] <- ifelse(z[i,t] == 2, 1,0)
       N3[i,t] <- ifelse(z[i,t] == 3, 1,0)
     }
+    z[i,f[i]] <- fs[i]
+    N1[i,f[i]] <- ifelse(z[i,f[i]] == 1, 1,0)
+    N2[i,f[i]] <- ifelse(z[i,f[i]] == 2, 1,0)
+    N3[i,f[i]] <- ifelse(z[i,f[i]] == 3, 1,0)
     for (t in (f[i]+1):noccas){
       # z(t) given z(t-1)
       z[i,t] ~ dcat(gamma[z[i,t-1],1:4,Treatment[i],t-1])
