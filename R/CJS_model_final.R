@@ -732,9 +732,9 @@ multievent_treatment_corrected_abundance <- function(){
     # State at first capture
     z[i,f[i]] <- fs[i]
     for (t in 1:f[i]){
-      N1[i,t] <- 0
-      N2[i,t] <- 0
-      N3[i,t] <- 0
+      N1[i,t] <- ifelse(z[i,t] == 1, 1,0)
+      N2[i,t] <- ifelse(z[i,t] == 2, 1,0)
+      N3[i,t] <- ifelse(z[i,t] == 3, 1,0)
     }
     for (t in (f[i]+1):noccas){
       # z(t) given z(t-1)
