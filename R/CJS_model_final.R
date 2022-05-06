@@ -608,7 +608,7 @@ Model_multi_treatment_corrected <- jags.parallel(data = jags.data,
                                                   parameters.to.save = parameters,
                                                   model.file = multievent_treatment_corrected,
                                                   n.chains = 2,
-                                                  n.iter = ni)
+                                                  n.iter = 10000)
 save(Model_multi_treatment_corrected, file = "R/object/Model_multi_treatment_corrected.RData" )
 
 #-----------------------------------------------------------------------------------------------
@@ -753,23 +753,23 @@ multievent_treatment_corrected_abundance <- function(){
   }
   for (t in 1:noccas){
     n1[t,1] <- sum(N1[Tr1,t])
-    n2[t,1] <- sum(N1[Tr1,t])
-    n3[t,1] <- sum(N1[Tr1,t])
+    n2[t,1] <- sum(N2[Tr1,t])
+    n3[t,1] <- sum(N3[Tr1,t])
     ntot[t,1] <- n1[t,1] + n2[t,1] + n3[t,1]
     
     n1[t,2] <- sum(N1[Tr2,t])
-    n2[t,2] <- sum(N1[Tr2,t])
-    n3[t,2] <- sum(N1[Tr2,t])
+    n2[t,2] <- sum(N2[Tr2,t])
+    n3[t,2] <- sum(N3[Tr2,t])
     ntot[t,2] <- n1[t,2] + n2[t,2] + n3[t,2]
     
     n1[t,3] <- sum(N1[Tr3,t])
-    n2[t,3] <- sum(N1[Tr3,t])
-    n3[t,3] <- sum(N1[Tr3,t])
+    n2[t,3] <- sum(N2[Tr3,t])
+    n3[t,3] <- sum(N3[Tr3,t])
     ntot[t,3] <- n1[t,3] + n2[t,3] + n3[t,3]
     
     n1[t,4] <- sum(N1[Tr4,t])
-    n2[t,4] <- sum(N1[Tr4,t])
-    n3[t,4] <- sum(N1[Tr4,t])
+    n2[t,4] <- sum(N2[Tr4,t])
+    n3[t,4] <- sum(N3[Tr4,t])
     ntot[t,4] <- n1[t,4] + n2[t,4] + n3[t,4]
   }
 }
