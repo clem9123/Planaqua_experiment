@@ -617,6 +617,8 @@ save(Model_multi_treatment_corrected, file = "R/object/Model_multi_treatment_cor
 ################################################################################################
 #-----------------------------------------------------------------------------------------------
 
+old = Sys.time()
+
 multievent_treatment_corrected_abundance <- function(){
   
   # -------------------------------------------------
@@ -796,7 +798,8 @@ Model_multi_treatment_corrected_abundance <- jags.parallel(data = jags.data,
                                                   n.iter = ni)
 save(Model_multi_treatment_corrected_abundance, file = "R/object/Model_multi_treatment_corrected_abundance.RData" )
 
-
+runtime = Sys.time() - old
+print(runtime)
 #-----------------------------------------------------------------------------------------------
 ################################################################################################
 # Model with time, lake and abundance : pas fonctionnel
