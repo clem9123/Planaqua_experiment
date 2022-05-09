@@ -49,9 +49,73 @@ ggplot(BDD_g)+
 
 
 ```
+
+```{r}
+ggplot(BDD_p)+
+  geom_bar(aes(x = Year, fill = Tag_year),position = position_stack(reverse = TRUE))+
+  scale_fill_brewer(palette = "YlOrBr", direction = -1)
+
+ggplot(BDD_p %>% filter (Year == "2022"))+
+  geom_bar(aes(x = Lake, fill = Tag_year),position = position_stack(reverse = TRUE))+
+  scale_fill_brewer(palette = "YlOrBr", direction = -1)+
+  facet_wrap(~Treatment, scales= "free_x")
+
+ggplot(BDD_p %>% filter (Year == "2021"))+
+  geom_bar(aes(x = Lake))+
+  facet_wrap(~Treatment, scales= "free_x")
+
+ggplot(BDD_p %>% filter (Year == "2020"))+
+  geom_bar(aes(x = Lake))+
+  facet_wrap(~Treatment, scales= "free_x")
+
+ggplot(BDD_p %>% filter (Year == "2019"))+
+  geom_bar(aes(x = Lake))+
+  facet_wrap(~Treatment, scales= "free_x")
+
+ggplot(BDD_p %>% filter (Year == "2018"))+
+  geom_bar(aes(x = Lake))+
+  facet_wrap(~Treatment, scales= "free_x")
+
+ggplot(BDD_p %>% filter (Year == "2017"))+
+  geom_bar(aes(x = Lake))+
+  facet_wrap(~Treatment, scales= "free_x")
+
+ggplot(BDD_p %>% filter (Year == "2016"))+
+  geom_bar(aes(x = Lake))+
+  facet_wrap(~Treatment, scales= "free_x")
+```
+
+```{r}
+pn1 <- BDD_p %>% filter (Passage_net == 1) %>% group_by(Year,Lake) %>% summarise(nb1 = n()) %>% ungroup()
+pn2 <- BDD_p %>% filter (Passage_net == 2) %>% group_by(Year,Lake) %>% summarise(nb2 = n()) %>% ungroup()
+pn3 <- BDD_p %>% filter (Passage_net == 3) %>% group_by(Year,Lake) %>% summarise(nb3 = n()) %>% ungroup()
+
+pn <- merge(pn1,pn2, all = TRUE) %>% merge(pn3, all = TRUE)
+pn[is.na(pn)] <- 0
+
+pn <- pn %>% mutate(p1 = (nb1-nb2)/nb1, 
+                    p2 = (nb2-nb3)/nb2, 
+                    p3 = (nb1-nb3)/(nb2+nb1))
+pn
+```
+
 ```{r}
 ggplot(BDD_p %>% filter(Tag_year == "2016" & Year == "2022"))+
   geom_density(aes(x = Size, color = Treatment))
+```
+
+```{r}
+pn1 <- BDD_g %>% filter (Passage_net == 1) %>% group_by(Year,Lake) %>% summarise(nb1 = n()) %>% ungroup()
+pn2 <- BDD_g %>% filter (Passage_net == 2) %>% group_by(Year,Lake) %>% summarise(nb2 = n()) %>% ungroup()
+pn3 <- BDD_g %>% filter (Passage_net == 3) %>% group_by(Year,Lake) %>% summarise(nb3 = n()) %>% ungroup()
+
+pn <- merge(pn1,pn2, all = TRUE) %>% merge(pn3, all = TRUE)
+pn[is.na(pn)] <- 0
+
+pn <- pn %>% mutate(p1 = (nb1-nb2)/nb1, 
+                    p2 = (nb2-nb3)/nb2, 
+                    p3 = (nb1-nb3)/(nb2+nb1))
+pn <- pn %>% mutate(diff = ifelse(p1 == 1, 0,p1-p2))
 ```
 
 

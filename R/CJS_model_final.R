@@ -79,7 +79,23 @@ jags.data <- list(y = s_group,
                   Tr1 = which(s$Treatment == 1),
                   Tr2 = which(s$Treatment == 2), 
                   Tr3 = which(s$Treatment == 3), 
-                  Tr4 = which(s$Treatment == 4))
+                  Tr4 = which(s$Treatment == 4))#,
+                  #L1 = which(s$Lake == 1),
+                  #L2 = which(s$Lake == 2),
+                  #L3 = which(s$Lake == 3),
+                  #L4 = which(s$Lake == 4),
+                  #L5 = which(s$Lake == 5),
+                  #L6 = which(s$Lake == 6),
+                  #L7 = which(s$Lake == 7),
+                  #L8 = which(s$Lake == 8),
+                  #L9 = which(s$Lake == 9),
+                  #L10 = which(s$Lake == 10),
+                  #L11 = which(s$Lake == 11),
+                  #L12 = which(s$Lake == 12),
+                  #L13 = which(s$Lake == 13),
+                  #L14 = which(s$Lake == 14),
+                  #L15 = which(s$Lake == 15),
+                  #L16 = which(s$Lake == 16))
 
 #-----------------------------------------------------------------------------------------------
 ################################################################################################
