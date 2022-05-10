@@ -7,9 +7,12 @@ library(patchwork)
 
 source("R/importation_data.R")
 
+load("R/object/Model_multi_treatment_time_abundance.RData")
 load("R/object/Model_multi_treatment_corrected_abundance.RData")
 
 
+load("R/object/Model_lake_time_abundance.RData") #Model_multi_lake_time_abundance
+load("R/object/Model_multi_lake_corrected_abundance.RData")
 
 
 #######################

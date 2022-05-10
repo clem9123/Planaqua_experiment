@@ -79,23 +79,24 @@ jags.data <- list(y = s_group,
                   Tr1 = which(s$Treatment == 1),
                   Tr2 = which(s$Treatment == 2), 
                   Tr3 = which(s$Treatment == 3), 
-                  Tr4 = which(s$Treatment == 4),
-                  L1 = which(s$Lake == 1),
-                  L2 = which(s$Lake == 2),
-                  L3 = which(s$Lake == 3),
-                  L4 = which(s$Lake == 4),
-                  L5 = which(s$Lake == 5),
-                  L6 = which(s$Lake == 6),
-                  L7 = which(s$Lake == 7),
-                  L8 = which(s$Lake == 8),
-                  L9 = which(s$Lake == 9),
-                  L10 = which(s$Lake == 10),
-                  L11 = which(s$Lake == 11),
-                  L12 = which(s$Lake == 12),
-                  L13 = which(s$Lake == 13),
-                  L14 = which(s$Lake == 14),
-                  L15 = which(s$Lake == 15),
-                  L16 = which(s$Lake == 16))
+                  Tr4 = which(s$Treatment == 4))#,
+                  
+                  #L1 = which(s$Lake == 1),
+                  #L2 = which(s$Lake == 2),
+                  #L3 = which(s$Lake == 3),
+                  #L4 = which(s$Lake == 4),
+                  #L5 = which(s$Lake == 5),
+                  #L6 = which(s$Lake == 6),
+                  #L7 = which(s$Lake == 7),
+                  #L8 = which(s$Lake == 8),
+                  #L9 = which(s$Lake == 9),
+                  #L10 = which(s$Lake == 10),
+                  #L11 = which(s$Lake == 11),
+                  #L12 = which(s$Lake == 12),
+                  #L13 = which(s$Lake == 13),
+                  #L14 = which(s$Lake == 14),
+                  #L15 = which(s$Lake == 15),
+                  #L16 = which(s$Lake == 16))
 
 #-----------------------------------------------------------------------------------------------
 ################################################################################################
@@ -813,6 +814,172 @@ Model_multi_treatment_corrected_abundance_zbis <- jags.parallel(data = jags.data
                                                   n.chains = 2,
                                                   n.iter = ni)
 save(Model_multi_treatment_corrected_abundance_zbis, file = "R/object/Model_multi_treatment_corrected_abundance_zbis.RData" )
+
+runtime = Sys.time() - old
+print(runtime)
+
+#-----------------------------------------------------------------------------------------------
+################################################################################################
+# Model corrected with abundance TIME
+################################################################################################
+#-----------------------------------------------------------------------------------------------
+
+old = Sys.time()
+
+multievent_treatment_time_abundance <- function(){
+  
+  # -------------------------------------------------
+  # Parameters:
+  # phi1 : survival for state 1
+  # phi2 : survival for state 2
+  # phi3 : survival for state 3
+  # p1 : capture probability for state 1
+  # p2 : capture probability for state 2
+  # p3 : capture probability for state 3
+  # psi12 : probability of growth from state 1 to 2
+  # psi23 : probability of growth from state 2 to 3
+  # error : probability of asserting a false state when captured
+  # -------------------------------------------------
+  # States (z):
+  # 1 = alive and size between 
+  # 2 = alive and size between
+  # 3 = alive and size between
+  # 4 = dead
+  # Observations (y):  
+  # 1 = detected and measured between
+  # 2 = detected and measured between
+  # 3 = detected and measured between
+  # 4 = not detected
+  # -------------------------------------------------
+  
+  # priors
+  for (t in 1:(noccas-1)){
+    for (tr in 1:4){
+      phi1[tr,t] ~ dunif(0,1)
+      phi2[tr,t] ~ dunif(0,1)
+      phi3[tr,t] ~ dunif(0,1)
+      
+      psi12[tr,t] ~ dunif(0,1)
+      psi23[tr,t] ~ dunif(0,1)
+      psi13[tr,t] ~ dunif(0,1)
+    }
+  }
+  
+  p1 ~ dunif(0,1)
+  p2 ~ dunif(0,1)
+  p3 ~ dunif(0,1)
+  
+  error ~ dunif(0,1)
+  
+  # probabilities of state z(t+1) given z(t)
+  for (t in 1:(noccas-1)){
+    for (tr in 1:4) {
+      gamma[1,1,tr,t] <- phi1[tr,t] * (1-psi12[tr,t]-psi13[tr,t])
+      gamma[1,2,tr,t] <- phi1[tr,t] * psi12[tr,t]
+      gamma[1,3,tr,t] <- phi1[tr,t] * psi13[tr,t]
+      gamma[1,4,tr,t] <- (1-phi1[tr,t])
+      gamma[2,1,tr,t] <- 0
+      gamma[2,2,tr,t] <- phi2[tr,t] * (1-psi23[tr,t])
+      gamma[2,3,tr,t] <- phi2[tr,t] * psi23[tr,t]
+      gamma[2,4,tr,t] <- (1-phi2[tr,t])
+      gamma[3,1,tr,t] <- 0
+      gamma[3,2,tr,t] <- 0
+      gamma[3,3,tr,t] <- phi3[tr,t]
+      gamma[3,4,tr,t] <- (1-phi3[tr,t])
+      gamma[4,1,tr,t] <- 0
+      gamma[4,2,tr,t] <- 0
+      gamma[4,3,tr,t] <- 0
+      gamma[4,4,tr,t] <- 1
+    }
+  }
+  
+  
+  # probabilities of y(t) given z(t)
+  omega[1,1] <- p1 * (1-2 * error)
+  omega[1,2] <- p1 * error
+  omega[1,3] <- p1 * error
+  omega[1,4] <- 1-p1
+  omega[2,1] <- p2 * error
+  omega[2,2] <- p2 * (1-error)
+  omega[2,3] <- p2 * error
+  omega[2,4] <- 1-p2
+  omega[3,1] <- p3 * error
+  omega[3,2] <- p3 * error
+  omega[3,3] <- p3 * (1- 2*error)
+  omega[3,4] <- 1-p3
+  omega[4,1] <- 0
+  omega[4,2] <- 0
+  omega[4,3] <- 0
+  omega[4,4] <- 1
+  
+  # likelihood 
+  for (i in 1:nind){
+    # State at first capture
+    
+    for (t in 1:(f[i]-1)){
+      z[i,t] <- 0
+      N1[i,t] <- ifelse(z[i,t] == 1, 1,0)
+      N2[i,t] <- ifelse(z[i,t] == 2, 1,0)
+      N3[i,t] <- ifelse(z[i,t] == 3, 1,0)
+    }
+    z[i,f[i]] <- fs[i]
+    N1[i,f[i]] <- ifelse(z[i,f[i]] == 1, 1,0)
+    N2[i,f[i]] <- ifelse(z[i,f[i]] == 2, 1,0)
+    N3[i,f[i]] <- ifelse(z[i,f[i]] == 3, 1,0)
+    for (t in (f[i]+1):noccas){
+      # z(t) given z(t-1)
+      z[i,t] ~ dcat(gamma[z[i,t-1],1:4,Treatment[i],t-1])
+      N1[i,t] <- ifelse(z[i,t] == 1, 1,0)
+      N2[i,t] <- ifelse(z[i,t] == 2, 1,0)
+      N3[i,t] <- ifelse(z[i,t] == 3, 1,0)
+      # y(t) given z(t)
+      y[i,t] ~ dcat(omega[z[i,t],1:4])
+    }
+  }
+  for (t in 1:noccas){
+    n1[t,1] <- sum(N1[Tr1,t])
+    n2[t,1] <- sum(N2[Tr1,t])
+    n3[t,1] <- sum(N3[Tr1,t])
+    ntot[t,1] <- n1[t,1] + n2[t,1] + n3[t,1]
+    
+    n1[t,2] <- sum(N1[Tr2,t])
+    n2[t,2] <- sum(N2[Tr2,t])
+    n3[t,2] <- sum(N3[Tr2,t])
+    ntot[t,2] <- n1[t,2] + n2[t,2] + n3[t,2]
+    
+    n1[t,3] <- sum(N1[Tr3,t])
+    n2[t,3] <- sum(N2[Tr3,t])
+    n3[t,3] <- sum(N3[Tr3,t])
+    ntot[t,3] <- n1[t,3] + n2[t,3] + n3[t,3]
+    
+    n1[t,4] <- sum(N1[Tr4,t])
+    n2[t,4] <- sum(N2[Tr4,t])
+    n3[t,4] <- sum(N3[Tr4,t])
+    ntot[t,4] <- n1[t,4] + n2[t,4] + n3[t,4]
+  }
+}
+
+inits = function(){
+  list(phi1 = matrix(ncol = 5, runif(20,0,1)),phi2 = matrix(ncol = 5, runif(20,0,1)),phi3 = matrix(ncol = 5, runif(20,0,1)),
+       p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
+       psi12 = matrix(ncol = 5, runif(20,0,0.9)),psi23 =matrix(ncol = 5, runif(20,0,1)), psi13 = matrix(ncol = 5, runif(20,0,0.1)),
+       error = runif(1,0,0.1),
+       z = zi)}
+
+parameters = c("phi1","phi2","phi3",
+               "p1","p2","p3",
+               "psi12","psi23",
+               "psi13",
+               "error",
+               "n1","n2","n3","ntot")
+
+Model_multi_treatment_time_abundance <- jags.parallel(data = jags.data,
+                                                                inits = inits,
+                                                                parameters.to.save = parameters,
+                                                                model.file = multievent_treatment_time_abundance,
+                                                                n.chains = 2,
+                                                                n.iter = ni)
+save(Model_multi_treatment_time_abundance, file = "R/object/Model_multi_treatment_time_abundance.RData" )
 
 runtime = Sys.time() - old
 print(runtime)
