@@ -44,7 +44,7 @@ f <- apply(s_group, 1, get.first)
 zinit <- s_group
 for (i in 1:nrow(s_group)) {
   for (j in 1:ncol(s_group)) {
-    if (j > f[i] & s_group[i,j]==4) {zinit[i,j] <- zinit[i,j-1]}
+    if (j > f[i] & s_group[i,j]==4) {zinit[i,j] <- ifelse(zinit[i,j-1]==1,2,zinit[i,j-1])}
   }
 }
 for (i in 1:nrow(s_group)) {
@@ -806,13 +806,13 @@ parameters = c("phi1","phi2","phi3",
                "error",
                "n1","n2","n3","ntot")
 
-Model_multi_treatment_corrected_abundance <- jags.parallel(data = jags.data,
+Model_multi_treatment_corrected_abundance_zbis <- jags.parallel(data = jags.data,
                                                   inits = inits,
                                                   parameters.to.save = parameters,
                                                   model.file = multievent_treatment_corrected_abundance,
                                                   n.chains = 2,
                                                   n.iter = ni)
-save(Model_multi_treatment_corrected_abundance, file = "R/object/Model_multi_treatment_corrected_abundance.RData" )
+save(Model_multi_treatment_corrected_abundance_zbis, file = "R/object/Model_multi_treatment_corrected_abundance_zbis.RData" )
 
 runtime = Sys.time() - old
 print(runtime)
@@ -1161,7 +1161,17 @@ multievent_lake_time_abundance <- function(){
   # likelihood 
   for (i in 1:nind){
     # State at first capture
+    
+    for (t in 1:(f[i]-1)){
+      z[i,t] <- 0
+      N1[i,t] <- ifelse(z[i,t] == 1, 1,0)
+      N2[i,t] <- ifelse(z[i,t] == 2, 1,0)
+      N3[i,t] <- ifelse(z[i,t] == 3, 1,0)
+    }
     z[i,f[i]] <- fs[i]
+    N1[i,f[i]] <- ifelse(z[i,f[i]] == 1, 1,0)
+    N2[i,f[i]] <- ifelse(z[i,f[i]] == 2, 1,0)
+    N3[i,f[i]] <- ifelse(z[i,f[i]] == 3, 1,0)
     for (t in (f[i]+1):noccas){
       # z(t) given z(t-1)
       z[i,t] ~ dcat(gamma[z[i,t-1],1:4,Lake[i],t-1])
@@ -1172,6 +1182,9 @@ multievent_lake_time_abundance <- function(){
       y[i,t] ~ dcat(omega[z[i,t],1:4])
     }
   }
+  
+  # Additional variable
+  
   for (t in 1:noccas){
     n1[t,1] <- sum(N1[L1,t])
     n2[t,1] <- sum(N2[L1,t])
