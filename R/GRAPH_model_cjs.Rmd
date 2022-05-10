@@ -1243,7 +1243,8 @@ tbl5_psi = rbind(data.frame(tbl5_psi12, c = "1"), data.frame(tbl5_psi23, c = "2"
 colnames(tbl5_n) <- c("n", "size","treatment","year")
 tbl5_n <- tbl5_n %>% mutate(size = factor (size),
                                 treatment = factor(treatment),
-                                year = factor(year))
+                                year = factor(year),
+                            exp_year = ifelse(year %in% c(1,2,3),1,2))
 colnames(tbl5_ntot) <- c("n", "size","treatment","year")
 tbl5_ntot <- tbl5_ntot %>% mutate(size = factor (size),
                                 treatment = factor(treatment),
@@ -1299,283 +1300,46 @@ ggplot(tbl5_ntot)+
 ```
 
 ```{r}
-p1 <- ggplot(tbl5_psi %>% filter (year == "1"), aes(color = treatment))+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 1, treatment == "1"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 1, treatment == "2"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 1, treatment == "3"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 1, treatment == "4"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 1, treatment == "1"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 1, treatment == "2"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 1, treatment == "3"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 1, treatment == "4"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  ylim(c(0,1))+
-  facet_wrap(~c)
-p2 <- ggplot(tbl5_psi %>% filter (year == "2"), aes(color =treatment))+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 2, treatment == "1"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 2, treatment == "2"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 2, treatment == "3"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 2, treatment == "4"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 2, treatment == "1"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 2, treatment == "2"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 2, treatment == "3"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 2, treatment == "4"),aes(x = treatment, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  ylim(c(0,1))+
-  facet_wrap(~c)
-
-p1 + p2
-
+sum_phi <- tbl5_phi %>% group_by(year,size,treatment) %>% summarize(mean = mean(phi), max = quantile(phi,0.975), min = quantile(phi,0.025)) %>% ungroup()
+sum_psi <- tbl5_psi %>% group_by(year,c,treatment) %>% summarize(mean = mean(psi), max = quantile(psi,0.975), min = quantile(psi,0.025)) %>% ungroup() %>%
+  mutate (treatment = case_when(treatment == 1 ~ "F/T", treatment == 2 ~ "T/T",treatment == 3 ~ "F/F", treatment == 4 ~ "T/F"),
+          c = case_when(c == 1 ~ "Small to Medium", c == 2 ~ "Medium to Large"),
+          year = ifelse(year == 1, "Before", "After")) %>% mutate(year = factor(year, levels= c("Before", "After")))
+sum_p <- tbl5_p %>% group_by(size) %>% summarize(mean = mean(p), max = quantile(p,0.975), min = quantile(p,0.025)) %>% ungroup()
+test <- merge(sum_phi,tbl5_n %>% group_by(exp_year, treatment, size) %>% summarize(eff = mean (n)) %>% mutate(year = exp_year), all = TRUE) %>% 
+  mutate (treatment = case_when(treatment == 1 ~ "F/T", treatment == 2 ~ "T/T",treatment == 3 ~ "F/F", treatment == 4 ~ "T/F"),
+          size = case_when(size == 1 ~ "Small", size == 2 ~ "Medium", size == 3 ~ "Large"),
+          year = ifelse(year == 1, "Before", "After")) %>% mutate(year = factor(year, levels= c("Before", "After")))
 ```
 
 ```{r}
-p1 <- ggplot(tbl5_phi %>% filter (year == "1"), aes(color = size))+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "1"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "2"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "3"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "4"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "1"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "2"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "3"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "4"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "1"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "2"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "3"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "4"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  
-  guides(color = element_blank())+
-  ylim(c(0,1))+
-  facet_wrap(~size)
-
-p2 <- ggplot(tbl5_phi %>% filter (year == "2"), aes(color = size))+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "1"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "2"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "3"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "4"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "1"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "2"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "3"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "4"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "1"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "2"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "3"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "4"),aes(x = treatment, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  
-  guides(color = element_blank())+
-  ylim(c(0,1))+
-  facet_wrap(~size)
-
-p1 + p2
+ggplot(test)+
+  geom_point(aes (x = treatment, y = mean, color = eff))+
+  geom_errorbar(aes(x = treatment, ymax = max, ymin = min, color = eff, width = 0.4))+
+  scale_color_gradient(low = "#81d2e5", high = "#2a46b0")+
+  facet_grid(rows = vars(size), cols = vars(year), labeller = "label_value")+
+  labs (y = "Survival", x = "Treatment : Perch/Nutrients")
 ```
+
+Mes conclusions : chute de la survie  des petits avec l'ajout de perche, pas d'effet des nutriments pas d'effet des traitements sur la survie des poissons de taille 2 et 3
 
 ```{r}
-p1 <- ggplot(tbl5_n %>% filter (size == "1"), aes(color = treatment))+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 1, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 2, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 3, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 4, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 5, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 6, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 1, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 2, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 3, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 4, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 5, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 6, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 1, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 2, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 3, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 4, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 5, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 6, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 1, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 2, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 3, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 4, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 5, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 1, year == 6, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 1, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 2, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 3, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 4, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 5, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 6, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 1, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 2, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 3, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 4, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 5, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 6, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 1, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 2, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 3, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 4, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 5, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 6, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 1, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 2, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 3, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 4, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 5, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 2, year == 6, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 1, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 2, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 3, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 4, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 5, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 6, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 1, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 2, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 3, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 4, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 5, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 6, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 1, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 2, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 3, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 4, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 5, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 6, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 1, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 2, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 3, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 4, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 5, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_n %>% filter(size == 3, year == 6, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  facet_wrap (~size)
-
-p1
+ggplot(sum_psi)+
+  geom_point(aes (x = treatment, y = mean))+
+  geom_errorbar(aes(x = treatment, ymax = max, ymin = min, width = 0.4))+
+  #scale_color_gradient(low = "#81d2e5", high = "#2a46b0")+
+  facet_grid(rows = vars(c), cols = vars(year), labeller = "label_value")+
+  labs (y = "Growth", x = "Treatment : Perch/Nutrients")
 ```
+
+Mes conclusions : Ajout des perches : probabilité de croissance plus importante de 1 a 2
+Et sans perche diff probabilité de passer de 2 à 3 augmenté par la présence de nutrients
 
 ```{r}
-p1 <- ggplot(tbl5_ntot, aes(color = treatment))+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 1, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 2, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 3, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 4, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 5, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 6, treatment == "1"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 1, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 2, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 3, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 4, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 5, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 6, treatment == "2"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 1, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 2, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 3, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 4, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 5, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 6, treatment == "3"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 1, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 2, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 3, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 4, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 5, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_ntot %>% filter(year == 6, treatment == "4"),aes(x = year, y = mean(n),ymin = quantile(n, 0.025), ymax = quantile(n, 0.975)),show.legend = F)
-
-p1
+ggplot(sum_p)+
+  geom_point(aes (x = size, y = mean))+
+  geom_errorbar(aes(x = size, ymax = max, ymin = min, width = 0.4))+
+  labs (y = "Capture probability", x = "Size")
 ```
-
-```{r}
-p1 <- ggplot(tbl5_psi %>% filter (treatment == "1"), aes(color =c))+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 1, treatment == "1"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 2, treatment == "1"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 1, treatment == "1"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 2, treatment == "1"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  guides(color = element_blank())+
-  ylim(c(0,1))+
-  facet_wrap(~c)
-p2 <- ggplot(tbl5_psi %>% filter (treatment == "2"), aes(color =c))+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 1, treatment == "2"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 2, treatment == "2"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 1, treatment == "2"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 2, treatment == "2"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  guides(color = element_blank())+
-  ylim(c(0,1))+
-  facet_wrap(~c)
-p3 <- ggplot(tbl5_psi %>% filter (treatment == "3"), aes(color =c))+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 1, treatment == "3"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 2, treatment == "3"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 1, treatment == "3"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 2, treatment == "3"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  guides(color = element_blank())+
-  ylim(c(0,1))+
-  facet_wrap(~c)
-p4 <- ggplot(tbl5_psi %>% filter (treatment == "4"), aes(color =c))+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 1, treatment == "4"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 2, treatment == "4"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 1, treatment == "4"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 2, treatment == "4"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
-  guides(color = element_blank())+
-  ylim(c(0,1))+
-  facet_wrap(~c)
-
-(p1+p2)/(p3+p4)
-```
-
-```{r}
-p1 <- ggplot(tbl5_phi %>% filter (treatment == "1"), aes(color = size))+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  guides(color = element_blank())+
-  ylim(c(0,1))+
-  facet_wrap(~size)
-p2 <- ggplot(tbl5_phi %>% filter (treatment == "2"), aes(color = size))+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  guides(color = element_blank())+
-  ylim(c(0,1))+
-  facet_wrap(~size)
-p3 <- ggplot(tbl5_phi %>% filter (treatment == "3"), aes(color = size))+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  guides(color = element_blank())+
-  ylim(c(0,1))+
-  facet_wrap(~size)
-p4 <- ggplot(tbl5_phi %>% filter (treatment == "4"), aes(color = size))+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
-  guides(color = element_blank())+
-  ylim(c(0,1))+
-  facet_wrap(~size)
-
-(p1+p2)/(p3+p4)
-```
-
-
 
 
