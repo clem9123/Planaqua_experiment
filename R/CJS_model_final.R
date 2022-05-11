@@ -79,8 +79,8 @@ jags.data <- list(y = s_group,
                   Tr1 = which(s$Treatment == 1),
                   Tr2 = which(s$Treatment == 2), 
                   Tr3 = which(s$Treatment == 3), 
-                  Tr4 = which(s$Treatment == 4))#,
-                  
+                  Tr4 = which(s$Treatment == 4),
+                  LT = Lake_treatment$Treatment)
                   #L1 = which(s$Lake == 1),
                   #L2 = which(s$Lake == 2),
                   #L3 = which(s$Lake == 3),
@@ -1506,24 +1506,24 @@ multievent_treatment_random_corrected_abundance <- function(){
   
   for (t in 1:2){
     for (l in 1:16){
-      phi1_aux[l,t] ~ dnorm(phi1[tr,1], 1/(sigma^2))
-      phi2_aux[l,t] ~ dnorm(phi2[tr,1], 1/(sigma^2))
-      phi3_aux[l,t] ~ dnorm(phi3[tr,1], 1/(sigma^2))
+      phi1_aux[l,t] ~ dnorm(phi1[LT[l],1], 1/(sigma^2))
+      phi2_aux[l,t] ~ dnorm(phi2[LT[l],1], 1/(sigma^2))
+      phi3_aux[l,t] ~ dnorm(phi3[LT[l],1], 1/(sigma^2))
       
-      psi12_aux[l,t] ~ dnorm(psi12[tr,1], 1/(sigma^2))
-      psi23_aux[l,t] ~ dnorm(psi23[tr,1], 1/(sigma^2))
+      psi12_aux[l,t] ~ dnorm(psi12[LT[l],1], 1/(sigma^2))
+      psi23_aux[l,t] ~ dnorm(psi23[LT[l],1], 1/(sigma^2))
       #psi13_aux[l,t] ~ dnorm(psi13[tr,1], 1/(sigma^2))
     }
   }
   
   for (t in 3:(noccas-1)){
     for (l in 1:16){
-      phi1_aux[l,t] ~ dnorm(phi1[tr,2], 1/(sigma^2))
-      phi2_aux[l,t] ~ dnorm(phi2[tr,2], 1/(sigma^2))
-      phi3_aux[l,t] ~ dnorm(phi3[tr,2], 1/(sigma^2))
+      phi1_aux[l,t] ~ dnorm(phi1[LT[l],2], 1/(sigma^2))
+      phi2_aux[l,t] ~ dnorm(phi2[LT[l],2], 1/(sigma^2))
+      phi3_aux[l,t] ~ dnorm(phi3[LT[l],2], 1/(sigma^2))
       
-      psi12_aux[l,t] ~ dnorm(psi12[tr,2], 1/(sigma^2))
-      psi23_aux[l,t] ~ dnorm(psi23[tr,2], 1/(sigma^2))
+      psi12_aux[l,t] ~ dnorm(psi12[LT[l],2], 1/(sigma^2))
+      psi23_aux[l,t] ~ dnorm(psi23[LT[l],2], 1/(sigma^2))
       #psi13_aux[l,t] ~ dnorm(psi13[tr,2], 1/(sigma^2))
     }
   }
@@ -1533,6 +1533,8 @@ multievent_treatment_random_corrected_abundance <- function(){
   p3 ~ dunif(0,1)
   
   error ~ dunif(0,1)
+  
+  sigma ~ dnorm(0,1)
   
   # probabilities of state z(t+1) given z(t)
   for (t in 1:(noccas-1)){
@@ -1626,14 +1628,14 @@ inits = function(){
   list(phi1 = matrix(ncol = 2, runif(8,0,1)),phi2 = matrix(ncol = 2, runif(8,0,1)),phi3 = matrix(ncol = 2, runif(8,0,1)),
        p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
        psi12 = matrix(ncol = 2, runif(8,0,0.5)),psi23 = matrix(ncol = 2, runif(8,0,0.5)), #psi13 = matrix(ncol = 2, runif(8,0,0.5)),
-       error = runif(1,0,0.1),
+       error = runif(1,0,0.1), sigma = runif(1,-1,1),
        z = zi)}
 
 parameters = c("phi1","phi2","phi3",
                "p1","p2","p3",
                "psi12","psi23",
                #"psi13",
-               "error",
+               "error", "sigma",
                "n1","n2","n3","ntot",
                "phi1_aux","phi2_aux","phi3_aux",
                "psi12_aux","psi13_aux","psi23_aux")
