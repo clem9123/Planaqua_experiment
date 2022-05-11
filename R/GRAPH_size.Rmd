@@ -83,6 +83,9 @@ ggplot(BDD_p %>% filter (Year == "2017"))+
 ggplot(BDD_p %>% filter (Year == "2016"))+
   geom_bar(aes(x = Lake))+
   facet_wrap(~Treatment, scales= "free_x")
+
+ggplot(BDD_p)+
+  geom_density(aes(x = Size, color = Year))
 ```
 
 ```{r}
@@ -130,5 +133,6 @@ nrow(BDD_g %>% filter (Tag_year == "2016" & Year == "2016"))
 ```
 
 ```{r}
+
 ```
 
