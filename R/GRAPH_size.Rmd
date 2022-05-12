@@ -133,6 +133,40 @@ nrow(BDD_g %>% filter (Tag_year == "2016" & Year == "2016"))
 ```
 
 ```{r}
+#size_break <- c(0,120,180,300)
+#BDD_g <- BDD_g %>% mutate(s_group = discretize(Size ,method = "fixed",
+#                            breaks = size_break, 
+#                            labels= c(1:(length(size_break)-1))))
+ggplot(BDD_g)+
+  geom_bar(aes(x = Year, fill = s_group))+#,position = position_stack(reverse = TRUE))+
+  #scale_fill_brewer(palette = "YlOrBr")+#, direction = -1)+
+  facet_wrap(~Treatment)
 
+#En récupérent que ce que j'étudie
+
+ggplot(BDD_g %>% filter(Tag_id %in% s$Tag_id & !is.na(s_group)))+
+  geom_bar(aes(x = Year, fill = s_group))+#,position = position_stack(reverse = TRUE))+
+  scale_fill_brewer(palette = "YlOrBr")+#, direction = -1)+
+  facet_wrap(~Treatment)
+
+BDD_g %>% filter(Tag_id %in% s$Tag_id & is.na(s_group))
 ```
+
+```{r}
+sum <- BDD_g %>% filter(!is.na(s_group)) %>% group_by(s_group,Year,Treatment,Lake) %>% summarize(n = n())
+
+ggplot(sum)+
+  geom_boxplot(aes(y = n, x = Treatment))+
+  geom_jitter(aes(y = n, x = Treatment, color = Year))+
+  facet_wrap(~ s_group)
+```
+
+```{r}
+ggplot(BDD_g %>% filter(Year == "2016"))+
+  geom_bar(aes(x= Lake, fill =s_group))
+```
+
+
+
+
 
