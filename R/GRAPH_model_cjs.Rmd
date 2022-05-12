@@ -1694,7 +1694,61 @@ EFFET RANDOM
 ###################################################################################
 
 ```{r}
-print(Model_multi_treatment_random_corrected_abundance[[2]]$mean)
+print(Model_multi_treatment_random_corrected_abundance[[2]]$mean$phi1)
+
+tbl1 = data.frame()
+tbl2 = data.frame()
+tbl3 = data.frame()
+for (l in 1:16){
+  for (t in 1:5){
+    tbl1 <- rbind(tbl1,data.frame(Model_multi_treatment_random_corrected_abundance[[2]]$mean$phi1_aux[l,t],as.character(l),as.character(t)))
+    tbl2 <- rbind(tbl2,data.frame(Model_multi_treatment_random_corrected_abundance[[2]]$mean$phi2_aux[l,t],as.character(l),as.character(t)))
+    tbl3 <- rbind(tbl3,data.frame(Model_multi_treatment_random_corrected_abundance[[2]]$mean$phi3_aux[l,t],as.character(l),as.character(t)))
+  }
+}
+
+tbl1mean = data.frame()
+tbl2mean = data.frame()
+tbl3mean = data.frame()
+for (tr in 1:4){
+  for (t in 1:2){
+    tbl1mean <- rbind(tbl1mean,data.frame(Model_multi_treatment_random_corrected_abundance[[2]]$mean$phi1[tr,t],as.character(tr),as.character(t)))
+    tbl2mean <- rbind(tbl2mean,data.frame(Model_multi_treatment_random_corrected_abundance[[2]]$mean$phi2[tr,t],as.character(tr),as.character(t)))
+    tbl3mean <- rbind(tbl3mean,data.frame(Model_multi_treatment_random_corrected_abundance[[2]]$mean$phi3[tr,t],as.character(tr),as.character(t)))
+  }
+}
+
+
+colnames(tbl1) <- c("phi","Lake","year")
+tbl1 <- merge(tbl1,Lake_treatment)
+
+colnames(tbl2) <- c("phi","Lake","year")
+tbl2 <- merge(tbl2,Lake_treatment)
+
+colnames(tbl3) <- c("phi","Lake","year")
+tbl3 <- merge(tbl3,Lake_treatment)
+
+colnames(tbl1mean) <- c("phi","Treatment","year")
+colnames(tbl2mean) <- c("phi","Treatment","year")
+colnames(tbl3mean) <- c("phi","Treatment","year")
+
+
+p1 = ggplot(tbl1)+
+  geom_jitter(aes(x = year, y = phi, color = Treatment), width = 0.2)+
+  ylim(0,1)
+p2 = ggplot(tbl1mean)+
+  geom_point (aes(x = year,y = phi,color = Treatment), shape = "square", size = 5)+
+  ylim(0,1)
+p1+p2
+
+ggplot(tbl2)+
+  geom_jitter(aes(x = year, y = phi, color = Treatment), width = 0.2)
+
+ggplot(tbl3)+
+  geom_jitter(aes(x = year, y = phi, color = Treatment), width = 0.2)
+```
+```{r}
+traceplot(Model_multi_treatment_random_corrected_abundance, varname = c("phi1_aux"), ask = F)
 ```
 
 ```{r}

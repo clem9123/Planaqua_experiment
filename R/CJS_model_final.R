@@ -1654,7 +1654,7 @@ print(runtime)
 
 #-----------------------------------------------------------------------------------------------
 ################################################################################################
-# Model corrected with abundance effet random lake et time
+# Model corrected with abundance effet random lake et time 2
 ################################################################################################
 #-----------------------------------------------------------------------------------------------
 
@@ -1698,27 +1698,32 @@ multievent_treatment_random_corrected_abundance <- function(){
       #psi13[tr,t] ~ dunif(0,1)
     }
   }
+  for (t in 1:(noccas-1)){
+    for (l in 1:16){
+      epsilon[l,t] ~ dnorm(0,1/(sigma^2))
+    }
+  }
   
   for (t in 1:2){
     for (l in 1:16){
-      phi1_aux[l,t] ~ dnorm(phi1[LT[l],1], 1/(sigma^2))
-      phi2_aux[l,t] ~ dnorm(phi2[LT[l],1], 1/(sigma^2))
-      phi3_aux[l,t] ~ dnorm(phi3[LT[l],1], 1/(sigma^2))
+      logit(phi1_aux[l,t]) <- logit(phi1[LT[l],1]) + epsilon[l,t]
+      logit(phi2_aux[l,t]) <- logit(phi2[LT[l],1]) + epsilon[l,t]
+      logit(phi3_aux[l,t]) <- logit(phi3[LT[l],1]) + epsilon[l,t]
       
-      psi12_aux[l,t] ~ dnorm(psi12[LT[l],1], 1/(sigma^2))
-      psi23_aux[l,t] ~ dnorm(psi23[LT[l],1], 1/(sigma^2))
+      logit(psi12_aux[l,t]) <- logit(psi12[LT[l],1]) + epsilon[l,t]
+      logit(psi23_aux[l,t]) <- logit(psi23[LT[l],1]) + epsilon[l,t]
       #psi13_aux[l,t] ~ dnorm(psi13[tr,1], 1/(sigma^2))
     }
   }
   
   for (t in 3:(noccas-1)){
     for (l in 1:16){
-      phi1_aux[l,t] ~ dnorm(phi1[LT[l],2], 1/(sigma^2))
-      phi2_aux[l,t] ~ dnorm(phi2[LT[l],2], 1/(sigma^2))
-      phi3_aux[l,t] ~ dnorm(phi3[LT[l],2], 1/(sigma^2))
+      logit(phi1_aux[l,t]) <- logit(phi1[LT[l],2]) + epsilon[l,t]
+      logit(phi2_aux[l,t]) <- logit(phi2[LT[l],2]) + epsilon[l,t]
+      logit(phi3_aux[l,t]) <- logit(phi3[LT[l],2]) + epsilon[l,t]
       
-      psi12_aux[l,t] ~ dnorm(psi12[LT[l],2], 1/(sigma^2))
-      psi23_aux[l,t] ~ dnorm(psi23[LT[l],2], 1/(sigma^2))
+      logit(psi12_aux[l,t]) <- logit(psi12[LT[l],2]) + epsilon[l,t]
+      logit(psi23_aux[l,t]) <- logit(psi23[LT[l],2]) + epsilon[l,t]
       #psi13_aux[l,t] ~ dnorm(psi13[tr,2], 1/(sigma^2))
     }
   }
@@ -1729,7 +1734,7 @@ multievent_treatment_random_corrected_abundance <- function(){
   
   error ~ dunif(0,1)
   
-  sigma ~ dnorm(0,1)
+  sigma ~ dnorm(0,50)
   
   # probabilities of state z(t+1) given z(t)
   for (t in 1:(noccas-1)){
@@ -1824,6 +1829,7 @@ inits = function(){
        p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
        psi12 = matrix(ncol = 2, runif(8,0,0.5)),psi23 = matrix(ncol = 2, runif(8,0,0.5)), #psi13 = matrix(ncol = 2, runif(8,0,0.5)),
        error = runif(1,0,0.1), sigma = runif(1,-1,1),
+       epsilon = matrix(ncol = 5, runif(80,0,1)),
        z = zi)}
 
 parameters = c("phi1","phi2","phi3",
@@ -1833,9 +1839,9 @@ parameters = c("phi1","phi2","phi3",
                "error", "sigma",
                "n1","n2","n3","ntot",
                "phi1_aux","phi2_aux","phi3_aux",
-               "psi12_aux","psi13_aux","psi23_aux")
+               "psi12_aux","psi13_aux","psi23_aux","epsilon")
 
-Model_multi_treatment_random_corrected_abundance <- jags.parallel(data = jags.data,
+Model_multi_treatment_random_corrected_abundance2 <- jags.parallel(data = jags.data,
                                                                   inits = inits,
                                                                   parameters.to.save = parameters,
                                                                   model.file = multievent_treatment_random_corrected_abundance,
