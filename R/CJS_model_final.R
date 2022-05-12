@@ -2037,7 +2037,7 @@ inits = function(){
        p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
        psi12 = matrix(ncol = 2, runif(8,0,0.5)),psi23 = matrix(ncol = 2, runif(8,0,0.5)), #psi13 = matrix(ncol = 2, runif(8,0,0.5)),
        error = runif(1,0,0.1), sigma = runif(1,-1,1),
-       epsilon = matrix(ncol = 5, runif(80,0,1)),
+       epsilon = array(runif(80,0,1),c()),mu = matrix(ncol = 5, runif(40,0,1))
        z = zi)}
 
 parameters = c("phi1","phi2","phi3",
@@ -2049,7 +2049,7 @@ parameters = c("phi1","phi2","phi3",
                "phi1_aux","phi2_aux","phi3_aux",
                "psi12_aux","psi13_aux","psi23_aux","epsilon")
 
-Model_multi_treatment_random_corrected_abundance2 <- jags.parallel(data = jags.data,
+Model_multi_treatment_random_corrected_abundance3 <- jags.parallel(data = jags.data,
                                                                    inits = inits,
                                                                    parameters.to.save = parameters,
                                                                    model.file = multievent_treatment_random_corrected_abundance,
