@@ -1199,6 +1199,8 @@ MODEL TREATMENT ONE EXP TIME
 ###################################################################################
 
 ```{r}
+model = Model_multi_treatment_random_corrected_abundance2 #Model_multi_treatment_corrected_abundance
+
 tbl5_p = data.frame()
 tbl5_phi = data.frame()
 tbl5_psi12 = data.frame()
@@ -1209,27 +1211,27 @@ for (n in 1:2){
   for (tr in 1:4){
     for (t in 1:2){
       tbl5_psi12 <- rbind(tbl5_psi12, 
-               data.frame(as.mcmc(Model_multi_treatment_corrected_abundance)[[n]][,paste("psi12","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+               data.frame(as.mcmc(model)[[n]][,paste("psi12","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
       tbl5_psi23 <- rbind(tbl5_psi23, 
-               data.frame(as.mcmc(Model_multi_treatment_corrected_abundance)[[n]][,paste("psi23","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+               data.frame(as.mcmc(model)[[n]][,paste("psi23","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
       
       for (gs in 1:3){
         tbl5_phi <- rbind(tbl5_phi, 
-               data.frame(as.mcmc(Model_multi_treatment_corrected_abundance)[[n]][,paste("phi",as.character(gs),"[",as.character(tr),",",as.character(t),"]", sep = "")],gs,tr,t))
+               data.frame(as.mcmc(model)[[n]][,paste("phi",as.character(gs),"[",as.character(tr),",",as.character(t),"]", sep = "")],gs,tr,t))
       }
     }
     for (t in 1:6){
       tbl5_ntot <- rbind(tbl5_ntot, 
-               data.frame(as.mcmc(Model_multi_treatment_corrected_abundance)[[n]][,paste("ntot","[",as.character(t),",",as.character(tr),"]", sep = "")],"tot",tr,t))
+               data.frame(as.mcmc(model)[[n]][,paste("ntot","[",as.character(t),",",as.character(tr),"]", sep = "")],"tot",tr,t))
       for (gs in 1:3){
         tbl5_n <- rbind(tbl5_n, 
-               data.frame(as.mcmc(Model_multi_treatment_corrected_abundance)[[n]][,paste("n",as.character(gs),"[",as.character(t),",",as.character(tr),"]", sep = "")],gs,tr,t))
+               data.frame(as.mcmc(model)[[n]][,paste("n",as.character(gs),"[",as.character(t),",",as.character(tr),"]", sep = "")],gs,tr,t))
       }
     }
   }
   for (gs in 1:3){
     tbl5_p <- rbind(tbl5_p, 
-               data.frame(as.mcmc(Model_multi_treatment_corrected_abundance)[[n]][,paste("p",as.character(gs), sep = "")],gs))
+               data.frame(as.mcmc(model)[[n]][,paste("p",as.character(gs), sep = "")],gs))
   }
 }
 
