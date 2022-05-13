@@ -1199,7 +1199,7 @@ MODEL TREATMENT ONE EXP TIME
 ###################################################################################
 
 ```{r}
-model = Model_multi_treatment_random_corrected_abundance2 #Model_multi_treatment_corrected_abundance
+model = Model_multi_treatment_random_corrected_abundance4 #Model_multi_treatment_corrected_abundance
 
 tbl5_p = data.frame()
 tbl5_phi = data.frame()
