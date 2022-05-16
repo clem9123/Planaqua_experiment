@@ -18,18 +18,36 @@ source("R/importation_data.R")
 ```
 
 ```{r}
-print(Model_Treatment_time_and_lake[[2]]$mean)
+print(Model_Treatment_time_and_lake)#[[2]]$mean)
 ```
 
 Deviance = 9990
+DIC = 21 575
+
 C'est beaucoup (plus que Treatment tout simple) malgré cet augmentation de la liberté
 C'est bizarre
 
+Ca n'a pas convergé en fait donc normal
+Je sais pas trop quoi faire du coup 
+  Soit le model est mal écrit
+  Soit pas assez de puissance
+  ou bien mauvaise initialisation
+    surtout mu et epsilon
+
+
 ```{r}
-print(Model_treatment[[2]]$mean)
+print(Model_Treatment[[2]]$mean)
 ```
 
 Deviance = 9336
+DIC = 17 892
+
+```{r}
+print(Model_Treatment_time_x_lake[[2]]$mean)
+```
+
+Deviance = 8629
+DIC = 15 382
 
 ```{r}
 epsilon_phi <- data.frame(Lake = factor(1:16), 

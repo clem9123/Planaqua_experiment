@@ -67,7 +67,7 @@ jags.data <- list(y = s_group,
                   fs = fs,
                   nind = nrow(s_group),
                   noccas = ncol(s_group),
-                  ni = 10000,
+                  ni = 100000,
                   Lake = s$Lake,
                   Treatment = s$Treatment,
                   Tr1 = which(s$Treatment == 1),
@@ -260,8 +260,8 @@ inits = function(){
        error = runif(1,0,0.1),
        sigma_phi = runif(1,0,1), sigma_psi = runif(1,0,1),
        tau_phi = runif(1,0,1), tau_psi = runif(1,0,1),
-       epsilon_psi = runif(16, -10,10),mu_psi = runif(5,-10,10),
-       epsilon_phi = runif(16, -10,10),mu_phi = runif(5,-10,10),
+       epsilon_psi = runif(16, -1,1),mu_psi = runif(5,-1,1),
+       epsilon_phi = runif(16, -1,1),mu_phi = runif(5,-1,1),
        z = zi)}
 
 parameters = c("phi1","phi2","phi3",
@@ -272,13 +272,13 @@ parameters = c("phi1","phi2","phi3",
                "error", 
                "n1","n2","n3","ntot")
 
-Model_Treatment_time_and_lake <- jags.parallel(data = jags.data,
+Model_Treatment_time_and_lake_3 <- jags.parallel(data = jags.data,
                                                inits = inits,
                                                parameters.to.save = parameters,
                                                model.file = model,
                                                n.chains = 2,
                                                n.iter = ni)
-save(Model_Treatment_time_and_lake, file = "R/model_final/Model_Treatment_time_and_lake.RData" )
+#save(Model_Treatment_time_and_lake, file = "R/model_final/Model_Treatment_time_and_lake.RData" )
 
 runtime = Sys.time() - old
 print(runtime)
