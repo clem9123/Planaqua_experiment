@@ -1,6 +1,5 @@
 
 # importation des library
-library(tidyverse)
 library(readxl)
 
 # importation des donn?es et mise en forme des colonnes

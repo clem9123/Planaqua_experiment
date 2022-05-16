@@ -1,0 +1,122 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE}
+library(R2jags)
+library(tidyverse)
+library(arules)
+library(patchwork)
+
+load("R/model_final/Model_Treatment.RData")
+load("R/model_final/Model_Treatment_time_and_lake.RData")
+load("R/model_final/Model_Treatment_time_x_lake.RData")
+
+source("R/importation_data.R")
+```
+
+```{r}
+print(Model_Treatment_time_and_lake[[2]]$mean)
+```
+
+Deviance = 9990
+C'est beaucoup (plus que Treatment tout simple) malgré cet augmentation de la liberté
+C'est bizarre
+
+```{r}
+print(Model_treatment[[2]]$mean)
+```
+
+Deviance = 9336
+
+```{r}
+epsilon_phi <- data.frame(Lake = factor(1:16), 
+                          Treatment = Lake_treatment$Treatment, 
+                          epsilon_phi = Model_Treatment_time_and_lake[[2]]$mean$epsilon_phi)
+
+ggplot(epsilon_phi)+
+  geom_point(aes(x = Lake ,y = epsilon_phi, color = Treatment))
+```
+
+```{r}
+epsilon_psi <- data.frame(Lake = factor(1:16), 
+                          Treatment = Lake_treatment$Treatment, 
+                          epsilon_psi = Model_Treatment_time_and_lake[[2]]$mean$epsilon_psi)
+
+ggplot(epsilon_psi)+
+  geom_point(aes(x = Lake ,y = epsilon_psi, color = Treatment))
+```
+
+```{r}
+model = as.mcmc(Model_Treatment_time_and_lake)
+phi = data.frame()
+for (n in 1:2){
+  for (tr in 1:4){
+    for (gs in 1:3){
+      for (e in 1:2){
+        phi <- rbind(phi, 
+               data.frame(model[[n]][,paste("phi",as.character(gs),"[",as.character(tr),",",as.character(e),"]", sep = "")],
+                          Size = gs,
+                          Treatment = tr,
+                          Exp_time = e))
+      }
+    }
+  }
+}
+
+sum_phi = phi %>% group_by (Size,Treatment,Exp_time) %>% summarize(mean = mean(var1), min = quantile(var1,0.025), max = quantile(var1,0.975))
+
+ggplot(sum_phi, aes(color = factor(Treatment)))+
+  geom_point(aes(x = Treatment, y = mean))+
+  geom_errorbar(aes(x = Treatment, ymin = min, ymax = max), width = 0.4)+
+  facet_grid(rows = vars(Size), cols = vars(Exp_time))
+
+ggplot(phi)+
+  geom_density(aes(x = var1, color = factor(Treatment)))+
+  facet_grid(rows = vars(Size), cols = vars(Exp_time))
+
+```
+
+```{r}
+model = as.mcmc(Model_Treatment)
+phi = data.frame()
+for (n in 1:2){
+  for (tr in 1:4){
+    for (gs in 1:3){
+      for (e in 1:2){
+        phi <- rbind(phi, 
+               data.frame(model[[n]][,paste("phi",as.character(gs),"[",as.character(tr),",",as.character(e),"]", sep = "")],
+                          Size = gs,
+                          Treatment = tr,
+                          Exp_time = e))
+      }
+    }
+  }
+}
+
+sum_phi = phi %>% group_by (Size,Treatment,Exp_time) %>% summarize(mean = mean(var1), min = quantile(var1,0.025), max = quantile(var1,0.975))
+
+ggplot(sum_phi, aes(color = factor(Treatment)))+
+  geom_point(aes(x = Treatment, y = mean))+
+  geom_errorbar(aes(x = Treatment, ymin = min, ymax = max), width = 0.4)+
+  facet_grid(rows = vars(Size), cols = vars(Exp_time))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
