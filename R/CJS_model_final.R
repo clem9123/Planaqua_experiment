@@ -2261,3 +2261,194 @@ save(Model_multi_treatment_random_corrected_abundance4, file = "R/object/Model_m
 
 runtime = Sys.time() - old
 print(runtime)
+
+#-----------------------------------------------------------------------------------------------
+################################################################################################
+# POUBELLE
+################################################################################################
+#-----------------------------------------------------------------------------------------------
+
+old = Sys.time()
+
+multievent_treatment_rd_corrected_abundance <- function(){
+  
+  # -------------------------------------------------
+  # Parameters:
+  # phi1 : survival for state 1
+  # phi2 : survival for state 2
+  # phi3 : survival for state 3
+  # p1 : capture probability for state 1
+  # p2 : capture probability for state 2
+  # p3 : capture probability for state 3
+  # psi12 : probability of growth from state 1 to 2
+  # psi23 : probability of growth from state 2 to 3
+  # error : probability of asserting a false state when captured
+  # -------------------------------------------------
+  # States (z):
+  # 1 = alive and size between 
+  # 2 = alive and size between
+  # 3 = alive and size between
+  # 4 = dead
+  # Observations (y):  
+  # 1 = detected and measured between
+  # 2 = detected and measured between
+  # 3 = detected and measured between
+  # 4 = not detected
+  # -------------------------------------------------
+  
+  # priors
+  for (e in 1:2){
+    for (tr in 1:4){
+      for (gs in 1:3){
+        mean_phi[gs,tr,e] ~ dunif(0,1)
+      }
+      mean_phi[4,tr,e] <- 0
+    }
+  }
+  
+  for (e in 1:2){
+    for (tr in 1:4){
+      for (gs in 1:2){
+        mean_psi[gs,tr,e] ~ dunif(0,1)
+      }
+      mean_psi[3,tr,e] <- 0
+      mean_psi[4,tr,e] <- 0
+    }
+  }
+  
+  for (t in 1:(noccas-1)){
+    mu_phi[t] ~ dunif(-100,100)
+    mu_psi[t] ~ dunif(-100,100)
+  }
+  
+  for (l in 1:16){
+    epsilon_phi[l] ~ dunif(-100,100)
+    epsilon_psi[l] ~ dunif(-100,100)
+  }
+  
+  for (gs in 1:3){
+    p[gs] <- dunif(0,1)
+  }
+  
+  error ~ dunif(0,1)
+  
+  # probabilities of state z(t+1) given z(t)
+  for (t in 1:(noccas-1)){
+    for (tr in 1:4) {
+      gamma[1,1,tr,t] <- phi[i,t] * (1-psi[i,t])
+      gamma[1,2,tr,t] <- phi[i,t] * psi[i,t]
+      gamma[1,3,tr,t] <- 0
+      gamma[1,4,tr,t] <- (1-phi[i,t])
+      gamma[2,1,tr,t] <- 0
+      gamma[2,2,tr,t] <- phi[i,t] * (1-psi[i,t])
+      gamma[2,3,tr,t] <- phi[i,t] * psi[i,t]
+      gamma[2,4,tr,t] <- (1-phi[i,t])
+      gamma[3,1,tr,t] <- 0
+      gamma[3,2,tr,t] <- 0
+      gamma[3,3,tr,t] <- phi[i,t]
+      gamma[3,4,tr,t] <- (1-phi[i,t])
+      gamma[4,1,tr,t] <- 0
+      gamma[4,2,tr,t] <- 0
+      gamma[4,3,tr,t] <- 0
+      gamma[4,4,tr,t] <- 1
+    }
+  }
+  
+  
+  # probabilities of y(t) given z(t)
+  omega[1,1] <- p[1] * (1-2 * error)
+  omega[1,2] <- p[1] * error
+  omega[1,3] <- p[1] * error
+  omega[1,4] <- 1-p[1]
+  omega[2,1] <- p[2] * error
+  omega[2,2] <- p[2] * (1-error)
+  omega[2,3] <- p[2] * error
+  omega[2,4] <- 1-p[2]
+  omega[3,1] <- p[3] * error
+  omega[3,2] <- p[3] * error
+  omega[3,3] <- p[3] * (1- 2*error)
+  omega[3,4] <- 1-p[3]
+  omega[4,1] <- 0
+  omega[4,2] <- 0
+  omega[4,3] <- 0
+  omega[4,4] <- 1
+  
+  # likelihood 
+  for (i in 1:nind){
+    # State at first capture
+    
+    for (t in 1:(f[i]-1)){
+      z[i,t] <- 0
+      N1[i,t] <- ifelse(z[i,t] == 1, 1,0)
+      N2[i,t] <- ifelse(z[i,t] == 2, 1,0)
+      N3[i,t] <- ifelse(z[i,t] == 3, 1,0)
+    }
+    z[i,f[i]] <- fs[i]
+    N1[i,f[i]] <- ifelse(z[i,f[i]] == 1, 1,0)
+    N2[i,f[i]] <- ifelse(z[i,f[i]] == 2, 1,0)
+    N3[i,f[i]] <- ifelse(z[i,f[i]] == 3, 1,0)
+    for (t in (f[i]+1):noccas){
+      # z(t) given z(t-1)
+      e[i,t] <- ifelse(t<3,1,2)
+      logit(phi[i,t]) <- logit(mean_phi[z[i,t-1],Treatment[i],e[i,t]]) + mu_phi[t-1] + epsilon_phi[Lake[i]]
+      logit(psi[i,t]) <- logit(mean_psi[z[i,t-1],Treatment[i],e[i,t]]) + mu_psi[t-1] + epsilon_psi[Lake[i]]
+      z[i,t] ~ dcat(gamma[z[i,t-1],1:4,Treatment[i],t-1])
+      N1[i,t] <- ifelse(z[i,t] == 1, 1,0)
+      N2[i,t] <- ifelse(z[i,t] == 2, 1,0)
+      N3[i,t] <- ifelse(z[i,t] == 3, 1,0)
+      # y(t) given z(t)
+      y[i,t] ~ dcat(omega[z[i,t],1:4])
+    }
+  }
+  for (t in 1:noccas){
+    n1[t,1] <- sum(N1[Tr1,t])
+    n2[t,1] <- sum(N2[Tr1,t])
+    n3[t,1] <- sum(N3[Tr1,t])
+    ntot[t,1] <- n1[t,1] + n2[t,1] + n3[t,1]
+    
+    n1[t,2] <- sum(N1[Tr2,t])
+    n2[t,2] <- sum(N2[Tr2,t])
+    n3[t,2] <- sum(N3[Tr2,t])
+    ntot[t,2] <- n1[t,2] + n2[t,2] + n3[t,2]
+    
+    n1[t,3] <- sum(N1[Tr3,t])
+    n2[t,3] <- sum(N2[Tr3,t])
+    n3[t,3] <- sum(N3[Tr3,t])
+    ntot[t,3] <- n1[t,3] + n2[t,3] + n3[t,3]
+    
+    n1[t,4] <- sum(N1[Tr4,t])
+    n2[t,4] <- sum(N2[Tr4,t])
+    n3[t,4] <- sum(N3[Tr4,t])
+    ntot[t,4] <- n1[t,4] + n2[t,4] + n3[t,4]
+  }
+}
+
+inits = function(){
+  list(mean_phi = array(runif(4*4*5,0,1),c(4,4,5)),
+       epsilon_phi = runif(16,-10,10),
+       mu_phi = runif(5,-10,10),
+       mean_psi = array(runif(4*4*5,0,1),c(4,4,5)),
+       epsilon_psi = runif(16,-10,10),
+       mu_psi = runif(16,-10,10),
+       p = runif(3,0,1),c(4,4,5),
+       error = runif(1,0,0.1),
+       z = zi)}
+
+parameters = c("mean_phi","mu_phi","epsilon_phi",
+               "mean_psi","mu_psi","epsilon_psi",
+               "p","error",
+               "n1","n2","n3","ntot")
+
+Model_multi_treatment_rd_corrected_abundance <- jags.parallel(data = jags.data,
+                                                              inits = inits,
+                                                              parameters.to.save = parameters,
+                                                              model.file = multievent_treatment_rd_corrected_abundance,
+                                                              n.chains = 2,
+                                                              n.iter = ni)
+save(Model_multi_treatment_rd_corrected_abundance_zbis, file = "R/object/Model_multi_treatment_rd_corrected_abundance_zbis.RData" )
+
+runtime = Sys.time() - old
+print(runtime)
+
+
+
