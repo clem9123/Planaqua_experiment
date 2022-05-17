@@ -272,13 +272,13 @@ parameters = c("phi1","phi2","phi3",
                "error", 
                "n1","n2","n3","ntot")
 
-Model_Treatment_time_and_lake_3 <- jags.parallel(data = jags.data,
+Model_Treatment_time_and_lake <- jags.parallel(data = jags.data,
                                                inits = inits,
                                                parameters.to.save = parameters,
                                                model.file = model,
                                                n.chains = 2,
                                                n.iter = ni)
-#save(Model_Treatment_time_and_lake, file = "R/model_final/Model_Treatment_time_and_lake.RData" )
+save(Model_Treatment_time_and_lake, file = "R/model_final/Model_Treatment_time_and_lake.RData" )
 
 runtime = Sys.time() - old
 print(runtime)
@@ -654,25 +654,24 @@ model <- function(){
 inits = function(){
   list(phi1 = matrix(ncol = 2, runif(8,0,1)),phi2 = matrix(ncol = 2, runif(8,0,1)),phi3 = matrix(ncol = 2, runif(8,0,1)),
        p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
-       psi12 = matrix(ncol = 2, runif(8,0,0.5)),psi23 = matrix(ncol = 2, runif(8,0,0.5)), psi13 = matrix(ncol = 2, runif(8,0,0.5)),
+       psi12 = matrix(ncol = 2, runif(8,0,0.5)),psi23 = matrix(ncol = 2, runif(8,0,0.5)),
        error = runif(1,0,0.1),
        z = zi)}
 
 parameters = c("phi1","phi2","phi3",
                "p1","p2","p3",
                "psi12","psi23",
-               #"psi13",
                "error",
                "n1","n2","n3","ntot")
 
-Model_treatment <- jags.parallel(data = jags.data,
+Model_Treatment <- jags.parallel(data = jags.data,
                                  inits = inits,
                                  parameters.to.save = parameters,
                                  model.file = model,
                                  n.chains = 2,
                                  n.iter = ni)
 
-save(Model_treatment, file = "R/model_final/Model_treatment.RData" )
+save(Model_Treatment, file = "R/model_final/Model_Treatment.RData" )
 
 runtime = Sys.time() - old
 print(runtime)
@@ -874,7 +873,8 @@ Model_treatment_capture <- jags.parallel(data = jags.data,
                                  n.chains = 2,
                                  n.iter = ni)
 
-save(Model_treatment_capture, file = "R/model_final/Model_treatment_capture.RData" )
+save(Model_Treatment_capture, file = "R/model_final/Model_Treatment_capture.RData" )
 
 runtime = Sys.time() - old
 print(runtime)
+
