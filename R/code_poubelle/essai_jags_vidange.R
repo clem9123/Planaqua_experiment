@@ -6,7 +6,7 @@
 
 s <- BDD_a %>% ungroup () %>% pivot_wider(id_cols = Tag_id, names_from = Year, values_from = Size)
 
-tr <- BDD_a %>% filter(Year != "2022") %>% group_by(Tag_id, Treatment) %>% summarize() %>% ungroup() #%>% filter(Year != "2022") 
+tr <- BDD_a %>% group_by(Tag_id, Treatment) %>% summarize() %>% ungroup() #%>% filter(Year != "2022") 
 mooved <- tr[duplicated(tr$Tag_id),]$Tag_id
 tr <- tr %>% filter ( !duplicated(tr$Tag_id))
 tr <- tr %>% mutate (Treatment = ifelse(Tag_id %in% mooved, NA, Treatment))
@@ -27,7 +27,7 @@ s <- s %>% filter(!is.na(Lake))
 
 # creation s_group data frame
 size_break <- c(0,120,180,300)
-s_group <- data.frame(apply(s[2:7], 2, 
+s_group <- data.frame(apply(s[2:8], 2, 
                             function(x) discretize(x,method = "fixed",
                                                    breaks = size_break, 
                                                    labels= c(1:(length(size_break)-1)))))
@@ -123,8 +123,8 @@ model <- function(){
     }
   }
   for (t in 1:(noccas-1)){
-      mu_phi[t] ~ dnorm(0,1/(tau_phi^2))
-      mu_psi[t] ~ dnorm(0,1/(tau_psi^2))
+    mu_phi[t] ~ dnorm(0,1/(tau_phi^2))
+    mu_psi[t] ~ dnorm(0,1/(tau_psi^2))
   }
   
   for (l in 1:16){
@@ -165,28 +165,33 @@ model <- function(){
   tau_phi ~ dunif(0,50)
   tau_psi ~ dunif(0,50)
   
+  for (gs in 1:3){
+    for (tr in 1:4){
+      phi_vid[gs,tr] ~ dunif(0,1)
+    }
+  }
+  
   # probabilities of state z(t+1) given z(t)
-  for (t in 1:(noccas-1)){
-    for (l in 1:16) {
-      gamma[1,1,l,t] <- phi1_aux[l,t] * (1-psi12_aux[l,t])#-psi13_aux[l,t])
-      gamma[1,2,l,t] <- phi1_aux[l,t] * psi12_aux[l,t]
+  for (l in 1:16) {
+    for (t in 1:(noccas-1)){
+      gamma[1,1,l,t] <- ifelse(t == noccas-1,phi_vid[1,LT[l]],phi1_aux[l,t] * (1-psi12_aux[l,t]))
+      gamma[1,2,l,t] <- ifelse(t == noccas-1,0,phi1_aux[l,t] * psi12_aux[l,t])
       gamma[1,3,l,t] <- 0 #phi1_aux[l,t] * psi13_aux[l,t]
-      gamma[1,4,l,t] <- (1-phi1_aux[l,t])
+      gamma[1,4,l,t] <- ifelse(t == noccas-1,1-phi_vid[1,LT[l]],(1-phi1_aux[l,t]))
       gamma[2,1,l,t] <- 0
-      gamma[2,2,l,t] <- phi2_aux[l,t] * (1-psi23_aux[l,t])
-      gamma[2,3,l,t] <- phi2_aux[l,t] * psi23_aux[l,t]
-      gamma[2,4,l,t] <- (1-phi2_aux[l,t])
+      gamma[2,2,l,t] <- ifelse(t == noccas-1,phi_vid[2,LT[l]],phi2_aux[l,t] * (1-psi23_aux[l,t]))
+      gamma[2,3,l,t] <- ifelse(t == noccas-1,0,phi2_aux[l,t] * psi23_aux[l,t])
+      gamma[2,4,l,t] <- ifelse(t == noccas-1,1-phi_vid[2,LT[l]],(1-phi2_aux[l,t]))
       gamma[3,1,l,t] <- 0
       gamma[3,2,l,t] <- 0
-      gamma[3,3,l,t] <- phi3_aux[l,t]
-      gamma[3,4,l,t] <- (1-phi3_aux[l,t])
+      gamma[3,3,l,t] <-  ifelse(t == noccas-1,phi_vid[3,LT[l]],phi3_aux[l,t])
+      gamma[3,4,l,t] <-  ifelse(t == noccas-1,1-phi_vid[3,LT[l]],(1-phi3_aux[l,t]))
       gamma[4,1,l,t] <- 0
       gamma[4,2,l,t] <- 0
       gamma[4,3,l,t] <- 0
       gamma[4,4,l,t] <- 1
     }
   }
-  
   
   # probabilities of y(t) given z(t)
   omega[1,1] <- p1 * (1-2 * error)
@@ -206,6 +211,23 @@ model <- function(){
   omega[4,3] <- 0
   omega[4,4] <- 1
   
+  delta[1,1] <- (1-2 * error)
+  delta[1,2] <- error
+  delta[1,3] <- error
+  delta[1,4] <- 0
+  delta[2,1] <- error
+  delta[2,2] <- (1-2*error)
+  delta[2,3] <- error
+  delta[2,4] <- 0
+  delta[3,1] <- error
+  delta[3,2] <- error
+  delta[3,3] <- (1- 2*error)
+  delta[3,4] <- 0
+  delta[4,1] <- 0
+  delta[4,2] <- 0
+  delta[4,3] <- 0
+  delta[4,4] <- 1
+  
   # likelihood 
   for (i in 1:nind){
     # State at first capture
@@ -220,7 +242,7 @@ model <- function(){
     N1[i,f[i]] <- ifelse(z[i,f[i]] == 1, 1,0)
     N2[i,f[i]] <- ifelse(z[i,f[i]] == 2, 1,0)
     N3[i,f[i]] <- ifelse(z[i,f[i]] == 3, 1,0)
-    for (t in (f[i]+1):noccas){
+    for (t in (f[i]+1):(noccas-1)){
       # z(t) given z(t-1)
       z[i,t] ~ dcat(gamma[z[i,t-1],1:4,Lake[i],t-1])
       N1[i,t] <- ifelse(z[i,t] == 1, 1,0)
@@ -229,6 +251,8 @@ model <- function(){
       # y(t) given z(t)
       y[i,t] ~ dcat(omega[z[i,t],1:4])
     }
+    z[i,noccas] ~ dcat(gamma[z[i,noccas-1],1:4,Lake[i],noccas-1])
+    y[i,noccas] ~ dcat(delta[z[i,noccas],1:4])
   }
   for (t in 1:noccas){
     n1[t,1] <- sum(N1[Tr1,t])
@@ -262,6 +286,7 @@ inits = function(){
        tau_phi = runif(1,0,1), tau_psi = runif(1,0,1),
        epsilon_psi = runif(16, -1,1),mu_psi = runif(5,-1,1),
        epsilon_phi = runif(16, -1,1),mu_phi = runif(5,-1,1),
+       phi_vid = matrix(ncol = 4, runif(20,0,1)),
        z = zi)}
 
 parameters = c("phi1","phi2","phi3",
@@ -270,9 +295,10 @@ parameters = c("phi1","phi2","phi3",
                "epsilon_phi","mu_phi","sigma_phi","tau_phi",
                "epsilon_psi","mu_psi","sigma_psi","tau_psi",
                "error", 
+               "phi_vid",
                "n1","n2","n3","ntot")
 
-Model_Treatment_time_and_lake <- jags.parallel(data = jags.data,
+Model_Treatment_time_and_lake_vid <- jags.parallel(data = jags.data,
                                                inits = inits,
                                                parameters.to.save = parameters,
                                                model.file = model,
@@ -475,11 +501,11 @@ parameters = c("phi1","phi2","phi3",
                "n1","n2","n3","ntot")
 
 Model_Treatment_time_x_lake <- jags.parallel(data = jags.data,
-                                              inits = inits,
-                                              parameters.to.save = parameters,
-                                              model.file = model,
-                                              n.chains = 2,
-                                              n.iter = ni)
+                                             inits = inits,
+                                             parameters.to.save = parameters,
+                                             model.file = model,
+                                             n.chains = 2,
+                                             n.iter = ni)
 save(Model_Treatment_time_x_lake, file = "R/model_final/Model_Treatment_time_x_lake.RData" )
 
 runtime = Sys.time() - old
@@ -765,7 +791,7 @@ model <- function(){
       logit(p3_aux[l,t]) <- logit(p3) + epsilon[l,t]
     }
   }
-
+  
   error ~ dunif(0,1)
   
   # probabilities of state z(t+1) given z(t)
@@ -875,11 +901,11 @@ parameters = c("phi1","phi2","phi3",
                "n1","n2","n3","ntot")
 
 Model_treatment_capture <- jags.parallel(data = jags.data,
-                                 inits = inits,
-                                 parameters.to.save = parameters,
-                                 model.file = model,
-                                 n.chains = 2,
-                                 n.iter = ni)
+                                         inits = inits,
+                                         parameters.to.save = parameters,
+                                         model.file = model,
+                                         n.chains = 2,
+                                         n.iter = ni)
 
 save(Model_Treatment_capture, file = "R/model_final/Model_Treatment_capture.RData" )
 
