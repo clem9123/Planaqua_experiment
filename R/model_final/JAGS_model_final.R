@@ -754,7 +754,15 @@ model <- function(){
   
   for (l in 1:16){
     for (t in 1:(noccas-1)){
-      epsilon[l,t] ~ dunif(-1,1)
+      epsilon[l,t] ~ dunif(-20,20)
+    }
+  }
+  
+  for (l in 1:16){
+    for(t in 1:(noccas-1)){
+      logit(p1_aux[l,t]) <- logit(p1) + epsilon[l,t]
+      logit(p2_aux[l,t]) <- logit(p2) + epsilon[l,t]
+      logit(p3_aux[l,t]) <- logit(p3) + epsilon[l,t]
     }
   }
 
@@ -786,18 +794,18 @@ model <- function(){
   # probabilities of y(t) given z(t)
   for (l in 1:16){
     for (t in 1:(noccas-1)){
-      omega[1,1,l,t] <- (p1 + epsilon[l,t]) * (1-2 * error)
-      omega[1,2,l,t] <- (p1 + epsilon[l,t]) * error
-      omega[1,3,l,t] <- (p1 + epsilon[l,t]) * error
-      omega[1,4,l,t] <- 1-(p1 + epsilon[l,t])
-      omega[2,1,l,t] <- (p2 + epsilon[l,t]) * error
-      omega[2,2,l,t] <- (p2 + epsilon[l,t]) * (1-2 * error)
-      omega[2,3,l,t] <- (p2 + epsilon[l,t]) * error
-      omega[2,4,l,t] <- 1-(p2 + epsilon[l,t])
-      omega[3,1,l,t] <- (p3 + epsilon[l,t]) * error
-      omega[3,2,l,t] <- (p3 + epsilon[l,t]) * error
-      omega[3,3,l,t] <- (p3 + epsilon[l,t]) * (1- 2 * error)
-      omega[3,4,l,t] <- 1-(p3 + epsilon[l,t])
+      omega[1,1,l,t] <- (p1_aux[l,t]) * (1-2 * error)
+      omega[1,2,l,t] <- (p1_aux[l,t]) * error
+      omega[1,3,l,t] <- (p1_aux[l,t]) * error
+      omega[1,4,l,t] <- 1-(p1_aux[l,t])
+      omega[2,1,l,t] <- (p2_aux[l,t]) * error
+      omega[2,2,l,t] <- (p2_aux[l,t]) * (1-2 * error)
+      omega[2,3,l,t] <- (p2_aux[l,t]) * error
+      omega[2,4,l,t] <- 1-(p2_aux[l,t])
+      omega[3,1,l,t] <- (p3_aux[l,t]) * error
+      omega[3,2,l,t] <- (p3_aux[l,t]) * error
+      omega[3,3,l,t] <- (p3_aux[l,t]) * (1- 2 * error)
+      omega[3,4,l,t] <- 1-(p3_aux[l,t])
       omega[4,1,l,t] <- 0
       omega[4,2,l,t] <- 0
       omega[4,3,l,t] <- 0
@@ -856,7 +864,7 @@ inits = function(){
   list(phi1 = matrix(ncol = 2, runif(8,0,1)),phi2 = matrix(ncol = 2, runif(8,0,1)),phi3 = matrix(ncol = 2, runif(8,0,1)),
        p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
        psi12 = matrix(ncol = 2, runif(8,0,0.5)),psi23 = matrix(ncol = 2, runif(8,0,0.5)), psi13 = matrix(ncol = 2, runif(8,0,0.5)),
-       error = runif(1,0,0.1), epsilon = matrix(ncol = 5, runif(80,-0.2,0.2)),
+       error = runif(1,0,0.1), epsilon = matrix(ncol = 5, runif(80,-2,2)),
        z = zi)}
 
 parameters = c("phi1","phi2","phi3",
