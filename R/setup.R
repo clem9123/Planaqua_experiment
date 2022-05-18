@@ -7,14 +7,12 @@ library(patchwork)
 
 source("R/importation_data.R")
 
-load("R/object/Model_multi_treatment_time_abundance.RData")
-load("R/object/Model_multi_treatment_corrected_abundance.RData")
-load("R/object/Model_multi_treatment_random_corrected_abundance.RData")
-load("R/object/Model_multi_treatment_random_corrected_abundance3.RData")
+load("R/model_final/Model_Treatment.RData")
+load("R/model_final/Model_Treatment_time_and_lake.RData")
+load("R/model_final/Model_Treatment_time_x_lake.RData")
+load("R/model_final/Model_Treatment_capture.RData")
 
-load("R/object/Model_lake_time_abundance.RData") #Model_multi_lake_time_abundance
-load("R/object/Model_multi_lake_corrected_abundance.RData")
-
+file.edit("R/model_final/GRAPH_model_final.Rmd")
 
 #######################
 
