@@ -67,7 +67,7 @@ jags.data <- list(y = s_group,
                   fs = fs,
                   nind = nrow(s_group),
                   noccas = ncol(s_group),
-                  ni = 10000,
+                  ni = 100000,
                   Lake = s$Lake,
                   Treatment = s$Treatment,
                   Tr1 = which(s$Treatment == 1),
@@ -557,7 +557,7 @@ model <- function(){
     }
   }
   
-  p1 ~ dunif(0,1)
+  p1 ~ dunif(0.65,1)
   p2 ~ dunif(0,1)
   p3 ~ dunif(0,1)
   
@@ -653,7 +653,7 @@ model <- function(){
 
 inits = function(){
   list(phi1 = matrix(ncol = 2, runif(8,0,1)),phi2 = matrix(ncol = 2, runif(8,0,1)),phi3 = matrix(ncol = 2, runif(8,0,1)),
-       p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
+       p1 = runif(1,0.65,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
        psi12 = matrix(ncol = 2, runif(8,0,0.5)),psi23 = matrix(ncol = 2, runif(8,0,0.5)),
        error = runif(1,0,0.1),
        z = zi)}
@@ -664,7 +664,7 @@ parameters = c("phi1","phi2","phi3",
                "error",
                "n1","n2","n3","ntot")
 
-Model_Treatment <- jags.parallel(data = jags.data,
+Model_Treatment_p1 <- jags.parallel(data = jags.data,
                                  inits = inits,
                                  parameters.to.save = parameters,
                                  model.file = model,

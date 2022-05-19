@@ -166,7 +166,7 @@ ggplot(sum_p)+
 ```
 
 ```{r}
-model = as.mcmc(Model_Treatment_capture)
+model = as.mcmc(Model_treatment_capture)
 epsilon = data.frame()
 for (n in 1:2){
   for (l in 1:16){
@@ -188,7 +188,7 @@ ggplot(sum_epsilon)+
 ```
 
 ```{r}
-model = as.mcmc(Model_Treatment_capture)
+model = as.mcmc(Model_treatment_capture)
 psi = data.frame()
 for (n in 1:2){
   for (tr in 1:4){
@@ -260,7 +260,30 @@ ggplot(sum_epsilon_phi)+#, aes(color = factor(Treatment)))+
 ```
 
 ```{r}
-traceplot(Model_Treatment_capture, ask = F)
+print(Model_Treatment_time_and_lake[[2]]$DIC)
+print(Model_Treatment_time_x_lake[[2]]$DIC)
+print(Model_Treatment_capture[[2]]$DIC)
+print(Model_treatment_capture[[2]]$DIC)
+print(Model_Treatment[[2]]$DIC)
+
+deviance = data.frame()
+model = list(Model_Treatment_time_and_lake, Model_Treatment_time_x_lake, Model_Treatment_capture, Model_treatment_capture, Model_Treatment)
+name = c("Model_Treatment_time_and_lake", "Model_Treatment_time_x_lake", "Model_Treatment_capture", "Model_treatment_capture", "Model_Treatment")
+for (n in 1:2){
+    deviance <- rbind (deviance, dev = data.frame(as.mcmc(Model_Treatment_time_and_lake)[[1]][,"deviance"],name = "Model_Treatment_time_and_lake"))
+    deviance <- rbind (deviance, dev = data.frame(as.mcmc(Model_Treatment_time_x_lake)[[n]][,"deviance"],name = "Model_Treatment_time_x_lake"))
+    deviance <- rbind (deviance, dev = data.frame(as.mcmc(Model_Treatment_capture)[[n]][,"deviance"],name = "Model_Treatment_capture"))
+    deviance <- rbind (deviance, dev = data.frame(as.mcmc(Model_treatment_capture)[[n]][,"deviance"],name = "Model_treatment_capture"))
+    deviance <- rbind (deviance, dev = data.frame(as.mcmc(Model_Treatment)[[n]][,"deviance"],name = "Model_Treatment"))
+}
+
+
+sum_deviance = deviance %>% group_by(name) %>% summarize(mean = mean(var1), min = quantile(var1,0.025), max = quantile(var1,0.975)) %>% mutate(name = factor(name, level = c("Model_Treatment","Model_Treatment_time_x_lake","Model_Treatment_time_and_lake","Model_Treatment_capture")))
+ggplot(sum_deviance %>% filter(name != "Model_treatment_capture"))+
+  geom_point(aes(x = name, y = mean, color = name))+
+  geom_errorbar(aes(x = name, ymax = max, ymin = min, color = name))+
+  labs(x = "Model", y = "Distribution of deviance")+
+  theme(legend.position = "none")
 ```
 
 
