@@ -307,15 +307,13 @@ t[t>=50 & t<95] <- 3
 t[t>=95] <- 4
 t[is.na(t)] <- 0
 t <- cbind(t,Lake) %>% merge(Lake_treatment, all = TRUE)
-capt_hist <- data.frame(ch = unite(t %>%select(`2016`:`2022`), 
+capt_hist <- data.frame(ch = unite(s_group, 
                         col = "ch", 
                         sep = ""),
-                        Lake = t$Lake,
-                        Treatment = t$Treatment,
-                        Perch = t$Perch,
-                        Nutrients = t$Nutrients
-                        )
-capt_hist.proc <- process.data(capt_hist, model = "Multistrata", groups = c("Lake","Treatment","Perch","Nutrients"))
+                        Lake = s$Lake,
+                        Treatment = s$Treatment)
+
+capt_hist.proc <- process.data(capt_hist, model = "Multistrata", groups = c("Lake","Treatment"))
 capt_hist.ddl <- make.design.data(data = capt_hist.proc)
 ```
 
@@ -332,11 +330,16 @@ psiweight <- list(formula =~ stratum)
 ```{r message=FALSE, warning=FALSE}
 phi.p.psi <- mark(capt_hist.proc,
                  capt_hist.ddl,
-                 model.parameters = list(S = phi,
-                                         p = p,
-                                         Psi = psi),
+                 model.parameters = list(S = list(formula =~ stratum*Treatment),
+                                         p = list(formula =~ stratum),
+                                         Psi = list(formula =~ -1 +stratum:tostratum, link = "mlogit")),
                  output = FALSE, silent = TRUE)
 phi.p.psi$result$real
+```
+
+```{r}
+rm(list = ls(all = TRUE)) # j'aimerai supprimer tous les models seulement (voir ce que l'on peut faire avec class)
+cleanup(ask = FALSE)
 ```
 
 ```{r}

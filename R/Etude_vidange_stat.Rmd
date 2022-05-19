@@ -6,7 +6,7 @@ output: html_notebook
 ```{r}
 BDD_vid <- BDD_a %>% filter (Year %in% c(2021,2022))
 BDD_vid <- BDD_vid %>% mutate (catch_2021 = case_when(Year == "2021" ~ TRUE,
-                                      Tag_id %in% subset(BDD_vid, Year == "2021")$Tag_id ~ TRUE,
+                                      Tag_id %in% subset(BDD_vid , !is.na(Tag_id) & Year == "2021")$Tag_id ~ TRUE,
                                       TRUE ~ FALSE),
                                survie = case_when(Year == "2022" ~ TRUE,
                                       Tag_id %in% subset(BDD_vid, Year == "2022")$Tag_id ~ TRUE,
@@ -49,7 +49,9 @@ BDD_vid <- merge(BDD_vid,BDD_vid %>% group_by(Lake, Year) %>% summarize(density 
 size_break <- c(0,120,180,300)
 BDD_vid <- BDD_vid %>% mutate(s_group = factor(discretize(BDD_vid$Size,method = "fixed",
                            breaks = size_break, 
-                           labels= c(1:(length(size_break)-1)))))
+                           labels= c(1:(length(size_break)-1))))) %>% 
+  mutate(s_group = ifelse(Tag_id == "juvenile",0,s_group)) %>% 
+  mutate (s_group = factor(s_group))
 head(BDD_vid)
 ```
 
@@ -384,6 +386,24 @@ ggplot()+
 #  geom_point(aes(y=invlogit(0.08*x-0.0004*x^2-2), x = x))+
 #  geom_point(aes(y=invlogit(0.08*x-0.0003*x^2-2), x = x))
 ```
+```{r}
+
+t <- BDD_vid %>% filter(Year == "2022" & Tag_id != "juvenile") %>% mutate(catch_2021 = as.numeric(catch_2021))
+t$g_size <- t$g_size
+model_pc <- glmer(catch_2021 ~ s_group + (1|Lake), family = "binomial", t)
+summary(model_pc)
+```
+
+```{r}
+
+ggplot()+
+  geom_point(aes(y=invlogit(predict(model_pc)), x = subset(BDD_vid,Year == "2022")$s_group))+
+  labs(y = "Capture probability", x = "Size group")
+ggplot(BDD_vid %>% filter(Tag_id != "no_tag",Year == "2022"))+
+  geom_bar(aes(x = Lake, fill = catch_2021))+
+  facet_wrap(~s_group)
+
+```
 
 ```{r}
 model_pc2 <- update(model_pc, ~.- Size_2)
@@ -392,7 +412,7 @@ anova (model_pc, model_pc2)
 
 
 ```{r}
-BDD_vid_survie <- BDD_vid %>% filter(catch_2021) %>% group_by(taille,  Year) %>% summarise(nb = n())
+BDD_vid_survie <- BDD_vid %>% filter(catch_2021) %>% group_by(Size,  Year) %>% summarise(nb = n())
 p_survie = 1-(subset(BDD_vid_survie, Year=="2021")$nb - subset(BDD_vid_survie, Year=="2022")$nb)/subset(BDD_vid_survie, Year=="2021")$nb
 BDD_vid_survie %>% filter(Year == "2021") %>% cbind(p_survie)
 ```
@@ -421,6 +441,16 @@ ggplot()+
 ```
 ```{r}
 summary(model_phi2)
+```
+```{r}
+t <- BDD_vid %>% filter(Year == "2021") %>% mutate(survie = as.numeric(survie))
+model_phi <- glmer(survie ~ s_group+Treatment +(1|Lake), family = "binomial", t)
+summary(model_phi)
+```
+```{r}
+x = t$Size[!is.na(t$Size)]
+ggplot()+
+  geom_point(aes(y=invlogit(predict(model_phi)), x = subset(BDD_vid, Year == "2021")$s_group))
 ```
 
 ```{r}
@@ -467,5 +497,10 @@ ggplot(BDD_vid_n_bis)+
 ggplot(BDD_n)+
   geom_bar(aes(x= nb_adult))
   facet_wrap(~g_size)
+```
+
+```{r}
+ggplot(BDD_g)+
+  gem_density(Size)
 ```
 

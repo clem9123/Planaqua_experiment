@@ -146,6 +146,7 @@ ggplot(sum_phi, aes(color = factor(Treatment)))+
   geom_errorbar(aes(x = Treatment, ymin = min, ymax = max), width = 0.4)+
   facet_grid(rows = vars(Size), cols = vars(Exp_time))
 ```
+
 ```{r}
 model = as.mcmc(Model_Treatment_capture)
 p = data.frame()

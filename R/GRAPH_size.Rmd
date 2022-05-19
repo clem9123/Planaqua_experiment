@@ -45,7 +45,8 @@ ggplot(BDD_g, aes(x = Year, y  = Size, color = Treatment))+
 
 ggplot(BDD_g)+
   geom_bar(aes(x = Year, fill = Tag_year),position = position_stack(reverse = TRUE))+
-  scale_fill_brewer(palette = "YlOrBr", direction = -1)
+  scale_fill_brewer(palette = "YlOrBr", direction = -1)+
+  facet_wrap(~Treatment)
 
 ggplot(BDD_g)+
   geom_bar(aes(x = Year, fill = s_group))+
@@ -94,7 +95,8 @@ ggplot(BDD_g %>% filter(Tag_year == "2016" & Year == "2016"))+
 
 ggplot(BDD_g)+
   geom_histogram(aes(x = Size, color = Tag_year), binwidth = 2)+
-  facet_wrap(~ Lake)
+  facet_wrap(~ Lake)+
+  scale_y_continuous(trans = "log10")
 
 ggplot(BDD_g %>% filter(Tag_year == "2016" & !is.na(s_group)))+
   geom_bar(aes(x = Year, fill = s_group))+
