@@ -748,7 +748,7 @@ model <- function(){
     }
   }
   
-  p1 ~ dunif(0,1)
+  p1 ~ dunif(0.5,1)
   p2 ~ dunif(0,1)
   p3 ~ dunif(0,1)
   
@@ -862,7 +862,7 @@ model <- function(){
 
 inits = function(){
   list(phi1 = matrix(ncol = 2, runif(8,0,1)),phi2 = matrix(ncol = 2, runif(8,0,1)),phi3 = matrix(ncol = 2, runif(8,0,1)),
-       p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
+       p1 = runif(1,0.5,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
        psi12 = matrix(ncol = 2, runif(8,0,0.5)),psi23 = matrix(ncol = 2, runif(8,0,0.5)), psi13 = matrix(ncol = 2, runif(8,0,0.5)),
        error = runif(1,0,0.1), epsilon = matrix(ncol = 5, runif(80,-2,2)),
        z = zi)}
@@ -874,7 +874,7 @@ parameters = c("phi1","phi2","phi3",
                "epsilon",
                "n1","n2","n3","ntot")
 
-Model_treatment_capture <- jags.parallel(data = jags.data,
+Model_treatment_capture_p1 <- jags.parallel(data = jags.data,
                                  inits = inits,
                                  parameters.to.save = parameters,
                                  model.file = model,
