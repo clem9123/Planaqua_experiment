@@ -4,7 +4,7 @@ output: html_notebook
 ---
 
 ```{r}
-source("./setup.R")
+source("R/setup.R")
 ```
 
 
@@ -21,7 +21,11 @@ ggplot(BDD_g %>% filter(!is.na(s_group)))+
   facet_wrap(~factor(Treatment, levels = c(1,2,3,4), labels = Treatment_name))+
   labs(y = "Roach abundance") 
 
-
+ggplot(BDD_g %>% filter(!is.na(s_group) & s_group != "0"))+
+  geom_bar(aes(x = Year, fill = s_group))+
+  scale_fill_manual ("Size group",values =c("#FED98E","#FE9929","#CC4C02"), labels = c("Small","Medium","Large"))+
+  facet_wrap(~factor(Treatment, levels = c(1,2,3,4), labels = Treatment_name))+
+  labs(y = "Roach abundance")
 
 p1 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==1))+
   geom_bar(aes(x = Year, fill = s_group), show.legend = F)+
@@ -31,7 +35,7 @@ p1 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==1))+
                                    "Lake 11", "Lake 14", "Lake 9", "Lake 16",
                                    "Lake 2", "Lake 7", "Lake 4", "Lake 5",
                                    "Lake 12", "Lake 13", "Lake 10", "Lake 15")))+
-  labs(title = "Treatment 1", y = "Roach abundance")
+  labs(title = Treatment_name[1], y = "Roach abundance")
 
 p2 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==2))+
   geom_bar(aes(x = Year, fill = s_group), show.legend = F)+
@@ -41,7 +45,7 @@ p2 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==2))+
                                    "Lake 11", "Lake 14", "Lake 9", "Lake 16",
                                    "Lake 2", "Lake 7", "Lake 4", "Lake 5",
                                    "Lake 12", "Lake 13", "Lake 10", "Lake 15")))+
-  labs(title = "Treatment 2", y = "Roach abundance")
+  labs(title = Treatment_name[2], y = "Roach abundance")
 
 p3 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==3))+
   geom_bar(aes(x = Year, fill = s_group), show.legend = F)+
@@ -51,7 +55,7 @@ p3 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==3))+
                                    "Lake 11", "Lake 14", "Lake 9", "Lake 16",
                                    "Lake 2", "Lake 7", "Lake 4", "Lake 5",
                                    "Lake 12", "Lake 13", "Lake 10", "Lake 15")))+
-  labs(title = "Treatment 3", y = "Roach abundance")
+  labs(title = Treatment_name[3], y = "Roach abundance")
 
 p4 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==4))+
   geom_bar(aes(x = Year, fill = s_group))+
@@ -61,7 +65,7 @@ p4 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==4))+
                                    "Lake 11", "Lake 14", "Lake 9", "Lake 16",
                                    "Lake 2", "Lake 7", "Lake 4", "Lake 5",
                                    "Lake 12", "Lake 13", "Lake 10", "Lake 15")))+
-  labs(title = "Treatment 4", y = "Roach abundance")
+  labs(title = Treatment_name[4], y = "Roach abundance")
 
 (p1+p2)/(p3+p4)
 ```
@@ -143,19 +147,25 @@ colnames(b) <- c("Tag_id","sg_2022","size_2022")#, "Weight")
 
 c <- merge(a %>% filter (Tag_id != "juvenile" & Tag_id != "no_tag"),b %>% filter (Tag_id != "juvenile" & Tag_id != "no_tag"),all=T)
 
-c <- rbind(c,b %>% filter(Tag_id == "no_tag" & sg_2022 == 1) %>% 
+c <- rbind(c,b %>% filter(Tag_id == "no_tag" & sg_2022 == "1") %>% 
              mutate(sg_2021 = NA, size_2021 = NA) %>% 
              select("Tag_id","sg_2021","size_2021","sg_2022","size_2022"))
-c <- c %>% mutate(sg_2021 = ifelse(is.na(sg_2021),"Not catched", sg_2021),
-             sg_2022 = ifelse(is.na(sg_2022),"Dead", sg_2022)) %>%
-  mutate(sg_2022 = factor (sg_2022), sg_2021 = factor (sg_2021))
 
+c[is.na(c)] <- "0"
 
-ggplot(c ,aes(axis1 = factor(sg_2021, levels = c("4","1","2","3"), labels = c("Not_catched","Small","Medium","Large")),
-              axis2 = factor(sg_2022, levels = c("4","1","2","3"), labels = c("Dead","Small","Medium","Large"))))+
-  geom_alluvium(aes(fill = sg_2022),width = 1/12) +
-  scale_fill_brewer(palette = "YlOrBr","Size group in 2022", labels = c("Dead","Small","Medium","Large"))+
-  geom_stratum(width = 1/12, color = "black") +
+#c <- c %>% mutate(sg_2021 = ifelse(is.na(sg_2021),"4", sg_2021)),
+#             sg_2022 = ifelse(is.na(sg_2022),"4", sg_2022) %>%
+#  mutate(sg_2022 = factor (sg_2022, levels = c("0","1","2","3","4")), sg_2021 = factor (sg_2021, levels = #c("0","1","2","3","4")))
+
+c <- c %>% mutate(sg_2021 = factor(sg_2021, levels = c("0","1","2","3"), labels = c("Not catched","Small","Medium","Large")),
+             sg_2022 = factor(sg_2022, levels = c("0","1","2","3"), labels = c(" Dead"," Small"," Medium"," Large")))
+
+c <- c %>% group_by(sg_2021,sg_2022) %>% summarize(freq = n())
+
+ggplot(c ,aes(axis1 = sg_2021, axis2 = factor(sg_2022), y = freq))+
+  geom_alluvium(aes(fill = sg_2022),width = 1/7) +
+  scale_fill_manual(values = c("grey","#FED98E","#FE9929","#CC4C02"),"Size group in 2022")+
+  geom_stratum(width = 1/7, color = "black") +
   geom_text(stat = "stratum", size = 3, aes(label = after_stat(stratum)))+
   scale_x_discrete(limits = c("2021", "2022"), expand = c(.05, .05))+
   theme_void()
