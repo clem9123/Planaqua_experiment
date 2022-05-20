@@ -26,7 +26,9 @@ Lake_treatment <- read_excel("data/Lake_treatment.xlsx", col_types =c("text","lo
 Lake_treatment <- Lake_treatment %>% mutate(Lake = as.factor(Lake),
                                             Treatment = as.factor(Treatment))
 BDD_f <- BDD_f %>% mutate (Lake = case_when(is.na(Lake_capture) ~ Lake_released,
-                                            TRUE ~ Lake_capture))
+                                            TRUE ~ Lake_capture)) %>% 
+  mutate (Lake = factor(Lake,levels = c(1,8,3,6,11,14,9,16,2,7,4,5,12,13,10,15)))
+
 BDD_f <- merge (BDD_f, Lake_treatment)
 BDD_f <- BDD_f %>% arrange(Index)
 
@@ -66,6 +68,20 @@ BDD_p <- BDD_p %>% group_by(Tag_id) %>%
 BDD_p <- BDD_p %>% mutate (Obs_status = case_when(Tag_year %in% c("no_tag","juvenile")~ "capture",
                                                   Year == Tag_year ~ "capture",
                                                   Year != Tag_year ~ "recapture"))
+
+
+size_break <- c(0,120,180,300)
+BDD_g <- BDD_g %>% mutate(s_group = factor(discretize(BDD_g$Size,method = "fixed",
+                                                          breaks = size_break, 
+                                                          labels= c(1:(length(size_break)-1))))) %>% 
+  mutate(s_group = ifelse(Tag_id == "juvenile",0,s_group)) %>% 
+  mutate (s_group = factor(s_group))
+
+BDD_p <- BDD_p %>% mutate(s_group = factor(discretize(BDD_p$Size,method = "fixed",
+                                                      breaks = size_break, 
+                                                      labels= c(1:(length(size_break)-1))))) %>% 
+  mutate(s_group = ifelse(Tag_id == "juvenile",0,s_group)) %>% 
+  mutate (s_group = factor(s_group))
 
 # cr?ation d'un tableau avec les nombres de poisson par ann?e et lac avec les poids et taille moyenne
 
