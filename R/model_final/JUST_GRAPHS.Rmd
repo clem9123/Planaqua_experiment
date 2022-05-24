@@ -4,7 +4,15 @@ output: html_notebook
 ---
 
 ```{r}
+setwd("C:/Users/sandrine/Documents/R_script/Planaqua_experiment")
 source("R/setup.R")
+theme_set(theme_bw()+
+            theme(strip.background =element_rect(fill="white", color = "darkgrey"),
+                  panel.background = element_rect(fill = "#E6E6E6"),
+                  panel.grid = element_line(colour = "#D8D8D8"),
+                  panel.border = element_rect(color = "darkgrey"),
+                  axis.title.x = element_text(margin = margin(t = 10)),
+                  axis.title.y = element_text(margin = margin(r = 10))))
 ```
 
 
@@ -13,15 +21,15 @@ source("R/setup.R")
 ## Visualisation des données
 
 ```{r}
-Treatment_name =  c("1","2","3","4")
+Treatment_name =  c("Perch- / Nutrients+","Perch+ / Nutrients+","Perch- / Nutrients-","Perch+ / Nutrients-")
 
 ggplot(BDD_g %>% filter(!is.na(s_group)))+
   geom_bar(aes(x = Year, fill = s_group))+
   scale_fill_brewer("Size group",palette = "YlOrBr", labels = c("Juvenile","Small","Medium","Large"))+
   facet_wrap(~factor(Treatment, levels = c(1,2,3,4), labels = Treatment_name))+
-  labs(y = "Roach abundance") 
-
-ggplot(BDD_g %>% filter(!is.na(s_group) & s_group != "0"))+
+  labs(y = "Roach abundance")
+  
+ ggplot(BDD_g %>% filter(!is.na(s_group) & s_group != "0"))+
   geom_bar(aes(x = Year, fill = s_group))+
   scale_fill_manual ("Size group",values =c("#FED98E","#FE9929","#CC4C02"), labels = c("Small","Medium","Large"))+
   facet_wrap(~factor(Treatment, levels = c(1,2,3,4), labels = Treatment_name))+
@@ -76,9 +84,18 @@ p4 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==4))+
 #### Statistique
 
 ```{r}
-t <- BDD_g %>% filter (Year == "2022") %>% group_by(Treatment,Lake, s_group) %>% summarize(nb = n())
-m1 <- glmer(nb ~ s_group*Treatment + (1|Lake), family = "poisson", t)
+t <- BDD_g %>% filter (Year == "2022") %>% group_by(Treatment,Lake, s_group) %>% summarize(nb = n()) 
+nrow(t)
+t$index = c(1:51)
+
+m1 <- glmer(nb ~ s_group*Treatment + (1|Lake) + (1|index), family = "poisson", t)
 summary(m1)
+```
+
+
+```{r}
+m2 = update(m1, ~.- s_group:Treatment)
+anova(m1,m2)
 ```
 
 #### Données
@@ -97,17 +114,39 @@ ggplot(BDD_g %>% filter (Year == "2022"))+
 
 ```{r}
 t <- BDD_g %>% filter(Year == "2022" & Tag_id != "juvenile" & Tag_id != "no_tag") %>% mutate (catch_2021 = case_when(Year == "2021" ~ TRUE,
-                                      Tag_id %in% subset(BDD_vid , !is.na(Tag_id) & Year == "2021")$Tag_id ~ TRUE,
+                                      Tag_id %in% subset(BDD_g , !is.na(Tag_id) & Year == "2021")$Tag_id ~ TRUE,
                                       TRUE ~ FALSE)) %>%
                                         mutate(catch_2021 = as.numeric(catch_2021))
 model_pc <- glmer(catch_2021 ~ s_group + (1|Lake), family = "binomial", t)
 summary(model_pc)
 ```
+# anova update...
+pvalue et chi square degrés de liberté
 
+# mieux avec les vraies valeurs
 ```{r}
 ggplot()+
   geom_point(aes(y=invlogit(predict(model_pc)), x = factor(t$s_group, levels = c("1","2","3"), labels = c("Small","Medium","Large"))))+
   labs(y = "Capture probability", x = "Size group")
+```
+
+```{r}
+s <- t %>% group_by(s_group, Lake, Treatment, catch_2021) %>% summarize(n = n())
+s1 <- s%>% filter(catch_2021 == 0)%>% select(c("s_group", "Lake","Treatment", "n"))
+colnames(s1)<-  c("s_group", "Lake","Treatment", "new")
+s2 <- subset(s, catch_2021 == 1) %>% select(c("s_group", "Lake","Treatment", "n"))
+colnames(s2)<-  c("s_group", "Lake","Treatment", "catch")
+s <- merge (s1,s2, all = T)
+s[is.na(s)]<-0
+s <- s %>% mutate(prop = catch/(catch+new))
+
+s
+ggplot(s %>% filter (catch + new > 10))+
+  #geom_point(aes(x = s_group, y = prop, color = Lake))+
+  geom_point(aes(y=prop, 
+                 x = factor(s_group, levels = c("1","2","3"), labels = c("Small","Medium","Large")),
+                 color = Lake))+
+  labs(y = "Observed capture probability", x = "Size group")
 ```
 
 ### Data
@@ -123,18 +162,41 @@ ggplot(t %>% filter(Year == "2022"))+
 ### Survie pour les différentes classes de taille et les différents Traitements
 
 ```{r}
-t <- BDD_vid %>% filter(Year == "2021") %>% mutate(survie = case_when(Year == "2022" ~ TRUE,
-                                      Tag_id %in% subset(BDD_vid, Year == "2022")$Tag_id ~ TRUE,
+t <- BDD_g %>% filter(Year == "2021" & !is.na(s_group) & s_group != 0) %>% mutate(survie = case_when(Year == "2022" ~ TRUE,
+                                      Tag_id %in% subset(BDD_g, Year == "2022")$Tag_id ~ TRUE,
                                       TRUE ~ FALSE)) %>%
                   mutate(survie = as.numeric(survie))
-model_phi <- glmer(survie ~ s_group+Treatment +(1|Lake), family = "binomial", t)
+model_phi <- glmer(survie ~ s_group*Treatment +(1|Lake), family = "binomial", t)
 summary(model_phi)
+```
+
+```{r}
+m2 = update(model_phi, ~.- s_group:Treatment)
+anova(model_phi, m2)
 ```
 
 ```{r}
 ggplot()+
   geom_point(aes(y=invlogit(predict(model_phi)), x = factor(t$s_group, levels = c("1","2","3"), labels = c("Small","Medium","Large"))))+
   labs(x = "Size group", y = "Survival")
+```
+
+```{r}
+s <- t %>% group_by(s_group, Lake, Treatment, survie) %>% summarize(n = n())
+s1 <- s%>% filter(survie == 0)%>% select(c("s_group", "Lake","Treatment", "n"))
+colnames(s1)<-  c("s_group", "Lake","Treatment", "new")
+s2 <- subset(s, survie == 1) %>% select(c("s_group", "Lake","Treatment", "n"))
+colnames(s2)<-  c("s_group", "Lake","Treatment", "catch")
+s <- merge (s1,s2, all = T)
+s[is.na(s)]<-0
+s <- s %>% mutate(prop = catch/(catch+new))
+
+s
+ggplot(s %>% filter(catch+new > 10))+
+  geom_point(aes(y=prop, 
+                 x = factor(s_group, levels = c("1","2","3"), labels = c("Small","Medium","Large")),
+                 color = factor(Treatment, levels = c("1","2","3","4"), labels = Treatment_name)))+
+  labs(x = "Size group", y = "Survival", color = "Treatment")
 ```
 
 ### Visualisation de la survie et de la probabilité de capture
@@ -168,7 +230,12 @@ ggplot(c ,aes(axis1 = sg_2021, axis2 = factor(sg_2022), y = freq))+
   geom_stratum(width = 1/7, color = "black") +
   geom_text(stat = "stratum", size = 3, aes(label = after_stat(stratum)))+
   scale_x_discrete(limits = c("2021", "2022"), expand = c(.05, .05))+
-  theme_void()
+  labs(x = "Year", y = "Abundance")+
+  theme(panel.background = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks.y = element_blank())
 ```
 
 

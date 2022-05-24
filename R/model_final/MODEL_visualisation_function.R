@@ -1,4 +1,4 @@
-Treatment_name = c("F/T","T/T","F/F","T/F")
+Treatment_name =  c("Perch- / Nutrients+","Perch+ / Nutrients+","Perch- / Nutrients-","Perch+ / Nutrients-")
 
 get_phi <- function(model){
   model <- as.mcmc(model)
@@ -23,7 +23,7 @@ get_phi <- function(model){
             mutate(Size = factor(Size, levels = c("1","2","3"), labels = c("Small","Medium","Large")),
                    Treatment  = factor(Treatment, levels = c("1","2","3","4"), labels = Treatment_name),
                    Exp_time = factor(Exp_time, levels = c("1","2"), 
-                                     labels = c("Before perch elimination","After perch elimination"))))
+                                     labels = c("Before treatment","After treatment"))))
 }
 
 get_p <- function(model){
@@ -64,10 +64,10 @@ get_psi <- function(model){
   return(psi %>% 
     group_by (Size,Treatment,Exp_time) %>% 
     summarize(mean = mean(var1), min = quantile(var1,0.025), max = quantile(var1,0.975)) %>%
-    mutate(Size = factor(Size, levels = c("1","2","3"), labels = c("Small","Medium","Large")),
+    mutate(Size = factor(Size, levels = c("1","2"), labels = c("Small to Medium","Medium to Large")),
            Treatment  = factor(Treatment, levels = c("1","2","3","4"), labels = Treatment_name),
            Exp_time = factor(Exp_time, levels = c("1","2"), 
-                               labels = c("Before perch elimination","After perch elimination"))))
+                               labels = c("Before treatment","After treatment"))))
 }
 
 
@@ -137,8 +137,8 @@ get_all_deviance <- function(list_model,list_name){
            summarize(mean = mean(var1), min = quantile(var1,0.025), max = quantile(var1,0.975)))
 }
 
-plot_phi <- function(model){
-  ggplot(get_phi(model), aes(color = factor(Treatment)))+
+plot_phi <- function(summary){
+  ggplot(summary, aes(color = factor(Treatment)))+
     geom_point(aes(x = Treatment, y = mean))+
     geom_errorbar(aes(x = Treatment, ymin = min, ymax = max), width = 0.4)+
     scale_color_discrete("Treatment")+
@@ -147,8 +147,8 @@ plot_phi <- function(model){
     labs(y = "Survival probability")
 }
 
-plot_p <- function(model){
-  ggplot(get_p(model))+
+plot_p <- function(summary){
+  ggplot(summary)+
     geom_point(aes(x = Size, y = mean))+
     geom_errorbar(aes(x = Size, 
                       ymin = min, ymax = max), width = 0.4)+
@@ -156,16 +156,16 @@ plot_p <- function(model){
     ylim(0,1)
 }
 
-plot_epsilon <- function(model){
-  ggplot(get_epsilon(model))+
+plot_epsilon <- function(summary){
+  ggplot(summary)+
     geom_point(aes(x = factor(Lake), y = mean))+
     geom_errorbar(aes(x = factor(Lake), ymin = min, ymax = max), width = 0.4)+
     facet_wrap(~Year)+
     labs(x = "Lake", y = "Epsilon : variation around the capture probability")
 }
 
-plot_psi <- function(model) {
-  ggplot(get_psi(model), aes(color = factor(Treatment)))+
+plot_psi <- function(summary) {
+  ggplot(summary, aes(color = factor(Treatment)))+
     geom_point(aes(x = Treatment, y = mean))+
     geom_errorbar(aes(x = Treatment, ymin = min, ymax = max), width = 5)+
     facet_grid(rows = vars(Size), cols = vars(Exp_time))+
@@ -182,19 +182,10 @@ plot_deviance <- function(list_model,name_model){
     theme(legend.position = "none")
 }
 
-plot_n <- function(model){
-  ggplot(get_n(model))+
-    geom_point(stat = "identity", aes(x = Year, y = mean))
+plot_n <- function(summary){
+  ggplot(summary)+
+    geom_bar(stat = "identity", aes(x = Year, y = mean, fill = Size))+
+    #geom_errorbar(aes(x = Year, ymin =min, ymax = max))+
+    scale_fill_manual (values =c("#FED98E","#FE9929","#CC4C02"))+
+    facet_wrap(~Treatment)
 }
-
-n = get_n(Model_Treatment)
-ggplot(n)+
-  geom_point(stat = "identity", aes(x = Year, y = mean))+
-  geom_errorbar(aes(x = Year, ymin =min, ymax = max))+
-  facet_grid(Treatment ~ Size)
-
-ggplot(n)+
-  geom_bar(stat = "identity", aes(x = Year, y = mean, fill = Size))+
-  #geom_errorbar(aes(x = Year, ymin =min, ymax = max))+
-  scale_fill_manual (values =c("#FED98E","#FE9929","#CC4C02"))+
-  facet_wrap(~Treatment)

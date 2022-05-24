@@ -3,6 +3,16 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+```{r}
+theme_set(theme_bw()+
+            theme(strip.background =element_rect(fill="white", color = "darkgrey"),
+                  panel.background = element_rect(fill = "#E6E6E6"),
+                  panel.grid = element_line(colour = "#D8D8D8"),
+                  panel.border = element_rect(color = "darkgrey"),
+                  axis.title.x = element_text(margin = margin(t = 10)),
+                  axis.title.y = element_text(margin = margin(r = 10))))
+```
+
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 setwd("C:/Users/sandrine/Documents/R_script/Planaqua_experiment")
@@ -76,9 +86,61 @@ for (i in 4:5){
 ```
 
 
+```{r}
+quantile(as.mcmc(Model_Treatment_capture)[[2]][,"error"], probs = 0.025, digits = )
+mean(as.mcmc(Model_Treatment_capture)[[2]][,"error"])
+print(Model_Treatment_capture$summary)
+```
 
+```{r}
+quantile(as.mcmc(Model_Treatment_capture_p1)[[2]][,"p3"], probs = 0.025, digits = )
+mean(as.mcmc(Model_Treatment_capture_p1)[[2]][,"p3"])
+quantile(as.mcmc(Model_Treatment_capture_p1)[[2]][,"p3"],0.975)
+```
 
+Toutes les figures pour mon rapport
+```{r}
+model = Model_Treatment_capture
 
+ggplot(get_p(model))+
+  geom_point(aes(x = Size, y = mean))+
+  geom_errorbar(aes(x = Size, 
+                    ymin = min, ymax = max), width = 0.4)+
+  labs(y = "Capture probability", x = "Size group")+
+  ylim(0,1)
+
+ggplot(get_phi(model) %>% filter(Exp_time == "After treatment"), aes(color = factor(Treatment)))+
+  geom_point(aes(x = Treatment, y = mean))+
+  geom_errorbar(aes(x = Treatment, ymin = min, ymax = max), width = 1)+
+  scale_color_discrete("Treatment")+
+  facet_wrap(~Size)+
+  theme(axis.text.x=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank())+
+  labs(y = "Survival probability")+
+  ylim(0,1)
+
+ggplot(get_psi(model) %>% filter(Exp_time == "After treatment"), aes(color = factor(Treatment)))+
+  geom_point(aes(x = Treatment, y = mean))+
+  geom_errorbar(aes(x = Treatment, ymin = min, ymax = max), width = 1)+
+  facet_wrap(~Size)+
+  scale_color_discrete("Treatment")+
+  theme(axis.text.x=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank())+
+  labs(y = "Growth probability")+
+  ylim(0,1)
+
+ggplot(get_n(model))+
+  geom_bar(stat = "identity", aes(x = Year, y = mean, fill = Size))+
+  #geom_errorbar(aes(x = Year, ymin =min, ymax = max))+
+  scale_fill_manual (values =c("#FED98E","#FE9929","#CC4C02"))+
+  labs(y = "Abundance")+
+  facet_wrap(~Treatment)
+
+ggplot(get_epsilon(model))+
+  geom_point(aes(x = factor(Lake), y = mean))+
+  geom_errorbar(aes(x = factor(Lake), ymin = min, ymax = max), width = 0.4)+
+  facet_wrap(~Year)+
+  labs(x = "Lake", y = "Epsilon : variation around the capture probability")
+
+```
 
 
 
