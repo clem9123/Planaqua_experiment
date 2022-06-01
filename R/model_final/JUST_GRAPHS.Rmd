@@ -8,7 +8,7 @@ setwd("C:/Users/sandrine/Documents/R_script/Planaqua_experiment")
 source("R/setup.R")
 theme_set(theme_bw()+
             theme(strip.background =element_rect(fill="white", color = "darkgrey"),
-                  panel.background = element_rect(fill = "#E6E6E6"),
+                  panel.background = element_rect(fill = "#F2F2F2"),
                   panel.grid = element_line(colour = "#D8D8D8"),
                   panel.border = element_rect(color = "darkgrey"),
                   axis.title.x = element_text(margin = margin(t = 10)),
@@ -20,10 +20,16 @@ theme_set(theme_bw()+
 
 ## Visualisation des données
 
-```{r}
+```{r fig.height=7, fig.width=10}
 Treatment_name =  c("Perch- / Nutrients+","Perch+ / Nutrients+","Perch- / Nutrients-","Perch+ / Nutrients-")
 
 ggplot(BDD_g %>% filter(!is.na(s_group)))+
+  geom_bar(aes(x = Year, fill = s_group))+
+  scale_fill_brewer("Size group",palette = "YlOrBr", labels = c("Juvenile","Small","Medium","Large"))+
+  facet_wrap(~factor(Treatment, levels = c(1,2,3,4), labels = Treatment_name))+
+  labs(y = "Roach abundance")
+
+ggplot(BDD_p %>% filter(!is.na(s_group)))+
   geom_bar(aes(x = Year, fill = s_group))+
   scale_fill_brewer("Size group",palette = "YlOrBr", labels = c("Juvenile","Small","Medium","Large"))+
   facet_wrap(~factor(Treatment, levels = c(1,2,3,4), labels = Treatment_name))+
@@ -43,7 +49,8 @@ p1 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==1))+
                                    "Lake 11", "Lake 14", "Lake 9", "Lake 16",
                                    "Lake 2", "Lake 7", "Lake 4", "Lake 5",
                                    "Lake 12", "Lake 13", "Lake 10", "Lake 15")))+
-  labs(title = Treatment_name[1], y = "Roach abundance")
+  labs(title = Treatment_name[1], y = "Roach abundance")+
+  ylim(0,1200)
 
 p2 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==2))+
   geom_bar(aes(x = Year, fill = s_group), show.legend = F)+
@@ -53,7 +60,8 @@ p2 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==2))+
                                    "Lake 11", "Lake 14", "Lake 9", "Lake 16",
                                    "Lake 2", "Lake 7", "Lake 4", "Lake 5",
                                    "Lake 12", "Lake 13", "Lake 10", "Lake 15")))+
-  labs(title = Treatment_name[2], y = "Roach abundance")
+  labs(title = Treatment_name[2], y = "Roach abundance")+
+  ylim(0,1200)
 
 p3 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==3))+
   geom_bar(aes(x = Year, fill = s_group), show.legend = F)+
@@ -63,7 +71,8 @@ p3 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==3))+
                                    "Lake 11", "Lake 14", "Lake 9", "Lake 16",
                                    "Lake 2", "Lake 7", "Lake 4", "Lake 5",
                                    "Lake 12", "Lake 13", "Lake 10", "Lake 15")))+
-  labs(title = Treatment_name[3], y = "Roach abundance")
+  labs(title = Treatment_name[3], y = "Roach abundance")+
+  ylim(0,1200)
 
 p4 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==4))+
   geom_bar(aes(x = Year, fill = s_group))+
@@ -73,7 +82,54 @@ p4 <- ggplot(BDD_g %>% filter(!is.na(s_group) & Treatment ==4))+
                                    "Lake 11", "Lake 14", "Lake 9", "Lake 16",
                                    "Lake 2", "Lake 7", "Lake 4", "Lake 5",
                                    "Lake 12", "Lake 13", "Lake 10", "Lake 15")))+
-  labs(title = Treatment_name[4], y = "Roach abundance")
+  labs(title = Treatment_name[4], y = "Roach abundance")+
+  ylim(0,1200)
+
+(p1+p2)/(p3+p4)
+
+p1 <- ggplot(BDD_g %>% filter(s_group != 0 & !is.na(s_group) & Treatment ==1))+
+  geom_bar(aes(x = Year, fill = s_group), show.legend = F)+
+  scale_fill_brewer("Size group",palette = "YlOrBr", labels = c("Small","Medium","Large"))+
+  facet_wrap(~factor(Lake,levels = c(1,8,3,6,11,14,9,16,2,7,4,5,12,13,10,15),
+                        labels = c("Lake 1", "Lake 8", "Lake 3", "Lake 6",
+                                   "Lake 11", "Lake 14", "Lake 9", "Lake 16",
+                                   "Lake 2", "Lake 7", "Lake 4", "Lake 5",
+                                   "Lake 12", "Lake 13", "Lake 10", "Lake 15")))+
+  labs(title = Treatment_name[1], y = "Roach abundance")+
+  ylim(0,300)
+
+p2 <- ggplot(BDD_g %>% filter(s_group != 0 & !is.na(s_group) & Treatment ==2))+
+  geom_bar(aes(x = Year, fill = s_group), show.legend = F)+
+  scale_fill_brewer("Size group",palette = "YlOrBr", labels = c("Small","Medium","Large"))+
+  facet_wrap(~factor(Lake,levels = c(1,8,3,6,11,14,9,16,2,7,4,5,12,13,10,15),
+                        labels = c("Lake 1", "Lake 8", "Lake 3", "Lake 6",
+                                   "Lake 11", "Lake 14", "Lake 9", "Lake 16",
+                                   "Lake 2", "Lake 7", "Lake 4", "Lake 5",
+                                   "Lake 12", "Lake 13", "Lake 10", "Lake 15")))+
+  labs(title = Treatment_name[2], y = "Roach abundance")+
+  ylim(0,300)
+
+p3 <- ggplot(BDD_g %>% filter(s_group != 0 & !is.na(s_group) & Treatment ==3))+
+  geom_bar(aes(x = Year, fill = s_group), show.legend = F)+
+  scale_fill_brewer("Size group",palette = "YlOrBr", labels = c("Small","Medium","Large"))+
+  facet_wrap(~factor(Lake,levels = c(1,8,3,6,11,14,9,16,2,7,4,5,12,13,10,15),
+                        labels = c("Lake 1", "Lake 8", "Lake 3", "Lake 6",
+                                   "Lake 11", "Lake 14", "Lake 9", "Lake 16",
+                                   "Lake 2", "Lake 7", "Lake 4", "Lake 5",
+                                   "Lake 12", "Lake 13", "Lake 10", "Lake 15")))+
+  labs(title = Treatment_name[3], y = "Roach abundance")+
+  ylim(0,300)
+
+p4 <- ggplot(BDD_g %>% filter(s_group != 0 & !is.na(s_group) & Treatment ==4))+
+  geom_bar(aes(x = Year, fill = s_group))+
+  scale_fill_brewer("Size group",palette = "YlOrBr", labels = c("Small","Medium","Large"))+
+  facet_wrap(~factor(Lake,levels = c(1,8,3,6,11,14,9,16,2,7,4,5,12,13,10,15),
+                        labels = c("Lake 1", "Lake 8", "Lake 3", "Lake 6",
+                                   "Lake 11", "Lake 14", "Lake 9", "Lake 16",
+                                   "Lake 2", "Lake 7", "Lake 4", "Lake 5",
+                                   "Lake 12", "Lake 13", "Lake 10", "Lake 15")))+
+  labs(title = Treatment_name[4], y = "Roach abundance")+
+  ylim(0,300)
 
 (p1+p2)/(p3+p4)
 ```
@@ -102,6 +158,12 @@ anova(m1,m2)
 
 ```{r}
 ggplot(BDD_g %>% filter (Year == "2022"))+
+  geom_bar(aes(x = Lake, fill = s_group))+
+  scale_fill_brewer("Size group",palette = "YlOrBr", labels = c("Juvenile","Small","Medium","Large"))+
+  facet_wrap(~factor(Treatment, levels = c(1,2,3,4), labels = Treatment_name), scales= "free_x")+
+  labs(x = "Roach abundance")
+
+ggplot(BDD_p %>% filter (Year == "2022"))+
   geom_bar(aes(x = Lake, fill = s_group))+
   scale_fill_brewer("Size group",palette = "YlOrBr", labels = c("Juvenile","Small","Medium","Large"))+
   facet_wrap(~factor(Treatment, levels = c(1,2,3,4), labels = Treatment_name), scales= "free_x")+
@@ -141,11 +203,10 @@ s[is.na(s)]<-0
 s <- s %>% mutate(prop = catch/(catch+new))
 
 s
-ggplot(s %>% filter (catch + new > 10))+
+p1 <- ggplot(s %>% filter (catch + new > 10))+
   #geom_point(aes(x = s_group, y = prop, color = Lake))+
   geom_point(aes(y=prop, 
-                 x = factor(s_group, levels = c("1","2","3"), labels = c("Small","Medium","Large")),
-                 color = Lake))+
+                 x = factor(s_group, levels = c("1","2","3"), labels = c("Small","Medium","Large"))))+
   labs(y = "Observed capture probability", x = "Size group")
 ```
 
@@ -166,7 +227,8 @@ t <- BDD_g %>% filter(Year == "2021" & !is.na(s_group) & s_group != 0) %>% mutat
                                       Tag_id %in% subset(BDD_g, Year == "2022")$Tag_id ~ TRUE,
                                       TRUE ~ FALSE)) %>%
                   mutate(survie = as.numeric(survie))
-model_phi <- glmer(survie ~ s_group*Treatment +(1|Lake), family = "binomial", t)
+
+model_phi <- glmer(survie ~ s_group*Treatment +(1|Lake), family = "binomial", t, modCtr)
 summary(model_phi)
 ```
 
@@ -192,11 +254,20 @@ s[is.na(s)]<-0
 s <- s %>% mutate(prop = catch/(catch+new))
 
 s
-ggplot(s %>% filter(catch+new > 10))+
+p2 <- ggplot(s %>% filter(catch+new > 10))+
   geom_point(aes(y=prop, 
                  x = factor(s_group, levels = c("1","2","3"), labels = c("Small","Medium","Large")),
                  color = factor(Treatment, levels = c("1","2","3","4"), labels = Treatment_name)))+
   labs(x = "Size group", y = "Survival", color = "Treatment")
+```
+```{r fig.height=5, fig.width=12}
+p3+
+  labs(title = "A")+
+p1+
+  labs(y = "Capture probability",title = "B")+
+p2+
+  labs(y = "Survival probability",title = "C")+
+  plot_layout(widths = c(3,1,1))
 ```
 
 ### Visualisation de la survie et de la probabilité de capture
@@ -224,18 +295,18 @@ c <- c %>% mutate(sg_2021 = factor(sg_2021, levels = c("0","1","2","3"), labels 
 
 c <- c %>% group_by(sg_2021,sg_2022) %>% summarize(freq = n())
 
-ggplot(c ,aes(axis1 = sg_2021, axis2 = factor(sg_2022), y = freq))+
+p3 <- ggplot(c ,aes(axis1 = sg_2021, axis2 = factor(sg_2022), y = freq))+
   geom_alluvium(aes(fill = sg_2022),width = 1/7) +
   scale_fill_manual(values = c("grey","#FED98E","#FE9929","#CC4C02"),"Size group in 2022")+
   geom_stratum(width = 1/7, color = "black") +
-  geom_text(stat = "stratum", size = 3, aes(label = after_stat(stratum)))+
+  geom_text(stat = "stratum", size = 2.5, aes(label = after_stat(stratum)))+
   scale_x_discrete(limits = c("2021", "2022"), expand = c(.05, .05))+
   labs(x = "Year", y = "Abundance")+
   theme(panel.background = element_blank(),
         panel.grid = element_blank(),
         panel.border = element_blank(),
         axis.line = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.title.x = element_text(margin = margin(t = 0)))
 ```
 
 
