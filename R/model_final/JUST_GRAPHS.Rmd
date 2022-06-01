@@ -144,7 +144,8 @@ t <- BDD_g %>% filter (Year == "2022") %>% group_by(Treatment,Lake, s_group) %>%
 nrow(t)
 t$index = c(1:51)
 
-m1 <- glmer(nb ~ s_group*Treatment + (1|Lake) + (1|index), family = "poisson", t)
+m1 <- glmer(nb ~ s_group*Treatment + (1|Lake) + (1|index), family = "poisson", t, 
+            control = glmerControl(optimizer = "bobyqa")) 
 summary(m1)
 ```
 
@@ -184,6 +185,10 @@ summary(model_pc)
 ```
 # anova update...
 pvalue et chi square degrés de liberté
+```{r}
+m2 = update(model_pc, ~.- s_group)
+anova(model_pc, m2)
+```
 
 # mieux avec les vraies valeurs
 ```{r}
@@ -228,7 +233,8 @@ t <- BDD_g %>% filter(Year == "2021" & !is.na(s_group) & s_group != 0) %>% mutat
                                       TRUE ~ FALSE)) %>%
                   mutate(survie = as.numeric(survie))
 
-model_phi <- glmer(survie ~ s_group*Treatment +(1|Lake), family = "binomial", t, modCtr)
+model_phi <- glmerControl(optimizer = "bobyqa")#, family = "binomial"
+model_phi <- glmer(survie ~ s_group*Treatment +(1|Lake), t, family = "binomial", control = glmerControl(optimizer = "bobyqa"))
 summary(model_phi)
 ```
 
