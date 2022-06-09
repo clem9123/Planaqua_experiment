@@ -28,6 +28,7 @@ load("Model_Treatment_time_and_lake.RData")
 load("Model_Treatment_time_x_lake.RData")
 load("Model_Treatment_capture.RData")
 load("Model_Treatment_capture_p1.RData")
+load("Model_Treatment_capture_reverse.RData")
   
   
 list_model = list(
@@ -35,7 +36,8 @@ list_model = list(
   Model_Treatment_time_and_lake,
   Model_Treatment_time_x_lake,
   Model_Treatment_capture,
-  Model_Treatment_capture_p1
+  Model_Treatment_capture_p1,
+  Model_Treatment_capture_reverse
 )
 
 model_name = c(
@@ -43,7 +45,8 @@ model_name = c(
   "Model_Treatment_time_and_lake",
   "Model_Treatment_time_x_lake",
   "Model_Treatment_capture",
-  "Model_Treatment_capture_p1"
+  "Model_Treatment_capture_p1",
+  "Model_Treatment_capture_reverse"
 )
 ```
 
@@ -100,7 +103,8 @@ quantile(as.mcmc(Model_Treatment_capture_p1)[[2]][,"p3"],0.975)
 
 Toutes les figures pour mon rapport
 ```{r fig.height=4, fig.width=8}
-model = Model_Treatment_capture
+load("Model_Treatment_capture_reverse.RData")
+model = Model_Treatment_capture_reverse
 
 ggplot(get_p(model))+
   geom_point(aes(x = Size, y = mean))+
@@ -141,6 +145,14 @@ ggplot(get_epsilon(model))+
   labs(x = "Lake", y = "Epsilon distribution probability")
 
 ```
+
+```{r}
+print(Model_Treatment_capture)
+print(Model_Treatment_capture_reverse)
+traceplot(Model_Treatment_capture_reverse, ask = F)
+autocorr.plot(Model_Treatment_capture_reverse,ask=F)
+```
+
 
 ```{r fig.height=4, fig.width=7}
 p1 <- ggplot(get_phi(model) %>% filter(Exp_time == "Before treatment"), aes(color = factor(Treatment)))+
