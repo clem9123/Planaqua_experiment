@@ -1,5 +1,10 @@
 Treatment_name =  c("Perch- / Nutrients+","Perch+ / Nutrients+","Perch- / Nutrients-","Perch+ / Nutrients-")
 
+# ------------------------------
+# EXTRACTION OF DATA FROM MODEL
+# ------------------------------
+
+# Extract phi from model (survival)
 get_phi <- function(model){
   model <- as.mcmc(model)
   phi = data.frame()
@@ -26,6 +31,7 @@ get_phi <- function(model){
                                      labels = c("Before treatment","After treatment"))))
 }
 
+# Extract p from model (capture probability)
 get_p <- function(model){
   model <- as.mcmc(model)
   p = data.frame()
@@ -43,7 +49,7 @@ get_p <- function(model){
            mutate(Size = factor(Size, levels = c("1","2","3"), labels = c("Small","Medium","Large"))))
 }
 
-
+# Extract psi from model (growth)
 get_psi <- function(model){
   model <- as.mcmc(model)
   psi = data.frame()
@@ -70,7 +76,7 @@ get_psi <- function(model){
                                labels = c("Before treatment","After treatment"))))
 }
 
-
+# Extract epsilon from model (variability of capture)
 get_epsilon <- function(model){
   model <- as.mcmc(model)
   epsilon = data.frame()
@@ -91,6 +97,7 @@ get_epsilon <- function(model){
            mutate(Year = factor(Year, levels = c(1,2,3,4,5), labels = c(2017,2018,2019,2020,2021))))
 }
 
+# extract abundance from model
 get_n <- function(model){
   model <- as.mcmc(model)
   n = data.frame()
@@ -116,6 +123,7 @@ get_n <- function(model){
                                      labels = c(2016,2017,2018,2019,2020,2021))))
 }
 
+# extract deviance from model
 get_deviance <- function(model){
   deviance = data.frame()
   for (n in 1:2){
@@ -137,6 +145,11 @@ get_all_deviance <- function(list_model,list_name){
            summarize(mean = mean(var1), min = quantile(var1,0.025), max = quantile(var1,0.975)))
 }
 
+# ------------------
+# PLOT MODEL RESULT
+# ------------------
+
+# plot survival
 plot_phi <- function(summary){
   ggplot(summary, aes(color = factor(Treatment)))+
     geom_point(aes(x = Treatment, y = mean))+
@@ -147,6 +160,7 @@ plot_phi <- function(summary){
     labs(y = "Survival probability")
 }
 
+# plot capture probability
 plot_p <- function(summary){
   ggplot(summary)+
     geom_point(aes(x = Size, y = mean))+
@@ -156,6 +170,7 @@ plot_p <- function(summary){
     ylim(0,1)
 }
 
+# plot variability of capture
 plot_epsilon <- function(summary){
   ggplot(summary)+
     geom_point(aes(x = factor(Lake), y = mean))+
@@ -164,6 +179,7 @@ plot_epsilon <- function(summary){
     labs(x = "Lake", y = "Epsilon : variation around the capture probability")
 }
 
+# plot growth
 plot_psi <- function(summary) {
   ggplot(summary, aes(color = factor(Treatment)))+
     geom_point(aes(x = Treatment, y = mean))+
@@ -174,6 +190,7 @@ plot_psi <- function(summary) {
     labs(y = "Growth probability")
 }
 
+# plot deviance
 plot_deviance <- function(list_model,name_model){
   ggplot(get_all_deviance(list_model,name_model))+
     geom_point(aes(x = name, y = mean))+
@@ -182,6 +199,7 @@ plot_deviance <- function(list_model,name_model){
     theme(legend.position = "none")
 }
 
+# plot abundance
 plot_n <- function(summary){
   ggplot(summary)+
     geom_bar(stat = "identity", aes(x = Year, y = mean, fill = Size))+
