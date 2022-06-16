@@ -140,12 +140,8 @@ p4 <- ggplot(BDD_g %>% filter(s_group != 0 & !is.na(s_group) & Treatment ==4))+
 #### Statistique
 
 ```{r}
-t <- BDD_g %>% filter (Year == "2022") %>% group_by(Treatment,Lake, s_group) %>% summarize(nb = n()) 
-nrow(t)
-t$index = c(1:51)
-
-m1 <- glmer(nb ~ s_group*Treatment + (1|Lake) + (1|index), family = "poisson", t, 
-            control = glmerControl(optimizer = "bobyqa")) 
+t <- BDD_g %>% filter (Year == "2022" & !Tag_id%in% c("juvenile","no_tag")) %>% group_by(Treatment,Lake, s_group) %>% summarize(nb = n())
+m1 <- glmer(nb ~ s_group*Treatment + (1|Lake), family = "poisson", t) 
 summary(m1)
 ```
 
@@ -176,10 +172,12 @@ ggplot(BDD_p %>% filter (Year == "2022"))+
 #### Statistical analyses
 
 ```{r}
-t <- BDD_g %>% filter(Year == "2022" & Tag_id != "juvenile" & Tag_id != "no_tag") %>% mutate (catch_2021 = case_when(Year == "2021" ~ TRUE,
-                                      Tag_id %in% subset(BDD_g , !is.na(Tag_id) & Year == "2021")$Tag_id ~ TRUE,
-                                      TRUE ~ FALSE)) %>%
-                                        mutate(catch_2021 = as.numeric(catch_2021))
+t <- BDD_g %>% filter(Year == "2022" & !Tag_id %in% c("juvenile","no_tag")) %>% 
+               mutate (catch_2021 = case_when(Year == "2021" ~ TRUE,
+                                              Tag_id %in% subset(BDD_g , !is.na(Tag_id) & Year == "2021")$Tag_id ~ TRUE,
+                                              TRUE ~ FALSE)) %>%
+              mutate(catch_2021 = as.numeric(catch_2021))
+
 model_pc <- glmer(catch_2021 ~ s_group + (1|Lake), family = "binomial", t)
 summary(model_pc)
 ```
@@ -212,8 +210,17 @@ p1 <- ggplot(s %>% filter (catch + new > 10))+
   #geom_point(aes(x = s_group, y = prop, color = Lake))+
   geom_point(aes(y=prop, 
                  x = factor(s_group, levels = c("1","2","3"), labels = c("Small","Medium","Large"))))+
-  labs(y = "Observed capture probability", x = "Size group")
+  labs(y = "Observed capture probability")+
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())+
+  labs(y = "Capture probability",title = "B")
 ```
+
+```{r}
+p1
+```
+
 
 ### Data
 
@@ -228,18 +235,31 @@ ggplot(t %>% filter(Year == "2022"))+
 ### Survie pour les différentes classes de taille et les différents Traitements
 
 ```{r}
-t <- BDD_g %>% filter(Year == "2021" & !is.na(s_group) & s_group != 0) %>% mutate(survie = case_when(Year == "2022" ~ TRUE,
+t <- BDD_g %>% filter(Year == "2021" & !Tag_id %in% c("juvenile","no_tag") & s_group %in% c(1,2,3)) %>% mutate(survie = case_when(Year == "2022" ~ TRUE,
                                       Tag_id %in% subset(BDD_g, Year == "2022")$Tag_id ~ TRUE,
                                       TRUE ~ FALSE)) %>%
                   mutate(survie = as.numeric(survie))
-
-model_phi <- glmerControl(optimizer = "bobyqa")#, family = "binomial"
-model_phi <- glmer(survie ~ s_group*Treatment +(1|Lake), t, family = "binomial", control = glmerControl(optimizer = "bobyqa"))
+t$index <-  c(1:nrow(t))
+model_phi <- glmer(survie ~ s_group*Treatment +(1|Lake), t, family = "binomial", control = glmerControl(optimizer = "Nelder_Mead"))
 summary(model_phi)
 ```
 
 ```{r}
 m2 = update(model_phi, ~.- s_group:Treatment)
+anova(model_phi, m2)
+```
+
+```{r}
+t <- BDD_g %>% filter(Year == "2021" & !Tag_id %in% c("juvenile","no_tag") & s_group %in% c(1,2,3)) %>% mutate(survie = case_when(Year == "2022" ~ TRUE,
+                                      Tag_id %in% subset(BDD_g, Year == "2022")$Tag_id ~ TRUE,
+                                      TRUE ~ FALSE)) %>%
+                  mutate(survie = as.numeric(survie))
+
+model_phi <- glmer(survie ~ s_group +(1|Lake), t, family = "binomial")
+summary(model_phi)
+```
+```{r}
+m2 = update(model_phi, ~.- s_group)
 anova(model_phi, m2)
 ```
 
@@ -264,17 +284,10 @@ p2 <- ggplot(s %>% filter(catch+new > 10))+
   geom_point(aes(y=prop, 
                  x = factor(s_group, levels = c("1","2","3"), labels = c("Small","Medium","Large")),
                  color = factor(Treatment, levels = c("1","2","3","4"), labels = Treatment_name)))+
-  labs(x = "Size group", y = "Survival", color = "Treatment")
+  labs(x = "Size group", y = "Survival", color = "Treatment")+
+  labs(title = "C")
 ```
-```{r fig.height=5, fig.width=12}
-p3+
-  labs(title = "A")+
-p1+
-  labs(y = "Capture probability",title = "B")+
-p2+
-  labs(y = "Survival probability",title = "C")+
-  plot_layout(widths = c(3,1,1))
-```
+
 
 ### Visualisation de la survie et de la probabilité de capture
 
@@ -296,7 +309,7 @@ c[is.na(c)] <- "0"
 #             sg_2022 = ifelse(is.na(sg_2022),"4", sg_2022) %>%
 #  mutate(sg_2022 = factor (sg_2022, levels = c("0","1","2","3","4")), sg_2021 = factor (sg_2021, levels = #c("0","1","2","3","4")))
 
-c <- c %>% mutate(sg_2021 = factor(sg_2021, levels = c("0","1","2","3"), labels = c("Not catched","Small","Medium","Large")),
+c <- c %>% mutate(sg_2021 = factor(sg_2021, levels = c("0","1","2","3"), labels = c("Not caught","Small","Medium","Large")),
              sg_2022 = factor(sg_2022, levels = c("0","1","2","3"), labels = c(" Dead"," Small"," Medium"," Large")))
 
 c <- c %>% group_by(sg_2021,sg_2022) %>% summarize(freq = n())
@@ -312,10 +325,22 @@ p3 <- ggplot(c ,aes(axis1 = sg_2021, axis2 = factor(sg_2022), y = freq))+
         panel.grid = element_blank(),
         panel.border = element_blank(),
         axis.line = element_blank(),
-        axis.title.x = element_text(margin = margin(t = 0)))
+        axis.title.x = element_text(margin = margin(t = 0)))+
+  labs(title = "A")
 ```
 
 
+```{r fig.height=7, fig.width=12}
+p3+
+  labs(title = "A")+
+p1+
+  labs(y = "Capture probability",title = "B")+
+p2+
+  labs(y = "Survival probability",title = "C")+
+  plot_layout(widths = c(3,1,1))
+
+p3+(p1/p2)+plot_layout(widths = c(2,1))
+```
 
 
 

@@ -104,7 +104,7 @@ quantile(as.mcmc(Model_Treatment_capture_p1)[[2]][,"p3"],0.975)
 Toutes les figures pour mon rapport
 ```{r fig.height=4, fig.width=8}
 load("Model_Treatment_capture_reverse.RData")
-model = Perch_model_Treatment_capture
+model = Model_Treatment_capture_reverse
 
 ggplot(get_p(model))+
   geom_point(aes(x = Size, y = mean))+
@@ -154,7 +154,7 @@ autocorr.plot(Perch_model_Treatment_capture,ask=F)
 
 
 ```{r fig.height=4, fig.width=7}
-p1 <- ggplot(get_phi(model) %>% filter(Exp_time == "Before treatment"), aes(color = factor(Treatment)))+
+p1 <- ggplot(get_phi(model) %>% filter(Exp_time == "After treatment"), aes(color = factor(Treatment)))+
   geom_point(aes(x = Treatment, y = mean), show.legend = F)+
   geom_errorbar(aes(x = Treatment, ymin = min, ymax = max), width = 1, show.legend = F)+
   scale_color_discrete("Treatment")+
@@ -163,7 +163,7 @@ p1 <- ggplot(get_phi(model) %>% filter(Exp_time == "Before treatment"), aes(colo
   labs(y = "Survival probability")+
   ylim(0,1)
 
-p2 <- ggplot(get_psi(model) %>% filter(Exp_time == "Before treatment"), aes(color = factor(Treatment)))+
+p2 <- ggplot(get_psi(model) %>% filter(Exp_time == "After treatment"), aes(color = factor(Treatment)))+
   geom_point(aes(x = Treatment, y = mean))+
   geom_errorbar(aes(x = Treatment, ymin = min, ymax = max), width = 1)+
   facet_wrap(~Size)+
