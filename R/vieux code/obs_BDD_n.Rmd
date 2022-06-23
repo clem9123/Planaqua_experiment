@@ -1,0 +1,58 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+```{r}
+head(BDD_n)
+```
+
+```{r}
+ggplot(BDD_n)+
+  geom_point(aes(x = Year, y = nb_adult))+
+  facet_wrap(~Species)
+  
+ggplot(BDD_n)+
+  geom_point(data = BDD_n %>% filter(Species == "roach"), aes(x = Year, y = nb_adult), color = "orange")+
+  geom_line(data = BDD_n %>% filter(Species == "roach"), aes(x = Year, y = nb_adult, group = Lake), color = "orange")+
+  geom_point(data = BDD_n %>% filter(Species == "roach"), aes(x = Year, y = nb_poisson), color = "green")+
+  geom_line(data = BDD_n %>% filter(Species == "roach"), aes(x = Year, y = nb_poisson, group = Lake), color = "green")+
+  geom_point(data = BDD_n %>% filter(Species == "roach"), aes(x = Year, y = nb_juv), color = "red")+
+  geom_line(data = BDD_n %>% filter(Species == "roach"), aes(x = Year, y = nb_juv, group = Lake), color = "red")+
+  geom_point(data = BDD_n %>% filter(Species == "perch"), aes(x = Year, y = nb_adult), color = "blue")+
+  geom_line(data = BDD_n %>% filter(Species == "perch"), aes(x = Year, y = nb_adult, group = Lake), color = "blue")+
+  #ylim(0,300),
+  facet_wrap(~Lake)
+
+ggplot(BDD_n)+
+  geom_point(data = BDD_n %>% filter(Species == "roach"), aes(x = Year, y = nb_adult), color = "orange")+
+  geom_line(data = BDD_n %>% filter(Species == "roach"), aes(x = Year, y = nb_adult, group = Lake), color = "orange")+
+  geom_point(data = BDD_n %>% filter(Species == "perch"), aes(x = Year, y = nb_adult), color = "blue")+
+  geom_line(data = BDD_n %>% filter(Species == "perch"), aes(x = Year, y = nb_adult, group = Lake), color = "blue")+
+  #ylim(0,300),
+  facet_wrap(~Lake)
+
+ggplot(BDD_n %>% filter(Species == "perch"))+
+  geom_bar(stat = "identity", aes(x = Lake, fill = Treatment, y = nb_adult))+
+  facet_wrap(~Year)
+```
+
+```{r}
+BDD_g %>% filter(Tag_id == "juvenile" & Year == "2022")
+```
+
+```{r}
+ggplot(BDD_n %>% filter(Species == "roach"))+
+  geom_line(aes(group = Lake, x = Year, y = Mean_weight), color = "red")+
+  geom_line(data = BDD_n %>% filter(Species == "perch"),aes(group = Lake, x = Year, y = Mean_weight), color = "blue")+
+  facet_wrap(~Lake)
+```
+```{r}
+ggplot(BDD_n %>% filter(s_group == "2" & Species == "roach" & !is.na(s_group)))+
+  geom_bar(stat = "identity", aes(y = nb_adult, x = Lake))+
+  facet_wrap (~Year)
+```
+

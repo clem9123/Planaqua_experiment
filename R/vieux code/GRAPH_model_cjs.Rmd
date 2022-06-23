@@ -1,0 +1,1920 @@
+---
+title: "R Notebook"
+output: 
+---
+
+```{r}
+print(CJS_0)
+autocorr.plot(CJS_0, ask = F)
+traceplot(CJS_0, ask = F)
+```
+
+```{r}
+print(CJS_1)
+autocorr.plot(CJS_1, ask = F)
+traceplot(CJS_1, ask = F)
+```
+
+
+```{r}
+print(CJS_treatment)
+autocorr.plot(CJS_treatment, ask = F)
+traceplot(CJS_treatment, ask = F)
+```
+
+```{r}
+print(CJS_treatment_age)
+autocorr.plot(CJS_treatment_age, ask = F)
+traceplot(CJS_treatment_age, ask = F)
+```
+```{r}
+
+tbl = data.frame()
+for (i in 1:4){
+  for (j in 1:6){
+    x = as.mcmc(CJS_treatment_age)[[1]][,paste("phi[", as.character(i), ",", as.character(j), "]", sep = "")]
+    tbl <- rbind(tbl,data.frame(x,i,j))
+  }
+}
+
+colnames(tbl) <- c("phi","Treatment","Age")
+tbl <- tbl %>% mutate(Treatment = factor(Treatment)) %>% mutate(Age = factor(Age))
+
+ggplot(tbl)+
+  geom_density(aes( x = phi, color = Treatment))+
+  facet_wrap(~ Age)
+
+ggplot(tbl)+
+  geom_boxplot(aes( y = phi, color = Age))
+
+ggplot(tbl)+
+  geom_density(aes( x = phi, color = Age))+
+  facet_wrap(~ Treatment)
+
+tbl = data.frame()
+for (i in 1:5){
+  x = as.mcmc(CJS_treatment_age)[[1]][,paste("p[", as.character(i),"]", sep = "")]
+  tbl <- rbind(tbl,data.frame(x,i))
+}
+
+colnames(tbl) <- c("p","Age")
+tbl <- tbl %>% mutate(Age = factor(Age))
+
+
+ggplot(tbl)+
+  geom_density(aes( x = p, color = Age))
+
+ggplot(tbl)+
+  geom_boxplot(aes(y = p, color = Age))
+```
+
+
+```{r}
+print(CJS_treatment_maturity)
+autocorr.plot(CJS_treatment_maturity, ask = F)
+traceplot(CJS_treatment_maturity, ask = F)
+```
+
+```{r}
+tbl = data.frame()
+for (i in 1:4){
+  for (j in 1:2){
+    x = as.mcmc(CJS_treatment_maturity)[[1]][,paste("phim[", as.character(i), ",", as.character(j), "]", sep = "")]
+    tbl <- rbind(tbl,data.frame(x,i,j))
+  }
+}
+
+colnames(tbl) <- c("phi","Treatment","Maturity")
+tbl <- tbl %>% mutate(Treatment = factor(Treatment)) %>% mutate(Maturity = factor(Maturity))
+
+ggplot(tbl)+
+  geom_density(aes( x = phi, color = Treatment))+
+  facet_wrap(~ Maturity)
+
+ggplot(tbl)+
+  geom_density(aes( x = phi, color = Maturity))+
+  facet_wrap(~ Treatment)
+
+tbl = data.frame()
+for (j in 1:2){
+    x = as.mcmc(CJS_treatment_maturity)[[1]][,paste("pm[", as.character(j), "]", sep = "")]
+    tbl <- rbind(tbl,data.frame(x,j))
+}
+
+colnames(tbl) <- c("p","Maturity")
+
+tbl <- tbl %>% mutate(Maturity = factor(Maturity))
+
+ggplot(tbl)+
+  geom_density(aes( x = p, color = Maturity))
+
+```
+
+
+```{r}
+print(CJS_3)
+autocorr.plot(CJS_3, ask = F)
+traceplot(CJS_3, ask = F)
+```
+
+```{r}
+list_model = list(CJS_0,CJS_1,CJS_3, CJS_treatment, CJS_treatment_age, CJS_treatment_maturity) # CJS_taille1, CJS_taille2
+nom_model = c("CJS_0","CJS_1","CJS_3", "CJS_treatment", "CJS_treatment_age", "CJS_treatment_maturity")
+variable_model = c("p(~1)phi(~1)","p(~t+i)phi(~t+i)","p(~1)phi(~1)n(~t)","p(~1)phi(~tr)","p(~age)phi(~tr+age)","p(~mat)phi(~tr+mat)")
+deviance = c()
+dic = c()
+pD = c()
+for (model in list_model){
+  deviance <- append(deviance, model[[2]]$mean$deviance)
+  dic <- append(dic, model[[2]]$DIC)
+  pD <- append(pD, model[[2]]$pD)
+}
+DIC <- data.frame(nom_model, deviance, variable_model, dic, pD)
+
+colnames(DIC) <- c("model", "deviance", "variable","dic", "pD")
+
+DIC %>% arrange(dic)
+```
+
+```{r}
+
+rjags::load.module('dic')
+WAIC = data.frame()
+
+for (Model in list_model){
+  #recompile(CJS_3)
+  samples <- jags.samples(Model$model[[1]], 
+                          c("WAIC", "deviance"), type ="mean", n.iter = 200)
+
+  samples$p_waic <- samples$WAIC
+  samples$waic <- samples$deviance + samples$p_waic
+  tmp <- sapply(samples, sum)
+  waic <- round(c(waic = tmp[["waic"]], 
+                p_waic = tmp[["p_waic"]]),1)
+  WAIC <- rbind (WAIC,waic)
+}
+
+colnames(WAIC) <- c("waic", "p_waic")
+
+DIC_WAIC <- cbind (DIC,WAIC)
+DIC_WAIC %>% arrange(waic)
+```
+
+
+
+############ N'importe quoi à partir d'ici
+
+
+```{r}
+print(CJS_taille2)
+autocorr.plot(CJS_taille2, ask = F)
+traceplot(CJS_taille2, ask = F)
+```
+
+```{r}
+print(CJS_taille2)
+autocorr.plot(CJS_taille2, ask = F)
+traceplot(CJS_taille2, ask = F)
+```
+
+```{r}
+
+taille <- BDD_a$Size
+p <- 1/(1+exp(-0.003*taille))
+phi <- invlogit(0.003*taille+1)
+df = data.frame(taille,phi,p)
+
+ggplot(df)+
+  geom_point(aes(x = taille, y = phi))+
+  geom_point(aes(x = taille, y = p), color = "red")
+
+```
+
+
+```{r}
+print(CJS_0)
+autocorr.plot(CJS_0, ask = F)
+traceplot(CJS_0, ask = F)
+```
+
+
+```{r}
+print(CJS_0_2022)
+autocorr.plot(CJS_0_2022, ask = F)
+traceplot(CJS_0_2022, ask = F)
+```
+
+```{r}
+print(CJS_group_taille)
+autocorr.plot(CJS_group_taille, ask = F)
+traceplot(CJS_group_taille, ask = F)
+
+tbl = data.frame()
+for (i in 1:3){
+  tbl <- rbind(tbl, 
+               data.frame(as.mcmc(CJS_group_taille)[[1]][,paste("p[",as.character(i),"]", sep = "")],
+                          as.mcmc(CJS_group_taille)[[1]][,paste("phi[",as.character(i),"]", sep = "")],
+                          i))
+}
+colnames(tbl) <- c("p","phi","taille")
+tbl <- tbl %>% mutate(taille = factor (taille))
+
+ggplot(tbl)+
+  geom_violin(aes(x = taille , y = phi, color = taille))
+
+ggplot(tbl)+
+  geom_violin(aes(x = taille , y = p, color = taille))
+```
+
+```{r}
+table(unlist(s_group))
+```
+
+
+```{r}
+print(CJS_group_taille_tr)
+#autocorr.plot(CJS_group_taille_tr, ask = F)
+#traceplot(CJS_group_taille_tr, ask = F)
+
+tbl_p = data.frame()
+tbl_phi = data.frame()
+for (i in 1:4){
+  tbl_p <- rbind(tbl_p, 
+               data.frame(as.mcmc(CJS_group_taille_tr)[[1]][,paste("p[",as.character(i),"]", sep = "")],i))
+  for (j in 1:4){
+    tbl_phi <- rbind(tbl_phi, 
+               data.frame(as.mcmc(CJS_group_taille_tr)[[1]][,paste("phi[",as.character(i),",",as.character(j),"]", sep = "")],i,j))
+  }
+}
+colnames(tbl_phi) <- c("phi","taille","treatment")
+tbl_phi <- tbl_phi %>% mutate(taille = factor (taille),
+                              treatment = factor(treatment))
+colnames(tbl_p) <- c("p","taille")
+tbl_p <- tbl_p %>% mutate(taille = factor (taille))
+
+head(tbl_p)
+ggplot(tbl_phi)+
+  geom_violin(aes(y = phi, x = treatment, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_p)+
+  geom_violin(aes(x = taille , y = p, color = taille))
+```
+
+```{r}
+print(CJS_group_taille_tr_p)
+#autocorr.plot(CJS_group_taille_tr, ask = F)
+#traceplot(CJS_group_taille_tr, ask = F)
+
+tbl_p = data.frame()
+tbl_phi = data.frame()
+for (i in 1:6){
+  for (t in 1:6){
+    for (l in 1:16){
+      tbl_p <- rbind(tbl_p, 
+               data.frame(as.mcmc(CJS_group_taille_tr_p)[[1]][1:200,paste("p[",as.character(i),",",as.character(t),",",as.character(l),"]", sep = "")],i,t,l))
+    }
+  }
+  
+  for (j in 1:4){
+    tbl_phi <- rbind(tbl_phi, 
+               data.frame(as.mcmc(CJS_group_taille_tr_p)[[1]][1:200,paste("phi[",as.character(i),",",as.character(j),"]", sep = "")],i,j))
+  }
+}
+colnames(tbl_phi) <- c("phi","taille","treatment")
+tbl_phi <- tbl_phi %>% mutate(taille = factor (taille),
+                              treatment = factor(treatment))
+colnames(tbl_p) <- c("p","taille","year","Lake")
+tbl_p <- tbl_p %>% mutate(taille = factor (taille),
+                          year = factor(year),
+                          Lake = factor(Lake))
+
+
+ggplot(tbl_phi)+
+  geom_boxplot(aes(y = phi, x = treatment, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_p)+
+  geom_boxplot(aes(x = year , y = p))+
+  facet_wrap(~Lake)
+```
+
+```{r}
+print(CJS_group_taille_trt_p)
+#autocorr.plot(CJS_group_taille_tr_p_t, ask = F)
+#traceplot(CJS_group_taille_tr_p_t, varname = c("phi"),ask = F)
+
+tbl_p2 = data.frame()
+tbl_phi2 = data.frame()
+for (i in 1:6){
+  for (t in 1:5){
+    for (l in 1:16){
+      tbl_p2 <- rbind(tbl_p2, 
+               data.frame(as.mcmc(CJS_group_taille_trt_p)[[1]][1:200,paste("p[",as.character(i),",",as.character(t),",",as.character(l),"]", sep = "")],i,t,l))
+    }
+  
+    for (tr in 1:4){
+    tbl_phi2 <- rbind(tbl_phi2, 
+               data.frame(as.mcmc(CJS_group_taille_trt_p)[[1]][1:200,paste("phi[",as.character(i),",",as.character(t),",",as.character(tr),"]", sep = "")],i,t,tr))
+    }
+  }
+}
+colnames(tbl_phi2) <- c("phi","taille","year","treatment")
+tbl_phi2 <- tbl_phi2 %>% mutate(taille = factor (taille),
+                              treatment = factor(treatment),
+                              year = factor(year))
+colnames(tbl_p2) <- c("p","taille","year","Lake")
+tbl_p2 <- tbl_p2 %>% mutate(taille = factor (taille),
+                          year = factor(year),
+                          Lake = factor(Lake))
+
+
+ggplot(tbl_phi2 %>% filter(year != "1"))+
+  geom_violin(aes(y = phi, x = year, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_phi2%>% filter(year %in% c("4","5","6")))+
+  geom_density(aes(x = phi, color = taille))
+
+ggplot(tbl_phi2%>% filter(year %in% c("4","5","6")))+
+  geom_density(aes(x = phi, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_p2%>% filter(year != 1))+
+  geom_boxplot(aes(x = year , y = p))+
+  facet_wrap(~Lake)
+```
+
+```{r}
+print(CJS_group_taille_trcorrect_p)
+#autocorr.plot(CJS_group_taille_tr_p_t, ask = F)
+#traceplot(CJS_group_taille_tr_p_t, varname = c("phi"),ask = F)
+
+tbl_p2 = data.frame()
+tbl_phi2 = data.frame()
+for (i in 1:6){
+  for (t in 1:5){
+    for (l in 1:16){
+      tbl_p2 <- rbind(tbl_p2, 
+               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][1:200,paste("p[",as.character(i),",",as.character(t),",",as.character(l),"]", sep = "")],i,t,l))
+    }
+  
+    for (tr in 1:4){
+    tbl_phi2 <- rbind(tbl_phi2, 
+               data.frame(as.mcmc(CJS_group_taille_trcorrect_p)[[1]][1:200,paste("phi[",as.character(i),",",as.character(t),",",as.character(tr),"]", sep = "")],i,t,tr))
+    }
+  }
+}
+colnames(tbl_phi2) <- c("phi","taille","year","treatment")
+tbl_phi2 <- tbl_phi2 %>% mutate(taille = factor (taille),
+                              treatment = factor(treatment),
+                              year = factor(year))
+colnames(tbl_p2) <- c("p","taille","year","Lake")
+tbl_p2 <- tbl_p2 %>% mutate(taille = factor (taille),
+                          year = factor(year),
+                          Lake = factor(Lake))
+
+
+ggplot(tbl_phi2)+
+  geom_violin(aes(y = phi, x = year, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_phi2%>% filter(year %in% c("3","4","5")))+
+  geom_density(aes(x = phi, color = taille))
+
+ggplot(tbl_phi2%>% filter(year %in% c("3","4","5")))+
+  geom_density(aes(x = phi, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_p2%>% filter(year != 1))+
+  geom_boxplot(aes(x = year , y = p))+
+  facet_wrap(~Lake)
+```
+
+```{r}
+print(CJS_group_taille_trcorrect)
+autocorr.plot(CJS_group_taille_trcorrect, ask = F)
+traceplot(CJS_group_taille_trcorrect,ask = F)
+
+tbl_p2 = data.frame()
+tbl_phi2 = data.frame()
+#for (n in 1:4){
+for (i in 1:4){
+  tbl_p2 <- rbind(tbl_p2, 
+               data.frame(as.mcmc(CJS_group_taille_trcorrect)[[1]][1:100,paste("p[",as.character(i),"]", sep = "")],i))
+  for (t in 1:5){
+    for (tr in 1:4){
+    tbl_phi2 <- rbind(tbl_phi2, 
+               data.frame(as.mcmc(CJS_group_taille_trcorrect)[[1]][1:100,paste("phi[",as.character(i),",",as.character(tr),"]", sep = "")],i,tr)) #",",as.character(t),
+    }
+  }
+}
+#}
+colnames(tbl_phi2) <- c("phi","taille","treatment")
+tbl_phi2 <- tbl_phi2 %>% mutate(taille = factor (taille),
+                              treatment = factor(treatment))
+colnames(tbl_p2) <- c("p","taille")
+tbl_p2 <- tbl_p2 %>% mutate(taille = factor (taille))
+
+
+ggplot(tbl_phi2)+
+  geom_violin(aes(y = phi, x = treatment, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_phi2)+
+  geom_density(aes(x = phi, color = taille))
+
+ggplot(tbl_phi2)+
+  geom_density(aes(x = phi, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_p2)+
+  geom_boxplot(aes(x = taille , y = p))
+```
+
+```{r}
+print(CJS_group_taille_trtcorrect)
+#autocorr.plot(CJS_group_taille_trcorrect, ask = F)
+#traceplot(CJS_group_taille_trcorrect,ask = F)
+
+tbl_p = data.frame()
+tbl_phi = data.frame()
+#for (n in 1:4){
+for (i in 1:4){
+  tbl_p <- rbind(tbl_p, 
+               data.frame(as.mcmc(CJS_group_taille_trtcorrect)[[1]][1:100,paste("p[",as.character(i),"]", sep = "")],i))
+  for (t in 1:5){
+    for (tr in 1:4){
+    tbl_phi <- rbind(tbl_phi, 
+               data.frame(as.mcmc(CJS_group_taille_trtcorrect)[[1]][1:100,paste("phi[",as.character(i),",",as.character(t),",",as.character(tr),"]", sep = "")],i,t,tr)) #
+    }
+  }
+}
+#}
+colnames(tbl_phi) <- c("phi","taille","year","treatment")
+tbl_phi <- tbl_phi %>% mutate(taille = factor (taille),
+                                year = factor(year),
+                              treatment = factor(treatment))
+colnames(tbl_p) <- c("p","taille")
+tbl_p <- tbl_p %>% mutate(taille = factor (taille))
+
+
+ggplot(tbl_phi)+
+  geom_violin(aes(y = phi, x = year, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_phi)+
+  geom_density(aes(x = phi, color = taille))
+
+ggplot(tbl_phi)+
+  geom_density(aes(x = phi, color = treatment))+
+  facet_wrap(~taille)
+
+ggplot(tbl_p)+
+  geom_boxplot(aes(x = taille , y = p))
+```
+
+# Il reste des petites bosses peut-être à cause des différents lacs
+
+
+```{r}
+print(CJS_group_taille_ltcorrect)
+#autocorr.plot(CJS_group_taille_trcorrect, ask = F)
+#traceplot(CJS_group_taille_trcorrect,ask = F)
+
+tbl_p3 = data.frame()
+tbl_phi3 = data.frame()
+#for (n in 1:4){
+for (i in 1:4){
+  tbl_p3 <- rbind(tbl_p3, 
+               data.frame(as.mcmc(CJS_group_taille_ltcorrect)[[1]][1:50,paste("p[",as.character(i),"]", sep = "")],i))
+  for (t in 1:5){
+    for (tr in 1:16){
+    tbl_phi3 <- rbind(tbl_phi3, 
+               data.frame(as.mcmc(CJS_group_taille_ltcorrect)[[1]][1:50,paste("phi[",as.character(i),",",as.character(t),",",as.character(tr),"]", sep = "")],i,t,tr)) #
+    }
+  }
+}
+#}
+colnames(tbl_phi3) <- c("phi","taille","year","lake")
+tbl_phi3 <- tbl_phi3 %>% mutate(taille = factor (taille),
+                                year = factor(year),
+                              lake = factor(lake))
+colnames(tbl_p3) <- c("p","taille")
+tbl_p3 <- tbl_p3 %>% mutate(taille = factor (taille))
+
+
+ggplot(tbl_phi3)+
+  geom_violin(aes(y = phi, x = year, color = lake))+
+  facet_wrap(~taille)
+
+ggplot(tbl_phi3)+
+  geom_density(aes(x = phi, color = taille))
+
+ggplot(tbl_phi3)+
+  geom_density(aes(x = phi, color = lake))+
+  facet_wrap(~taille)
+
+ggplot(tbl_p3)+
+  geom_boxplot(aes(x = taille , y = p))
+```
+
+
+```{r}
+ggplot(BDD_a)+
+  geom_density(aes(x = Size, color = Year))+
+  facet_wrap(~Tag_year)
+```
+
+```{r}
+print(Taille)
+traceplot(Taille, ask = F)
+autocorr.plot(Taille, ask = F)
+```
+
+```{r}
+ggplot(BDD_a %>% filter (Year == "2022"))+
+  geom_density(aes(x = Size, color = Treatment))
+```
+
+```{r}
+print(Model_multi)
+traceplot(Model_multi, ask = F)
+autocorr.plot(Model_multi, ask = F)
+```
+
+```{r}
+print(Model_multi_treatment)
+traceplot(Model_multi_treatment, ask = F)
+autocorr.plot(Model_multi_treatment, ask = F)
+```
+
+```{r}
+print(Model_multi_treatment_time)
+traceplot(Model_multi_treatment_time, ask = F)
+autocorr.plot(Model_multi_treatment_time, ask = F)
+```
+
+```{r}
+tbl1_p = data.frame()
+tbl1_phi = data.frame()
+tbl1_psi12 = data.frame()
+tbl1_psi23 = data.frame()
+for (n in 1:2){
+  tbl1_psi12 <- rbind(tbl1_psi12, 
+               data.frame(as.mcmc(Model_multi)[[n]][,"psi12"]))
+  tbl1_psi23 <- rbind(tbl1_psi23, 
+               data.frame(as.mcmc(Model_multi)[[n]][,"psi23"]))
+  for (gs in 1:3){
+    tbl1_p <- rbind(tbl1_p, 
+               data.frame(as.mcmc(Model_multi)[[n]][,paste("p",as.character(gs), sep = "")],gs))
+    tbl1_phi <- rbind(tbl1_phi, 
+               data.frame(as.mcmc(Model_multi)[[n]][,paste("phi",as.character(gs), sep = "")],gs))
+  }
+}
+
+colnames(tbl1_phi) <- c("phi","size")
+tbl1_phi <- tbl1_phi %>% mutate(size = factor (size))
+
+colnames(tbl1_p) <- c("p","size")
+tbl1_p <- tbl1_p %>% mutate(size = factor (size))
+
+colnames(tbl1_psi12) <- c("psi")
+colnames(tbl1_psi23) <- c("psi")
+tbl1_psi <- rbind(data.frame(tbl1_psi12, c = "1"),data.frame(tbl1_psi23,c= "2"))
+
+ggplot(tbl1_phi)+
+  geom_density(aes(x = phi, color = size))
+
+ggplot(tbl1_p)+
+  geom_density(aes(x = p, color = size))
+
+ggplot(tbl1_psi)+
+  geom_density(aes(x = psi, color = c))
+
+```
+
+```{r}
+tbl2_p = data.frame()
+tbl2_phi = data.frame()
+tbl2_psi12 = data.frame()
+tbl2_psi23 = data.frame()
+for (n in 1:2){
+  for (tr in 1:4){
+    tbl2_psi12 <- rbind(tbl2_psi12, 
+               data.frame(as.mcmc(Model_multi_treatment)[[n]][,paste("psi12","[",as.character(tr),"]", sep = "")],tr))
+    tbl2_psi23 <- rbind(tbl2_psi23, 
+               data.frame(as.mcmc(Model_multi_treatment)[[n]][,paste("psi23","[",as.character(tr),"]", sep = "")],tr))
+    for (gs in 1:3){
+      tbl2_phi <- rbind(tbl2_phi, 
+               data.frame(as.mcmc(Model_multi_treatment)[[n]][,paste("phi",as.character(gs),"[",as.character(tr),"]", sep = "")],gs,tr))
+    }
+  }
+  for (gs in 1:3){
+    tbl2_p <- rbind(tbl2_p, 
+               data.frame(as.mcmc(Model_multi_treatment)[[n]][,paste("p",as.character(gs), sep = "")],gs))
+  }
+}
+
+colnames(tbl2_phi) <- c("phi","size","treatment")
+tbl2_phi <- tbl2_phi %>% mutate(size = factor (size),
+                                treatment = factor(treatment))
+
+colnames(tbl2_p) <- c("p","size")
+tbl2_p <- tbl2_p %>% mutate(size = factor (size))
+
+colnames(tbl2_psi12) <- c("psi","treatment")
+tbl2_psi12 <- tbl2_psi12 %>% mutate(treatment = factor (treatment))
+colnames(tbl2_psi23) <- c("psi","treatment")
+tbl2_psi23 <- tbl2_psi23 %>% mutate(treatment = factor (treatment))
+
+ggplot(tbl2_phi)+
+  geom_density(aes(x = phi, color = treatment))+
+  facet_wrap (~ size)
+
+ggplot(tbl2_p)+
+  geom_density(aes(x = p, color = size))
+
+ggplot(tbl2_psi12)+
+  geom_density(aes (x = psi, color = treatment))
+
+ggplot(tbl2_psi23)+
+  geom_density(aes (x = psi, color = treatment))
+```
+
+```{r}
+tbl3_p = data.frame()
+tbl3_phi = data.frame()
+tbl3_psi12 = data.frame()
+tbl3_psi23 = data.frame()
+for (n in 1:2){
+  for (tr in 1:4){
+    for (t in 1:5){
+      tbl3_psi12 <- rbind(tbl3_psi12, 
+               data.frame(as.mcmc(Model_multi_treatment_time)[[n]][,paste("psi12","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+      tbl3_psi23 <- rbind(tbl3_psi23, 
+               data.frame(as.mcmc(Model_multi_treatment_time)[[n]][,paste("psi23","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+    
+      for (gs in 1:3){
+        tbl3_phi <- rbind(tbl3_phi, 
+               data.frame(as.mcmc(Model_multi_treatment_time)[[n]][,paste("phi",as.character(gs),"[",as.character(tr),",",as.character(t),"]", sep = "")],gs,tr,t))
+      }
+    }
+  }
+  for (gs in 1:3){
+    tbl3_p <- rbind(tbl3_p, 
+               data.frame(as.mcmc(Model_multi_treatment_time)[[n]][,paste("p",as.character(gs), sep = "")],gs))
+  }
+}
+
+colnames(tbl3_phi) <- c("phi","size","treatment","year")
+tbl3_phi <- tbl3_phi %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year))
+
+colnames(tbl3_p) <- c("p","size")
+tbl3_p <- tbl3_p %>% mutate(size = factor (size))
+
+colnames(tbl3_psi12) <- c("psi","treatment","year")
+tbl3_psi12 <- tbl3_psi12 %>% mutate(treatment = factor (treatment),
+                                year = factor(year))
+colnames(tbl3_psi23) <- c("psi","treatment","year")
+tbl3_psi23 <- tbl3_psi23 %>% mutate(treatment = factor (treatment),
+                                year = factor(year))
+
+ggplot(tbl3_phi %>% filter(size == "1"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl3_phi %>% filter(size == "2"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl3_phi %>% filter(size == "3"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl3_p)+
+  geom_density(aes(x = p, color = size))
+
+ggplot(tbl3_psi12)+
+  geom_density(aes (x = psi, color = treatment))
+
+ggplot(tbl3_psi23)+
+  geom_density(aes (x = psi, color = treatment))
+
+```
+
+```{r}
+
+p1 <- ggplot(tbl3_phi %>% filter (treatment == "1"), aes(color = size))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 1, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 2, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 3, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 4, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 5, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 1, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 2, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 3, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 4, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 5, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 1, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 2, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 3, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 4, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 5, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  guides(color = element_blank())+
+  facet_wrap(~size)
+
+p2 <- ggplot(tbl3_phi %>% filter (treatment == "2"), aes(color = size))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 1, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 2, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 3, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 4, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 5, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 1, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 2, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 3, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 4, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 5, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 1, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 2, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 3, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 4, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 5, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  guides(color = element_blank())+
+  facet_wrap(~size)
+
+p3 <- ggplot(tbl3_phi %>% filter (treatment == "3"), aes(color = size))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 1, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 2, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 3, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 4, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 5, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 1, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 2, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 3, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 4, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 5, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 1, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 2, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 3, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 4, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 5, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  guides(color = element_blank())+
+  facet_wrap(~size)
+
+p4 <- ggplot(tbl3_phi %>% filter (treatment == "4"), aes(color = size))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 1, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 2, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 3, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 4, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 1, year == 5, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 1, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 2, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 3, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 4, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 2, year == 5, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 1, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 2, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 3, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 4, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl3_phi %>% filter(size == 3, year == 5, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  guides(color = element_blank())+
+  facet_wrap(~size)
+
+
+(p1+p2)/(p3+p4)
+```
+
+```{r}
+print(Model_multi_treatment_time_corrected)
+traceplot(Model_multi_treatment_time_corrected, ask = F)
+autocorr.plot(Model_multi_treatment_time_corrected, ask = F)
+```
+
+```{r}
+print(Model_multi_treatment_corrected)
+traceplot(Model_multi_treatment_corrected, ask = F)
+autocorr.plot(Model_multi_treatment_corrected, ask = F)
+```
+
+```{r}
+tbl4_p = data.frame()
+tbl4_phi = data.frame()
+tbl4_psi12 = data.frame()
+tbl4_psi23 = data.frame()
+for (n in 1:2){
+  for (tr in 1:4){
+    tbl4_psi12 <- rbind(tbl4_psi12, 
+               data.frame(as.mcmc(Model_multi_treatment_corrected)[[n]][,paste("psi12","[",as.character(tr),"]", sep = "")],tr))
+    tbl4_psi23 <- rbind(tbl4_psi23, 
+               data.frame(as.mcmc(Model_multi_treatment_corrected)[[n]][,paste("psi23","[",as.character(tr),"]", sep = "")],tr))
+    for (gs in 1:3){
+      tbl4_phi <- rbind(tbl4_phi, 
+               data.frame(as.mcmc(Model_multi_treatment_corrected)[[n]][,paste("phi",as.character(gs),"[",as.character(tr),"]", sep = "")],gs,tr))
+    }
+  }
+  for (gs in 1:3){
+    tbl4_p <- rbind(tbl4_p, 
+               data.frame(as.mcmc(Model_multi_treatment_corrected)[[n]][,paste("p",as.character(gs), sep = "")],gs))
+  }
+}
+
+colnames(tbl4_phi) <- c("phi","size","treatment")
+tbl4_phi <- tbl4_phi %>% mutate(size = factor (size),
+                                treatment = factor(treatment))
+
+colnames(tbl4_p) <- c("p","size")
+tbl4_p <- tbl4_p %>% mutate(size = factor (size))
+
+colnames(tbl4_psi12) <- c("psi","treatment")
+tbl4_psi12 <- tbl4_psi12 %>% mutate(treatment = factor (treatment))
+colnames(tbl4_psi23) <- c("psi","treatment")
+tbl4_psi23 <- tbl4_psi23 %>% mutate(treatment = factor (treatment))
+
+tbl4_psi <- rbind(data.frame(tbl4_psi12,c = "1"),data.frame(tbl4_psi23, c = "2"))
+
+ggplot(tbl4_phi)+
+  geom_density(aes(x = phi, color = treatment))+
+  facet_wrap (~ size, scale = "free_x")
+
+ggplot(tbl4_p)+
+  geom_density(aes(x = p, color = size))
+
+ggplot(tbl4_psi12)+
+  geom_density(aes (x = psi, color = treatment))
+
+ggplot(tbl4_psi23)+
+  geom_density(aes (x = psi, color = treatment))
+
+ggplot(tbl4_p)+
+  geom_density(aes(x = p, color = size))
+
+ggplot(tbl4_phi, aes(color = treatment))+
+  geom_pointrange(data = tbl4_phi %>% filter(treatment == "1", size == "1"), aes(x = treatment, y = mean(phi), ymin = quantile(phi, 0.025), ymax = quantile(phi,0.975)))+
+  geom_pointrange(data = tbl4_phi %>% filter(treatment == "1", size == "2"), aes(x = treatment, y = mean(phi), ymin = quantile(phi, 0.025), ymax = quantile(phi,0.975)))+
+  geom_pointrange(data = tbl4_phi %>% filter(treatment == "1", size == "3"), aes(x = treatment, y = mean(phi), ymin = quantile(phi, 0.025), ymax = quantile(phi,0.975)))+
+  geom_pointrange(data = tbl4_phi %>% filter(treatment == "2", size == "1"), aes(x = treatment, y = mean(phi), ymin = quantile(phi, 0.025), ymax = quantile(phi,0.975)))+
+  geom_pointrange(data = tbl4_phi %>% filter(treatment == "2", size == "2"), aes(x = treatment, y = mean(phi), ymin = quantile(phi, 0.025), ymax = quantile(phi,0.975)))+
+  geom_pointrange(data = tbl4_phi %>% filter(treatment == "2", size == "3"), aes(x = treatment, y = mean(phi), ymin = quantile(phi, 0.025), ymax = quantile(phi,0.975)))+
+  geom_pointrange(data = tbl4_phi %>% filter(treatment == "3", size == "1"), aes(x = treatment, y = mean(phi), ymin = quantile(phi, 0.025), ymax = quantile(phi,0.975)))+
+  geom_pointrange(data = tbl4_phi %>% filter(treatment == "3", size == "2"), aes(x = treatment, y = mean(phi), ymin = quantile(phi, 0.025), ymax = quantile(phi,0.975)))+
+  geom_pointrange(data = tbl4_phi %>% filter(treatment == "3", size == "3"), aes(x = treatment, y = mean(phi), ymin = quantile(phi, 0.025), ymax = quantile(phi,0.975)))+
+  geom_pointrange(data = tbl4_phi %>% filter(treatment == "4", size == "1"), aes(x = treatment, y = mean(phi), ymin = quantile(phi, 0.025), ymax = quantile(phi,0.975)))+
+  geom_pointrange(data = tbl4_phi %>% filter(treatment == "4", size == "2"), aes(x = treatment, y = mean(phi), ymin = quantile(phi, 0.025), ymax = quantile(phi,0.975)))+
+  geom_pointrange(data = tbl4_phi %>% filter(treatment == "4", size == "3"), aes(x = treatment, y = mean(phi), ymin = quantile(phi, 0.025), ymax = quantile(phi,0.975)))+
+  facet_wrap(~size)
+
+ggplot(tbl4_psi, aes(color = treatment))+
+  geom_pointrange(data = tbl4_psi %>% filter(treatment == "1", c == "1"), aes(x = treatment, y = mean(psi), ymin = quantile(psi, 0.025), ymax = quantile(psi,0.975)))+
+  geom_pointrange(data = tbl4_psi %>% filter(treatment == "2", c == "1"), aes(x = treatment, y = mean(psi), ymin = quantile(psi, 0.025), ymax = quantile(psi,0.975)))+
+  geom_pointrange(data = tbl4_psi %>% filter(treatment == "3", c == "1"), aes(x = treatment, y = mean(psi), ymin = quantile(psi, 0.025), ymax = quantile(psi,0.975)))+
+  geom_pointrange(data = tbl4_psi %>% filter(treatment == "4", c == "1"), aes(x = treatment, y = mean(psi), ymin = quantile(psi, 0.025), ymax = quantile(psi,0.975)))+
+  geom_pointrange(data = tbl4_psi %>% filter(treatment == "1", c == "2"), aes(x = treatment, y = mean(psi), ymin = quantile(psi, 0.025), ymax = quantile(psi,0.975)))+
+  geom_pointrange(data = tbl4_psi %>% filter(treatment == "2", c == "2"), aes(x = treatment, y = mean(psi), ymin = quantile(psi, 0.025), ymax = quantile(psi,0.975)))+
+  geom_pointrange(data = tbl4_psi %>% filter(treatment == "3", c == "2"), aes(x = treatment, y = mean(psi), ymin = quantile(psi, 0.025), ymax = quantile(psi,0.975)))+
+  geom_pointrange(data = tbl4_psi %>% filter(treatment == "4", c == "2"), aes(x = treatment, y = mean(psi), ymin = quantile(psi, 0.025), ymax = quantile(psi,0.975)))+
+  facet_wrap(~c)
+
+ggplot(tbl4_p)+
+  geom_pointrange(data = tbl4_p %>% filter(size == "1"), aes(x = size, y = mean(p), ymin = quantile(p, 0.025), ymax = quantile(p,0.975)))+
+  geom_pointrange(data = tbl4_p %>% filter(size == "2"), aes(x = size, y = mean(p), ymin = quantile(p, 0.025), ymax = quantile(p,0.975)))+
+  geom_pointrange(data = tbl4_p %>% filter(size == "3"), aes(x = size, y = mean(p), ymin = quantile(p, 0.025), ymax = quantile(p,0.975)))
+  
+```
+
+```{r}
+tbl5_p = data.frame()
+tbl5_phi = data.frame()
+tbl5_psi12 = data.frame()
+tbl5_psi23 = data.frame()
+for (n in 1:2){
+  for (tr in 1:4){
+    for (t in 1:5){
+      tbl5_psi12 <- rbind(tbl5_psi12, 
+               data.frame(as.mcmc(Model_multi_treatment_time_corrected)[[n]][,paste("psi12","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+      tbl5_psi23 <- rbind(tbl5_psi23, 
+               data.frame(as.mcmc(Model_multi_treatment_time_corrected)[[n]][,paste("psi23","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+    
+      for (gs in 1:3){
+        tbl5_phi <- rbind(tbl5_phi, 
+               data.frame(as.mcmc(Model_multi_treatment_time_corrected)[[n]][,paste("phi",as.character(gs),"[",as.character(tr),",",as.character(t),"]", sep = "")],gs,tr,t))
+      }
+    }
+  }
+  for (gs in 1:3){
+    tbl5_p <- rbind(tbl5_p, 
+               data.frame(as.mcmc(Model_multi_treatment_time_corrected)[[n]][,paste("p",as.character(gs), sep = "")],gs))
+  }
+}
+
+colnames(tbl5_phi) <- c("phi","size","treatment","year")
+tbl5_phi <- tbl5_phi %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year))
+
+colnames(tbl5_p) <- c("p","size")
+tbl5_p <- tbl5_p %>% mutate(size = factor (size))
+
+colnames(tbl5_psi12) <- c("psi","treatment","year")
+tbl5_psi12 <- tbl5_psi12 %>% mutate(treatment = factor (treatment),
+                                year = factor(year))
+colnames(tbl5_psi23) <- c("psi","treatment","year")
+tbl5_psi23 <- tbl5_psi23 %>% mutate(treatment = factor (treatment),
+                                year = factor(year))
+
+ggplot(tbl5_phi %>% filter(size == "1"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_phi %>% filter(size == "2"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_phi %>% filter(size == "3"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_p)+
+  geom_density(aes(x = p, color = size))
+
+ggplot(tbl5_psi12)+
+  geom_density(aes (x = psi, color = treatment))
+
+ggplot(tbl5_psi23)+
+  geom_density(aes (x = psi, color = treatment))
+```
+
+```{r}
+p1 <- ggplot(tbl5_phi %>% filter (treatment == "1"), aes(color = size))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 3, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 4, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 5, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 3, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 4, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 5, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 3, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 4, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 5, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  guides(color = element_blank())+
+  facet_wrap(~size)
+
+p2 <- ggplot(tbl5_phi %>% filter (treatment == "2"), aes(color = size))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 3, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 4, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 5, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 3, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 4, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 5, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 3, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 4, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 5, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  guides(color = element_blank())+
+  facet_wrap(~size)
+
+p3 <- ggplot(tbl5_phi %>% filter (treatment == "3"), aes(color = size))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 3, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 4, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 5, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 3, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 4, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 5, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 3, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 4, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 5, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  guides(color = element_blank())+
+  facet_wrap(~size)
+
+p4 <- ggplot(tbl5_phi %>% filter (treatment == "4"), aes(color = size))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 3, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 4, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 5, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 3, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 4, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 5, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 3, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 4, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 5, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)))+
+  guides(color = element_blank())+
+  facet_wrap(~size)
+
+
+(p1+p2)/(p3+p4)
+```
+
+```{r}
+print(Model_multi_treatment_corrected2)
+traceplot(Model_multi_treatment_corrected2, ask = F)
+autocorr.plot(Model_multi_treatment_corrected2, ask = F)
+```
+
+```{r}
+print(Model_multi_treatment_corrected3)
+traceplot(Model_multi_treatment_corrected3, ask = F)
+autocorr.plot(Model_multi_treatment_corrected3, ask = F)
+```
+```{r}
+tbl5_p = data.frame()
+tbl5_phi = data.frame()
+tbl5_psi12 = data.frame()
+tbl5_psi23 = data.frame()
+for (n in 1:2){
+  for (tr in 1:4){
+    for (t in 1:2){
+      tbl5_psi12 <- rbind(tbl5_psi12, 
+               data.frame(as.mcmc(Model_multi_treatment_corrected3)[[n]][,paste("psi12","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+      tbl5_psi23 <- rbind(tbl5_psi23, 
+               data.frame(as.mcmc(Model_multi_treatment_corrected3)[[n]][,paste("psi23","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+    
+      for (gs in 1:3){
+        tbl5_phi <- rbind(tbl5_phi, 
+               data.frame(as.mcmc(Model_multi_treatment_corrected3)[[n]][,paste("phi",as.character(gs),"[",as.character(tr),",",as.character(t),"]", sep = "")],gs,tr,t))
+      }
+    }
+  }
+  for (gs in 1:3){
+    tbl5_p <- rbind(tbl5_p, 
+               data.frame(as.mcmc(Model_multi_treatment_corrected3)[[n]][,paste("p",as.character(gs), sep = "")],gs))
+  }
+}
+
+colnames(tbl5_phi) <- c("phi","size","treatment","year")
+tbl5_phi <- tbl5_phi %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year))
+
+colnames(tbl5_p) <- c("p","size")
+tbl5_p <- tbl5_p %>% mutate(size = factor (size))
+
+colnames(tbl5_psi12) <- c("psi","treatment","year")
+tbl5_psi12 <- tbl5_psi12 %>% mutate(treatment = factor (treatment),
+                                year = factor(year))
+colnames(tbl5_psi23) <- c("psi","treatment","year")
+tbl5_psi23 <- tbl5_psi23 %>% mutate(treatment = factor (treatment),
+                                year = factor(year))
+tbl5_psi = rbind(data.frame(tbl5_psi12, c = "1"), data.frame(tbl5_psi23, c = "2"))
+ggplot(tbl5_phi %>% filter(size == "1"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_phi %>% filter(size == "2"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_phi %>% filter(size == "3"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_p)+
+  geom_density(aes(x = p, color = size))
+
+ggplot(tbl5_psi12)+
+  geom_density(aes (x = psi, color = treatment))+
+  facet_wrap(~ year)
+
+ggplot(tbl5_psi23)+
+  geom_density(aes (x = psi, color = treatment))+
+  facet_wrap(~ year)
+```
+
+```{r}
+p1 <- ggplot(tbl5_phi %>% filter (treatment == "1"), aes(color = size))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "1"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  guides(color = element_blank())+
+  ylim(c(0,1))+
+  facet_wrap(~size)
+p2 <- ggplot(tbl5_phi %>% filter (treatment == "2"), aes(color = size))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "2"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  guides(color = element_blank())+
+  ylim(c(0,1))+
+  facet_wrap(~size)
+p3 <- ggplot(tbl5_phi %>% filter (treatment == "3"), aes(color = size))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "3"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  guides(color = element_blank())+
+  ylim(c(0,1))+
+  facet_wrap(~size)
+p4 <- ggplot(tbl5_phi %>% filter (treatment == "4"), aes(color = size))+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 1, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 1, year == 2, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 1, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 2, year == 2, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 1, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_phi %>% filter(size == 3, year == 2, treatment == "4"),aes(x = year, y = mean(phi),ymin = quantile(phi, 0.025), ymax = quantile(phi, 0.975)),show.legend = F)+
+  guides(color = element_blank())+
+  ylim(c(0,1))+
+  facet_wrap(~size)
+
+(p1+p2)/(p3+p4)
+```
+
+```{r}
+p1 <- ggplot(tbl5_psi %>% filter (treatment == "1"), aes(color =c))+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 1, treatment == "1"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 2, treatment == "1"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 1, treatment == "1"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 2, treatment == "1"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  guides(color = element_blank())+
+  ylim(c(0,1))+
+  facet_wrap(~c)
+p2 <- ggplot(tbl5_psi %>% filter (treatment == "2"), aes(color =c))+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 1, treatment == "2"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 2, treatment == "2"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 1, treatment == "2"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 2, treatment == "2"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  guides(color = element_blank())+
+  ylim(c(0,1))+
+  facet_wrap(~c)
+p3 <- ggplot(tbl5_psi %>% filter (treatment == "3"), aes(color =c))+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 1, treatment == "3"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 2, treatment == "3"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 1, treatment == "3"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 2, treatment == "3"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  guides(color = element_blank())+
+  ylim(c(0,1))+
+  facet_wrap(~c)
+p4 <- ggplot(tbl5_psi %>% filter (treatment == "4"), aes(color =c))+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 1, treatment == "4"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "1", year == 2, treatment == "4"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 1, treatment == "4"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  geom_pointrange(data = tbl5_psi %>% filter(c == "2", year == 2, treatment == "4"),aes(x = year, y = mean(psi),ymin = quantile(psi, 0.025), ymax = quantile(psi, 0.975)),show.legend = F)+
+  guides(color = element_blank())+
+  ylim(c(0,1))+
+  facet_wrap(~c)
+
+(p1+p2)/(p3+p4)
+```
+
+```{r}
+print(Model_multi_treatment_corrected_abundance)
+traceplot(Model_multi_treatment_corrected_abundance, ask = F)
+autocorr.plot(Model_multi_treatment_corrected_abundance, ask = F)
+```
+
+###################################################################################
+-----------------------------------------------------------------------------------
+
+MODEL TREATMENT ONE EXP TIME
+
+-----------------------------------------------------------------------------------
+###################################################################################
+
+```{r}
+model = Model_multi_treatment_random_corrected_abundance4 #Model_multi_treatment_corrected_abundance
+
+tbl5_p = data.frame()
+tbl5_phi = data.frame()
+tbl5_psi12 = data.frame()
+tbl5_psi23 = data.frame()
+tbl5_n = data.frame()
+tbl5_ntot = data.frame()
+for (n in 1:2){
+  for (tr in 1:4){
+    for (t in 1:2){
+      tbl5_psi12 <- rbind(tbl5_psi12, 
+               data.frame(as.mcmc(model)[[n]][,paste("psi12","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+      tbl5_psi23 <- rbind(tbl5_psi23, 
+               data.frame(as.mcmc(model)[[n]][,paste("psi23","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+      
+      for (gs in 1:3){
+        tbl5_phi <- rbind(tbl5_phi, 
+               data.frame(as.mcmc(model)[[n]][,paste("phi",as.character(gs),"[",as.character(tr),",",as.character(t),"]", sep = "")],gs,tr,t))
+      }
+    }
+    for (t in 1:6){
+      tbl5_ntot <- rbind(tbl5_ntot, 
+               data.frame(as.mcmc(model)[[n]][,paste("ntot","[",as.character(t),",",as.character(tr),"]", sep = "")],"tot",tr,t))
+      for (gs in 1:3){
+        tbl5_n <- rbind(tbl5_n, 
+               data.frame(as.mcmc(model)[[n]][,paste("n",as.character(gs),"[",as.character(t),",",as.character(tr),"]", sep = "")],gs,tr,t))
+      }
+    }
+  }
+  for (gs in 1:3){
+    tbl5_p <- rbind(tbl5_p, 
+               data.frame(as.mcmc(model)[[n]][,paste("p",as.character(gs), sep = "")],gs))
+  }
+}
+
+colnames(tbl5_phi) <- c("phi","size","treatment","year")
+tbl5_phi <- tbl5_phi %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year))
+
+colnames(tbl5_p) <- c("p","size")
+tbl5_p <- tbl5_p %>% mutate(size = factor (size))
+
+colnames(tbl5_psi12) <- c("psi","treatment","year")
+tbl5_psi12 <- tbl5_psi12 %>% mutate(treatment = factor (treatment),
+                                year = factor(year))
+colnames(tbl5_psi23) <- c("psi","treatment","year")
+tbl5_psi23 <- tbl5_psi23 %>% mutate(treatment = factor (treatment),
+                                year = factor(year))
+tbl5_psi = rbind(data.frame(tbl5_psi12, c = "1"), data.frame(tbl5_psi23, c = "2"))
+colnames(tbl5_n) <- c("n", "size","treatment","year")
+tbl5_n <- tbl5_n %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year),
+                            exp_year = ifelse(year %in% c(1,2,3),1,2))
+colnames(tbl5_ntot) <- c("n", "size","treatment","year")
+tbl5_ntot <- tbl5_ntot %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year))
+
+
+ggplot(tbl5_phi %>% filter(size == "1"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_phi %>% filter(size == "2"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_phi %>% filter(size == "3"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_p)+
+  geom_density(aes(x = p, color = size))
+
+ggplot(tbl5_psi12)+
+  geom_density(aes (x = psi, color = treatment))+
+  facet_wrap(~ year)
+
+ggplot(tbl5_psi23)+
+  geom_density(aes (x = psi, color = treatment))+
+  facet_wrap(~ year)
+
+ggplot(tbl5_n %>% filter(year == 1))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 2))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 3))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 4))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 5))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 6))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+
+ggplot(tbl5_ntot)+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~year)#, scale = "free_y")
+
+```
+
+```{r}
+sum_phi <- tbl5_phi %>% group_by(year,size,treatment) %>% summarize(mean = mean(phi), max = quantile(phi,0.975), min = quantile(phi,0.025)) %>% ungroup()
+sum_psi <- tbl5_psi %>% group_by(year,c,treatment) %>% summarize(mean = mean(psi), max = quantile(psi,0.975), min = quantile(psi,0.025)) %>% ungroup() %>%
+  mutate (treatment = case_when(treatment == 1 ~ "F/T", treatment == 2 ~ "T/T",treatment == 3 ~ "F/F", treatment == 4 ~ "T/F"),
+          c = case_when(c == 1 ~ "Small to Medium", c == 2 ~ "Medium to Large"),
+          year = ifelse(year == 1, "Before", "After")) %>% mutate(year = factor(year, levels= c("Before", "After")))
+sum_p <- tbl5_p %>% group_by(size) %>% summarize(mean = mean(p), max = quantile(p,0.975), min = quantile(p,0.025)) %>% ungroup()
+test <- merge(sum_phi,tbl5_n %>% group_by(exp_year, treatment, size) %>% summarize(eff = mean (n)) %>% mutate(year = exp_year), all = TRUE) %>% 
+  mutate (treatment = case_when(treatment == 1 ~ "F/T", treatment == 2 ~ "T/T",treatment == 3 ~ "F/F", treatment == 4 ~ "T/F"),
+          size = case_when(size == 1 ~ "Small", size == 2 ~ "Medium", size == 3 ~ "Large"),
+          year = ifelse(year == 1, "Before", "After")) %>% mutate(year = factor(year, levels= c("Before", "After")))
+```
+
+```{r}
+ggplot(test)+
+  geom_point(aes (x = treatment, y = mean, color = eff))+
+  geom_errorbar(aes(x = treatment, ymax = max, ymin = min, color = eff, width = 0.4))+
+  scale_color_gradient(low = "#81d2e5", high = "#2a46b0")+
+  facet_grid(rows = vars(size), cols = vars(year), labeller = "label_value")+
+  labs (y = "Survival", x = "Treatment : Perch/Nutrients")
+```
+
+Mes conclusions : chute de la survie  des petits avec l'ajout de perche, pas d'effet des nutriments pas d'effet des traitements sur la survie des poissons de taille 2 et 3
+
+```{r}
+ggplot(sum_psi)+
+  geom_point(aes (x = treatment, y = mean))+
+  geom_errorbar(aes(x = treatment, ymax = max, ymin = min, width = 0.4))+
+  #scale_color_gradient(low = "#81d2e5", high = "#2a46b0")+
+  facet_grid(rows = vars(c), cols = vars(year), labeller = "label_value")+
+  labs (y = "Growth", x = "Treatment : Perch/Nutrients")
+```
+
+Mes conclusions : Ajout des perches : probabilité de croissance plus importante de 1 a 2
+Et sans perche diff probabilité de passer de 2 à 3 augmenté par la présence de nutrients
+
+```{r}
+ggplot(sum_p)+
+  geom_point(aes (x = size, y = mean))+
+  geom_errorbar(aes(x = size, ymax = max, ymin = min, width = 0.4))+
+  labs (y = "Capture probability", x = "Size")
+```
+
+###################################################################################
+-----------------------------------------------------------------------------------
+
+MODEL TREATMENT ONE TIME
+
+-----------------------------------------------------------------------------------
+###################################################################################
+
+```{r}
+print(Model_multi_treatment_time_abundance)
+#traceplot(Model_multi_treatment_time_abundance, ask = FALSE)
+```
+
+```{r}
+tbl5_p = data.frame()
+tbl5_phi = data.frame()
+tbl5_psi12 = data.frame()
+tbl5_psi23 = data.frame()
+tbl5_n = data.frame()
+tbl5_ntot = data.frame()
+for (n in 1:2){
+  for (tr in 1:4){
+    for (t in 1:5){
+      tbl5_psi12 <- rbind(tbl5_psi12, 
+               data.frame(as.mcmc(Model_multi_treatment_time_abundance)[[n]][,paste("psi12","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+      tbl5_psi23 <- rbind(tbl5_psi23, 
+               data.frame(as.mcmc(Model_multi_treatment_time_abundance)[[n]][,paste("psi23","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+      
+      for (gs in 1:3){
+        tbl5_phi <- rbind(tbl5_phi, 
+               data.frame(as.mcmc(Model_multi_treatment_time_abundance)[[n]][,paste("phi",as.character(gs),"[",as.character(tr),",",as.character(t),"]", sep = "")],gs,tr,t))
+      }
+    }
+    for (t in 1:6){
+      tbl5_ntot <- rbind(tbl5_ntot, 
+               data.frame(as.mcmc(Model_multi_treatment_time_abundance)[[n]][,paste("ntot","[",as.character(t),",",as.character(tr),"]", sep = "")],"tot",tr,t))
+      for (gs in 1:3){
+        tbl5_n <- rbind(tbl5_n, 
+               data.frame(as.mcmc(Model_multi_treatment_time_abundance)[[n]][,paste("n",as.character(gs),"[",as.character(t),",",as.character(tr),"]", sep = "")],gs,tr,t))
+      }
+    }
+  }
+  for (gs in 1:3){
+    tbl5_p <- rbind(tbl5_p, 
+               data.frame(as.mcmc(Model_multi_treatment_time_abundance)[[n]][,paste("p",as.character(gs), sep = "")],gs))
+  }
+}
+
+colnames(tbl5_phi) <- c("phi","size","treatment","year")
+tbl5_phi <- tbl5_phi %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year))
+
+colnames(tbl5_p) <- c("p","size")
+tbl5_p <- tbl5_p %>% mutate(size = factor (size))
+
+colnames(tbl5_psi12) <- c("psi","treatment","year")
+tbl5_psi12 <- tbl5_psi12 %>% mutate(treatment = factor (treatment),
+                                year = factor(year))
+colnames(tbl5_psi23) <- c("psi","treatment","year")
+tbl5_psi23 <- tbl5_psi23 %>% mutate(treatment = factor (treatment),
+                                year = factor(year))
+tbl5_psi = rbind(data.frame(tbl5_psi12, c = "1"), data.frame(tbl5_psi23, c = "2"))
+colnames(tbl5_n) <- c("n", "size","treatment","year")
+tbl5_n <- tbl5_n %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year),
+                            exp_year = ifelse(year %in% c(1,2,3),1,2))
+colnames(tbl5_ntot) <- c("n", "size","treatment","year")
+tbl5_ntot <- tbl5_ntot %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year))
+
+
+ggplot(tbl5_phi %>% filter(size == "1"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_phi %>% filter(size == "2"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_phi %>% filter(size == "3"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_p)+
+  geom_density(aes(x = p, color = size))
+
+ggplot(tbl5_psi12)+
+  geom_density(aes (x = psi, color = treatment))+
+  facet_wrap(~ year)
+
+ggplot(tbl5_psi23)+
+  geom_density(aes (x = psi, color = treatment))+
+  facet_wrap(~ year)
+
+ggplot(tbl5_n %>% filter(year == 1))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 2))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 3))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 4))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 5))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 6))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+
+ggplot(tbl5_ntot)+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~year)#, scale = "free_y")
+
+```
+
+```{r}
+sum_phi <- tbl5_phi %>% group_by(year,size,treatment) %>% summarize(mean = mean(phi), max = quantile(phi,0.975), min = quantile(phi,0.025)) %>% ungroup()
+sum_psi <- tbl5_psi %>% group_by(year,c,treatment) %>% summarize(mean = mean(psi), max = quantile(psi,0.975), min = quantile(psi,0.025)) %>% ungroup() %>%
+  mutate (treatment = case_when(treatment == 1 ~ "F/T", treatment == 2 ~ "T/T",treatment == 3 ~ "F/F", treatment == 4 ~ "T/F"),
+          c = case_when(c == 1 ~ "Small to Medium", c == 2 ~ "Medium to Large"))#,
+          #year = ifelse(year == 1, "Before", "After")) %>% mutate(year = factor(year, levels= c("Before", "After")))
+sum_p <- tbl5_p %>% group_by(size) %>% summarize(mean = mean(p), max = quantile(p,0.975), min = quantile(p,0.025)) %>% ungroup()
+test <- merge(sum_phi,tbl5_n %>% group_by(year, treatment, size) %>% summarize(eff = mean (n)), all = TRUE) %>% 
+  mutate (treatment = case_when(treatment == 1 ~ "F/T", treatment == 2 ~ "T/T",treatment == 3 ~ "F/F", treatment == 4 ~ "T/F"),
+          size = case_when(size == 1 ~ "Small", size == 2 ~ "Medium", size == 3 ~ "Large"))#,
+          #year = ifelse(year == 1, "Before", "After")) %>% mutate(year = factor(year, levels= c("Before", "After")))
+```
+
+```{r}
+ggplot(test)+
+  geom_point(aes (x = treatment, y = mean, color = eff))+
+  geom_errorbar(aes(x = treatment, ymax = max, ymin = min, color = eff, width = 0.4))+
+  scale_color_gradient(low = "#81d2e5", high = "#2a46b0")+
+  facet_grid(rows = vars(size), cols = vars(year), labeller = "label_value")+
+  labs (y = "Survival", x = "Treatment : Perch/Nutrients")
+```
+
+```{r}
+ggplot(sum_psi)+
+  geom_point(aes (x = treatment, y = mean))+
+  geom_errorbar(aes(x = treatment, ymax = max, ymin = min, width = 0.4))+
+  #scale_color_gradient(low = "#81d2e5", high = "#2a46b0")+
+  facet_grid(rows = vars(c), cols = vars(year), labeller = "label_value")+
+  labs (y = "Growth", x = "Treatment : Perch/Nutrients")
+```
+
+```{r}
+ggplot(sum_p)+
+  geom_point(aes (x = size, y = mean))+
+  geom_errorbar(aes(x = size, ymax = max, ymin = min, width = 0.4))+
+  labs (y = "Capture probability", x = "Size")
+```
+
+###################################################################################
+-----------------------------------------------------------------------------------
+
+MODEL LAKE ON EXP TIME
+
+-----------------------------------------------------------------------------------
+###################################################################################
+
+```{r}
+tbl5_p = data.frame()
+tbl5_phi = data.frame()
+tbl5_psi12 = data.frame()
+tbl5_psi23 = data.frame()
+tbl5_n = data.frame()
+tbl5_ntot = data.frame()
+for (n in 1:2){
+  for (tr in 1:16){
+    for (t in 1:2){
+      tbl5_psi12 <- rbind(tbl5_psi12, 
+               data.frame(as.mcmc(Model_multi_lake_corrected_abundance)[[n]][,paste("psi12","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+      tbl5_psi23 <- rbind(tbl5_psi23, 
+               data.frame(as.mcmc(Model_multi_lake_corrected_abundance)[[n]][,paste("psi23","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+      
+      for (gs in 1:3){
+        tbl5_phi <- rbind(tbl5_phi, 
+               data.frame(as.mcmc(Model_multi_lake_corrected_abundance)[[n]][,paste("phi",as.character(gs),"[",as.character(tr),",",as.character(t),"]", sep = "")],gs,tr,t))
+      }
+    }
+    for (t in 1:6){
+      tbl5_ntot <- rbind(tbl5_ntot, 
+               data.frame(as.mcmc(Model_multi_lake_corrected_abundance)[[n]][,paste("ntot","[",as.character(t),",",as.character(tr),"]", sep = "")],"tot",tr,t))
+      for (gs in 1:3){
+        tbl5_n <- rbind(tbl5_n, 
+               data.frame(as.mcmc(Model_multi_lake_corrected_abundance)[[n]][,paste("n",as.character(gs),"[",as.character(t),",",as.character(tr),"]", sep = "")],gs,tr,t))
+      }
+    }
+  }
+  for (gs in 1:3){
+    tbl5_p <- rbind(tbl5_p, 
+               data.frame(as.mcmc(Model_multi_lake_corrected_abundance)[[n]][,paste("p",as.character(gs), sep = "")],gs))
+  }
+}
+
+colnames(tbl5_phi) <- c("phi","size","treatment","year")
+tbl5_phi <- tbl5_phi %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year))
+
+colnames(tbl5_p) <- c("p","size")
+tbl5_p <- tbl5_p %>% mutate(size = factor (size))
+
+colnames(tbl5_psi12) <- c("psi","treatment","year")
+tbl5_psi12 <- tbl5_psi12 %>% mutate(treatment = factor (treatment),
+                                year = factor(year))
+colnames(tbl5_psi23) <- c("psi","treatment","year")
+tbl5_psi23 <- tbl5_psi23 %>% mutate(treatment = factor (treatment),
+                                year = factor(year))
+tbl5_psi = rbind(data.frame(tbl5_psi12, c = "1"), data.frame(tbl5_psi23, c = "2"))
+colnames(tbl5_n) <- c("n", "size","treatment","year")
+tbl5_n <- tbl5_n %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year),
+                            exp_year = ifelse(year %in% c(1,2,3),1,2))
+colnames(tbl5_ntot) <- c("n", "size","treatment","year")
+tbl5_ntot <- tbl5_ntot %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year))
+
+
+ggplot(tbl5_phi %>% filter(size == "1"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_phi %>% filter(size == "2"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_phi %>% filter(size == "3"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_p)+
+  geom_density(aes(x = p, color = size))
+
+ggplot(tbl5_psi12)+
+  geom_density(aes (x = psi, color = treatment))+
+  facet_wrap(~ year)
+
+ggplot(tbl5_psi23)+
+  geom_density(aes (x = psi, color = treatment))+
+  facet_wrap(~ year)
+
+ggplot(tbl5_n %>% filter(year == 1))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 2))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 3))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 4))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 5))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 6))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+
+ggplot(tbl5_ntot)+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~year)#, scale = "free_y")
+
+```
+
+```{r}
+sum_phi <- tbl5_phi %>% group_by(year,size,treatment) %>% summarize(mean = mean(phi), max = quantile(phi,0.975), min = quantile(phi,0.025)) %>% ungroup()
+sum_psi <- tbl5_psi %>% group_by(year,c,treatment) %>% summarize(mean = mean(psi), max = quantile(psi,0.975), min = quantile(psi,0.025)) %>% ungroup() %>%
+  mutate (#treatment = case_when(treatment == 1 ~ "F/T", treatment == 2 ~ "T/T",treatment == 3 ~ "F/F", treatment == 4 ~ "T/F"),
+          c = case_when(c == 1 ~ "Small to Medium", c == 2 ~ "Medium to Large"),
+          year = ifelse(year == 1, "Before", "After")) %>% mutate(year = factor(year, levels= c("Before", "After")))
+sum_p <- tbl5_p %>% group_by(size) %>% summarize(mean = mean(p), max = quantile(p,0.975), min = quantile(p,0.025)) %>% ungroup()
+test <- merge(sum_phi,tbl5_n %>% group_by(year, treatment, size) %>% summarize(eff = mean (n)), all = TRUE) %>% 
+  mutate (#treatment = case_when(treatment == 1 ~ "F/T", treatment == 2 ~ "T/T",treatment == 3 ~ "F/F", treatment == 4 ~ "T/F"),
+          size = case_when(size == 1 ~ "Small", size == 2 ~ "Medium", size == 3 ~ "Large"),
+          year = ifelse(year == 1, "Before", "After")) %>% mutate(year = factor(year, levels= c("Before", "After")))
+colnames(test) = c("year","size","Lake","mean","max","min","eff")
+test <- merge(test,Lake_treatment)
+
+
+colnames(sum_psi) = c("year","size","Lake","mean","max","min")
+sum_psi <- merge(sum_psi,Lake_treatment)
+```
+
+
+```{r}
+ggplot(test)+
+  geom_point(aes (x = Lake, y = mean, color = Treatment))+#, color = eff))+
+  geom_errorbar(aes(x = Lake, ymax = max, ymin = min, color = Treatment, width = 0.4))+ #, color = eff
+  #scale_color_gradient(low = "#81d2e5", high = "#2a46b0")+
+  facet_grid(rows = vars(size), cols = vars(year), labeller = "label_value")+
+  labs (y = "Survival", x = "Treatment : Perch/Nutrients")
+```
+
+Mes conclusions : chute de la survie  des petits avec l'ajout de perche, pas d'effet des nutriments pas d'effet des traitements sur la survie des poissons de taille 2 et 3
+
+```{r}
+ggplot(sum_psi)+
+  geom_point(aes (x = Lake, y = mean, color = Treatment))+
+  geom_errorbar(aes(x = Lake, ymax = max, ymin = min, color = Treatment, width = 0.4))+
+  #scale_color_gradient(low = "#81d2e5", high = "#2a46b0")+
+  facet_grid(rows = vars(size), cols = vars(year), labeller = "label_value")+
+  labs (y = "Growth", x = "Treatment : Perch/Nutrients")
+```
+
+###################################################################################
+-----------------------------------------------------------------------------------
+
+PERCH
+
+-----------------------------------------------------------------------------------
+###################################################################################
+
+```{r}
+ggplot(BDD_p %>% filter (Tag_id != "juvenile"))+
+  geom_bar(aes(x= factor(Lake,level = c(1:16))))+
+  facet_wrap(~ Year)
+
+ggplot(BDD_p %>% filter (Tag_id != "juvenile"))+
+  geom_bar(aes(x= Treatment))+
+  facet_wrap(~ Year)
+```
+
+###################################################################################
+-----------------------------------------------------------------------------------
+
+EFFET RANDOM
+
+-----------------------------------------------------------------------------------
+###################################################################################
+
+```{r}
+print(Model_multi_treatment_random_corrected_abundance[[2]]$mean$phi1)
+
+tbl1 = data.frame()
+tbl2 = data.frame()
+tbl3 = data.frame()
+for (l in 1:16){
+  for (t in 1:5){
+    tbl1 <- rbind(tbl1,data.frame(Model_multi_treatment_random_corrected_abundance[[2]]$mean$phi1_aux[l,t],as.character(l),as.character(t)))
+    tbl2 <- rbind(tbl2,data.frame(Model_multi_treatment_random_corrected_abundance[[2]]$mean$phi2_aux[l,t],as.character(l),as.character(t)))
+    tbl3 <- rbind(tbl3,data.frame(Model_multi_treatment_random_corrected_abundance[[2]]$mean$phi3_aux[l,t],as.character(l),as.character(t)))
+  }
+}
+
+tbl1mean = data.frame()
+tbl2mean = data.frame()
+tbl3mean = data.frame()
+for (tr in 1:4){
+  for (t in 1:2){
+    tbl1mean <- rbind(tbl1mean,data.frame(Model_multi_treatment_random_corrected_abundance[[2]]$mean$phi1[tr,t],as.character(tr),as.character(t)))
+    tbl2mean <- rbind(tbl2mean,data.frame(Model_multi_treatment_random_corrected_abundance[[2]]$mean$phi2[tr,t],as.character(tr),as.character(t)))
+    tbl3mean <- rbind(tbl3mean,data.frame(Model_multi_treatment_random_corrected_abundance[[2]]$mean$phi3[tr,t],as.character(tr),as.character(t)))
+  }
+}
+
+
+colnames(tbl1) <- c("phi","Lake","year")
+tbl1 <- merge(tbl1,Lake_treatment)
+
+colnames(tbl2) <- c("phi","Lake","year")
+tbl2 <- merge(tbl2,Lake_treatment)
+
+colnames(tbl3) <- c("phi","Lake","year")
+tbl3 <- merge(tbl3,Lake_treatment)
+
+colnames(tbl1mean) <- c("phi","Treatment","year")
+colnames(tbl2mean) <- c("phi","Treatment","year")
+colnames(tbl3mean) <- c("phi","Treatment","year")
+
+
+p1 = ggplot(tbl1)+
+  geom_jitter(aes(x = year, y = phi, color = Treatment), width = 0.2)+
+  ylim(0,1)
+p2 = ggplot(tbl1mean)+
+  geom_point (aes(x = year,y = phi,color = Treatment), shape = "square", size = 5)+
+  ylim(0,1)
+p1+p2
+
+ggplot(tbl2)+
+  geom_jitter(aes(x = year, y = phi, color = Treatment), width = 0.2)
+
+ggplot(tbl3)+
+  geom_jitter(aes(x = year, y = phi, color = Treatment), width = 0.2)
+```
+```{r}
+traceplot(Model_multi_treatment_random_corrected_abundance, varname = c("phi1_aux"), ask = F)
+```
+
+```{r}
+tbl5_p = data.frame()
+tbl5_phi = data.frame()
+tbl5_psi12 = data.frame()
+tbl5_psi23 = data.frame()
+tbl5_n = data.frame()
+tbl5_ntot = data.frame()
+for (n in 1:2){
+  for (tr in 1:4){
+    for (t in 1:2){
+      tbl5_psi12 <- rbind(tbl5_psi12, 
+               data.frame(as.mcmc(Model_multi_treatment_random_corrected_abundance)[[n]][,paste("psi12","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+      tbl5_psi23 <- rbind(tbl5_psi23, 
+               data.frame(as.mcmc(Model_multi_treatment_random_corrected_abundance)[[n]][,paste("psi23","[",as.character(tr),",",as.character(t),"]", sep = "")],tr,t))
+      
+      for (gs in 1:3){
+        tbl5_phi <- rbind(tbl5_phi, 
+               data.frame(as.mcmc(Model_multi_treatment_random_corrected_abundance)[[n]][,paste("phi",as.character(gs),"[",as.character(tr),",",as.character(t),"]", sep = "")],gs,tr,t))
+      }
+    }
+    for (t in 1:6){
+      tbl5_ntot <- rbind(tbl5_ntot, 
+               data.frame(as.mcmc(Model_multi_treatment_random_corrected_abundance)[[n]][,paste("ntot","[",as.character(t),",",as.character(tr),"]", sep = "")],"tot",tr,t))
+      for (gs in 1:3){
+        tbl5_n <- rbind(tbl5_n, 
+               data.frame(as.mcmc(Model_multi_treatment_random_corrected_abundance)[[n]][,paste("n",as.character(gs),"[",as.character(t),",",as.character(tr),"]", sep = "")],gs,tr,t))
+      }
+    }
+  }
+  for (gs in 1:3){
+    tbl5_p <- rbind(tbl5_p, 
+               data.frame(as.mcmc(Model_multi_treatment_random_corrected_abundance)[[n]][,paste("p",as.character(gs), sep = "")],gs))
+  }
+}
+
+colnames(tbl5_phi) <- c("phi","size","treatment","year")
+tbl5_phi <- tbl5_phi %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year))
+
+colnames(tbl5_p) <- c("p","size")
+tbl5_p <- tbl5_p %>% mutate(size = factor (size))
+
+colnames(tbl5_psi12) <- c("psi","treatment","year")
+tbl5_psi12 <- tbl5_psi12 %>% mutate(treatment = factor (treatment),
+                                year = factor(year))
+colnames(tbl5_psi23) <- c("psi","treatment","year")
+tbl5_psi23 <- tbl5_psi23 %>% mutate(treatment = factor (treatment),
+                                year = factor(year))
+tbl5_psi = rbind(data.frame(tbl5_psi12, c = "1"), data.frame(tbl5_psi23, c = "2"))
+colnames(tbl5_n) <- c("n", "size","treatment","year")
+tbl5_n <- tbl5_n %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year),
+                            exp_year = ifelse(year %in% c(1,2,3),1,2))
+colnames(tbl5_ntot) <- c("n", "size","treatment","year")
+tbl5_ntot <- tbl5_ntot %>% mutate(size = factor (size),
+                                treatment = factor(treatment),
+                                year = factor(year))
+
+
+ggplot(tbl5_phi %>% filter(size == "1"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_phi %>% filter(size == "2"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_phi %>% filter(size == "3"))+
+  geom_density(aes(x = phi, color = year))+
+  facet_wrap(~treatment)
+
+ggplot(tbl5_p)+
+  geom_density(aes(x = p, color = size))
+
+ggplot(tbl5_psi12)+
+  geom_density(aes (x = psi, color = treatment))+
+  facet_wrap(~ year)
+
+ggplot(tbl5_psi23)+
+  geom_density(aes (x = psi, color = treatment))+
+  facet_wrap(~ year)
+
+ggplot(tbl5_n %>% filter(year == 1))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 2))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 3))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 4))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 5))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+ggplot(tbl5_n %>% filter(year == 6))+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~size, scale = "free_y")
+
+ggplot(tbl5_ntot)+
+  geom_density(aes(x = n, color = treatment))+
+  facet_wrap(~year)#, scale = "free_y")
+
+```
+
+```{r}
+sum_phi <- tbl5_phi %>% group_by(year,size,treatment) %>% summarize(mean = mean(phi), max = quantile(phi,0.975), min = quantile(phi,0.025)) %>% ungroup()
+sum_psi <- tbl5_psi %>% group_by(year,c,treatment) %>% summarize(mean = mean(psi), max = quantile(psi,0.975), min = quantile(psi,0.025)) %>% ungroup() %>%
+  mutate (treatment = case_when(treatment == 1 ~ "F/T", treatment == 2 ~ "T/T",treatment == 3 ~ "F/F", treatment == 4 ~ "T/F"),
+          c = case_when(c == 1 ~ "Small to Medium", c == 2 ~ "Medium to Large"),
+          year = ifelse(year == 1, "Before", "After")) %>% mutate(year = factor(year, levels= c("Before", "After")))
+sum_p <- tbl5_p %>% group_by(size) %>% summarize(mean = mean(p), max = quantile(p,0.975), min = quantile(p,0.025)) %>% ungroup()
+test <- merge(sum_phi,tbl5_n %>% group_by(exp_year, treatment, size) %>% summarize(eff = mean (n)) %>% mutate(year = exp_year), all = TRUE) %>% 
+  mutate (treatment = case_when(treatment == 1 ~ "F/T", treatment == 2 ~ "T/T",treatment == 3 ~ "F/F", treatment == 4 ~ "T/F"),
+          size = case_when(size == 1 ~ "Small", size == 2 ~ "Medium", size == 3 ~ "Large"),
+          year = ifelse(year == 1, "Before", "After")) %>% mutate(year = factor(year, levels= c("Before", "After")))
+```
+
+```{r}
+ggplot(test)+
+  geom_point(aes (x = treatment, y = mean, color = eff))+
+  geom_errorbar(aes(x = treatment, ymax = max, ymin = min, color = eff, width = 0.4))+
+  scale_color_gradient(low = "#81d2e5", high = "#2a46b0")+
+  facet_grid(rows = vars(size), cols = vars(year), labeller = "label_value")+
+  labs (y = "Survival", x = "Treatment : Perch/Nutrients")
+```
+
+Mes conclusions : chute de la survie  des petits avec l'ajout de perche, pas d'effet des nutriments pas d'effet des traitements sur la survie des poissons de taille 2 et 3
+
+```{r}
+ggplot(sum_psi)+
+  geom_point(aes (x = treatment, y = mean))+
+  geom_errorbar(aes(x = treatment, ymax = max, ymin = min, width = 0.4))+
+  #scale_color_gradient(low = "#81d2e5", high = "#2a46b0")+
+  facet_grid(rows = vars(c), cols = vars(year), labeller = "label_value")+
+  labs (y = "Growth", x = "Treatment : Perch/Nutrients")
+```
+
+Mes conclusions : Ajout des perches : probabilité de croissance plus importante de 1 a 2
+Et sans perche diff probabilité de passer de 2 à 3 augmenté par la présence de nutrients
+
+```{r}
+ggplot(sum_p)+
+  geom_point(aes (x = size, y = mean))+
+  geom_errorbar(aes(x = size, ymax = max, ymin = min, width = 0.4))+
+  labs (y = "Capture probability", x = "Size")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

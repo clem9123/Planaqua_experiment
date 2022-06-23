@@ -1,0 +1,33 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+# Les données
+
+```{r}
+ggplot(BDD_a, aes(x = Year, y  = Size, color = Treatment))+
+  geom_line(aes(group = Tag_id))
+
+ggplot(BDD_a, aes(x = Year, y  = Weight, color = Treatment))+
+  geom_line(aes(group = Tag_id))
+```
+
+```{r}
+BDD_a %>% filter(Size < 70)
+```
+
+
+#Fonction de von B
+
+```{r}
+L = 71.830
+K = 0.666
+t0 = 2014
+
+x = c(2016:2022)
+y = L*(1-exp(-K*(x-t0)))
+
+ggplot(data = data.frame(x,y), aes(x = factor(x), y = y))+ 
+  geom_point ()
+```
+
