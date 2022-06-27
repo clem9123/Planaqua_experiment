@@ -8,7 +8,7 @@ BDD_p%>% filter(Method_capture != "creel")
 nrow(BDD_p)
 
 
-BDD_a <- BDD_p%>% filter(Method_capture != "creel") # %>% filter (Year != "2022)
+BDD_a <- BDD_p%>% filter(!Method_capture %in% "creel")  %>% filter (Year != "2022")
 # maintenant il faut séparer le shistoire de vie des poissons qui changent de lac
 for (i in 1:nrow(BDD_a)){
   if (BDD_a[i,]$Tag_id != "no_tag"){
@@ -32,7 +32,7 @@ for (i in 1:nrow(BDD_a)){
 }
 
 # donne un tag au non taggué
-BDD_a[which(BDD_a$Tag_id == "no_tag"),]$Tag_id <- as.character(c(1:150))
+BDD_a[which(BDD_a$Tag_id == "no_tag"),]$Tag_id <- as.character(c(1:87))
 
 
 #------------------------
@@ -91,6 +91,13 @@ for (i in 1:nrow(s_group)) {
 for (i in 1:nrow(s_group)) {
   for (j in 1:ncol(s_group)) {    
     if (j <= f[i]) {zinit[i,j] <- NA}
+  }
+}
+for (i in 1:nrow(s_group)) {
+  if (f[i]<5){
+    if (zinit[i,f[i]+1] < fs[i]){
+      zinit[i,f[i]+1] <- fs[i]
+    }
   }
 }
 for (i in 1:nrow(s_group)) {
