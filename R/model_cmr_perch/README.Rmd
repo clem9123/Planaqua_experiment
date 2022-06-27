@@ -9,12 +9,11 @@ knitr::opts_chunk$set(echo=FALSE,message=FALSE, warning=FALSE)
 
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
-getwd()
-setwd("..")
 #source("R/setup.R")
 #source("R/MODEL_visualisation_function.R")
 
 load("Model_Treatment.RData")
+load("Model_Treatment_2022.RData")
 load("Model_Treatment_capture.RData")
 load("Model_Treatment_capture_reverse.RData")
 ```
@@ -32,7 +31,7 @@ theme_set(theme_bw()+
 ## Capture Probability and variability
 ### Mean capture probability
 ```{r fig.height=4, fig.width=8}
-model = Model_Treatment_capture_reverse
+model = Model_Treatment_2022
 
 ggplot(get_p(model))+
   geom_point(aes(x = Size, y = mean))+
@@ -87,7 +86,18 @@ ggplot(get_n(model),aes(y = mean, x = Year, color = Treatment))+
   #geom_line(aes(group = Treatment))+
   geom_errorbar(aes(ymin = min, ymax = max, x = Year, color = Treatment))+
   facet_grid(rows = vars(Size), cols = vars(Treatment))+
-  labs(y = "Abundance")
+  labs(y = "Abundance")+
+  geom_point(data = bn, aes(x="2022",y=n))
+```
+
+```{r}
+bn <- BDD_p %>% filter(Year=="2022") %>% group_by(Treatment, s_group) %>% summarize(n = n()) %>% filter(s_group !="0" & !is.na(s_group))
+colnames(bn) <- c("Treatment","Size","n")
+bn <- bn %>% mutate(Treatment = factor(Treatment, level = c(1,2,3,4), labels = c("Perch- / Nutrients+","Perch+ / Nutrients+","Perch- / Nutrients-","Perch+ / Nutrients-")),
+                    Size = factor(Size, level = c(1,2,3), labels = c("Small","Medium","Large")))
+ggplot(bn)+
+  geom_point(aes(x=1,y=n))+
+  facet_grid(rows = vars(Size), cols = vars(Treatment))
 ```
 
 ## You can get a table of the result with uncertainty :
@@ -118,5 +128,9 @@ p2 <- ggplot(get_psi(model) %>% filter(Exp_time == "After treatment"), aes(color
   ylim(0,1)
 
 p1+p2
+```
+
+```{r}
+traceplot(model,ask=F)
 ```
 
