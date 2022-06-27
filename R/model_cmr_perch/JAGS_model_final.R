@@ -58,7 +58,7 @@ model <- function(){
     }
   }
   
-  for (t in 3:(noccas-1)){
+  for (t in 3:(noccas-2)){
     for (tr in 1:4){
       phi1_aux[tr,t] <- phi1[tr,2]
       phi2_aux[tr,t] <- phi2[tr,2]
@@ -74,11 +74,16 @@ model <- function(){
   p2 ~ dunif(0,1)
   p3 ~ dunif(0,1)
   
+  v1 ~ dunif(0,1)
+  v2 ~ dunif(0,1)
+  v3 ~ dunif(0,1)
+  
   error ~ dunif(0,1)
   
   # probabilities of state z(t+1) given z(t)
-  for (t in 1:(noccas-1)){
-    for (tr in 1:4) {
+  for (tr in 1:4) {
+  for (t in 1:(noccas-2)){
+    
       gamma[1,1,tr,t] <- phi1_aux[tr,t] * (1-psi12_aux[tr,t]-psi13_aux[tr,t])
       gamma[1,2,tr,t] <- phi1_aux[tr,t] * psi12_aux[tr,t]
       gamma[1,3,tr,t] <- phi1_aux[tr,t] * psi13_aux[tr,t]
@@ -96,6 +101,22 @@ model <- function(){
       gamma[4,3,tr,t] <- 0
       gamma[4,4,tr,t] <- 1
     }
+    gamma[1,1,tr,noccas-1] <- v1
+    gamma[1,2,tr,noccas-1] <- 0
+    gamma[1,3,tr,noccas-1] <- 0
+    gamma[1,4,tr,noccas-1] <- 1-v1
+    gamma[2,1,tr,noccas-1] <- 0
+    gamma[2,2,tr,noccas-1] <- v2
+    gamma[2,3,tr,noccas-1] <- 0
+    gamma[2,4,tr,noccas-1] <- 1-v2
+    gamma[3,1,tr,noccas-1] <- 0
+    gamma[3,2,tr,noccas-1] <- 0
+    gamma[3,3,tr,noccas-1] <- v3
+    gamma[3,4,tr,noccas-1] <- 1-v3
+    gamma[4,1,tr,noccas-1] <- 0
+    gamma[4,2,tr,noccas-1] <- 0
+    gamma[4,3,tr,noccas-1] <- 0
+    gamma[4,4,tr,noccas-1] <- 1
   }
   
   
@@ -141,27 +162,30 @@ model <- function(){
       y[i,t] ~ dcat(omega[z[i,t],1:4])
     }
   }
-  for (t in 1:noccas){
-    n1[t,1] <- sum(N1[Tr1,t])
-    n2[t,1] <- sum(N2[Tr1,t])
-    n3[t,1] <- sum(N3[Tr1,t])
-    ntot[t,1] <- n1[t,1] + n2[t,1] + n3[t,1]
-    
-    n1[t,2] <- sum(N1[Tr2,t])
-    n2[t,2] <- sum(N2[Tr2,t])
-    n3[t,2] <- sum(N3[Tr2,t])
-    ntot[t,2] <- n1[t,2] + n2[t,2] + n3[t,2]
-    
-    n1[t,3] <- sum(N1[Tr3,t])
-    n2[t,3] <- sum(N2[Tr3,t])
-    n3[t,3] <- sum(N3[Tr3,t])
-    ntot[t,3] <- n1[t,3] + n2[t,3] + n3[t,3]
-    
-    n1[t,4] <- sum(N1[Tr4,t])
-    n2[t,4] <- sum(N2[Tr4,t])
-    n3[t,4] <- sum(N3[Tr4,t])
-    ntot[t,4] <- n1[t,4] + n2[t,4] + n3[t,4]
-  }
+  
+
+  
+  # (t in 1:noccas+1){
+  #  n1[t,1] <- sum(N1[Tr1,t])
+  #  n2[t,1] <- sum(N2[Tr1,t])
+  #  n3[t,1] <- sum(N3[Tr1,t])
+  #  ntot[t,1] <- n1[t,1] + n2[t,1] + n3[t,1]
+  #  
+  #  n1[t,2] <- sum(N1[Tr2,t])
+  #  n2[t,2] <- sum(N2[Tr2,t])
+  #  n3[t,2] <- sum(N3[Tr2,t])
+  #  ntot[t,2] <- n1[t,2] + n2[t,2] + n3[t,2]
+  #  
+  #  n1[t,3] <- sum(N1[Tr3,t])
+  #  n2[t,3] <- sum(N2[Tr3,t])
+  #  n3[t,3] <- sum(N3[Tr3,t])
+  #  ntot[t,3] <- n1[t,3] + n2[t,3] + n3[t,3]
+  #  
+  #  n1[t,4] <- sum(N1[Tr4,t])
+  #  n2[t,4] <- sum(N2[Tr4,t])
+  #  n3[t,4] <- sum(N3[Tr4,t])
+  #  ntot[t,4] <- n1[t,4] + n2[t,4] + n3[t,4]
+  #}
 }
 
 inits = function(){
@@ -169,22 +193,24 @@ inits = function(){
        p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
        psi12 = matrix(ncol = 2, runif(8,0,0.5)),psi23 = matrix(ncol = 2, runif(8,0,0.5)),psi13 = matrix(ncol = 2, runif(8,0,0.5)),
        error = runif(1,0,0.1),
+       v1 = runif(1,0,1),v2 = runif(1,0,1),v3 = runif(1,0,1),
        z = zi)}
 
 parameters = c("phi1","phi2","phi3",
                "p1","p2","p3",
                "psi12","psi23","psi13",
                "error",
+               "v1","v2","v3",
                "n1","n2","n3","ntot")
 
-Model_Treatment <- jags.parallel(data = jags.data,
+Model_Treatment_2022 <- jags.parallel(data = jags.data,
                                     inits = inits,
                                     parameters.to.save = parameters,
                                     model.file = model,
                                     n.chains = 2,
                                     n.iter = ni)
 
-save(Model_Treatment, file = "R/model_cmr_perch/Model_Treatment.RData" )
+save(Model_Treatment_2022, file = "R/model_cmr_perch/Model_Treatment_2022.RData" )
 
 runtime = Sys.time() - old
 print(runtime)
