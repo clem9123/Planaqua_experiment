@@ -102,17 +102,17 @@ model <- function(){
       gamma[4,4,tr,t] <- 1
     }
     gamma[1,1,tr,noccas-1] <- v1
-    gamma[1,2,tr,noccas-1] <- 0
-    gamma[1,3,tr,noccas-1] <- 0
-    gamma[1,4,tr,noccas-1] <- 1-v1
-    gamma[2,1,tr,noccas-1] <- 0
+    gamma[1,2,tr,noccas-1] <- v1*error
+    gamma[1,3,tr,noccas-1] <- v1*error
+    gamma[1,4,tr,noccas-1] <- 1-(1-2*error)*v1
+    gamma[2,1,tr,noccas-1] <- error*v2
     gamma[2,2,tr,noccas-1] <- v2
-    gamma[2,3,tr,noccas-1] <- 0
-    gamma[2,4,tr,noccas-1] <- 1-v2
-    gamma[3,1,tr,noccas-1] <- 0
-    gamma[3,2,tr,noccas-1] <- 0
+    gamma[2,3,tr,noccas-1] <- error*v2
+    gamma[2,4,tr,noccas-1] <- 1-(1-2*error)*v2
+    gamma[3,1,tr,noccas-1] <- error*v3
+    gamma[3,2,tr,noccas-1] <- error*v3
     gamma[3,3,tr,noccas-1] <- v3
-    gamma[3,4,tr,noccas-1] <- 1-v3
+    gamma[3,4,tr,noccas-1] <- 1-(1-2*error)*v3
     gamma[4,1,tr,noccas-1] <- 0
     gamma[4,2,tr,noccas-1] <- 0
     gamma[4,3,tr,noccas-1] <- 0
