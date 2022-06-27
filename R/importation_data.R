@@ -58,24 +58,25 @@ BDD_g <- BDD_g %>% mutate (Obs_status = case_when(Tag_year %in% c("no_tag","juve
                                                   Year == Tag_year ~ "capture",
                                                   Year != Tag_year ~ "recapture"))
 
+size_break <- c(0,130,180,400)
+BDD_g <- BDD_g %>% mutate(s_group = factor(discretize(BDD_g$Size,method = "fixed",
+                                                      breaks = size_break, 
+                                                      labels= c(1:(length(size_break)-1))))) %>% 
+  mutate(s_group = ifelse(Tag_id == "juvenile",0,s_group)) %>% 
+  mutate (s_group = factor(s_group))
 
-BDD_p <- BDD_f %>% filter(Species == "perch" & !(Method_capture %in% c("creel")) &
+# creation du tableau pour les perches
+BDD_p <- BDD_f %>% filter(Species == "perch" &
                       !(Session_capture %in% c("B","Z")))
 BDD_p <- BDD_p %>% group_by(Tag_id) %>% 
-  mutate(Tag_year = ifelse(Tag_id %in%  c("juvenile","no_tag"), "juvenile", min(as.character(Year)))) %>% 
+  mutate(Tag_year = ifelse(Tag_id %in%  c("juvenile","no_tag"), as.character(Year), min(as.character(Year)))) %>% 
   ungroup()
 
+size_break <- c(0,130,180,400)
 BDD_p <- BDD_p %>% mutate (Obs_status = case_when(Tag_year %in% c("no_tag","juvenile")~ "capture",
                                                   Year == Tag_year ~ "capture",
                                                   Year != Tag_year ~ "recapture"))
 
-
-size_break <- c(0,120,180,300)
-BDD_g <- BDD_g %>% mutate(s_group = factor(discretize(BDD_g$Size,method = "fixed",
-                                                          breaks = size_break, 
-                                                          labels= c(1:(length(size_break)-1))))) %>% 
-  mutate(s_group = ifelse(Tag_id == "juvenile",0,s_group)) %>% 
-  mutate (s_group = factor(s_group))
 
 BDD_p <- BDD_p %>% mutate(s_group = factor(discretize(BDD_p$Size,method = "fixed",
                                                       breaks = size_break, 
