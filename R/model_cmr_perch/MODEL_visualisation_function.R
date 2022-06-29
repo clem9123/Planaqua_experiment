@@ -104,7 +104,7 @@ get_n <- function(model){
   for (i in 1:2){
     for (tr in 1:4){
       for (gs in 1:3){
-        for (t in 1:6){
+        for (t in 1:7){
           n <- rbind(n, 
                      data.frame(model[[i]][,paste("n",as.character(gs),"[",as.character(t),",",as.character(tr),"]", sep = "")],
                                 Size = gs,
@@ -119,11 +119,29 @@ get_n <- function(model){
           summarize(mean = mean(var1), min = quantile(var1,0.025), max = quantile(var1,0.975)) %>%
           mutate(Size = factor(Size, levels = c("1","2","3"), labels = c("Small","Medium","Large")),
                  Treatment  = factor(Treatment, levels = c("1","2","3","4"), labels = Treatment_name),
-                 Year = factor(Year, levels = c(1,2,3,4,5,6), 
-                                     labels = c(2016,2017,2018,2019,2020,2021))))
+                 Year = factor(Year, levels = c(1,2,3,4,5,6,7), 
+                                     labels = c(2016,2017,2018,2019,2020,2021,2022))))
 }
 
-# extract deviance from model
+# Extract v from model (survival vidange)
+get_v <- function(model){
+  model <- as.mcmc(model)
+  v = data.frame()
+  for (n in 1:2){
+    for (gs in 1:3){
+        v <- rbind(v, 
+                   data.frame(model[[n]][,paste("v",as.character(gs),sep="")],
+                              Size = gs))
+    }
+  }
+  
+  return (v %>% 
+            group_by (Size) %>% 
+            summarize(mean = mean(var1), min = quantile(var1,0.025), max = quantile(var1,0.975)) %>%
+            mutate(Size = factor(Size, levels = c("1","2","3"), labels = c("Small","Medium","Large"))))
+}
+
+# extract deviance
 get_deviance <- function(model){
   deviance = data.frame()
   for (n in 1:2){
@@ -133,6 +151,7 @@ get_deviance <- function(model){
   return(deviance)
 }
 
+# extract all deviance
 get_all_deviance <- function(list_model,list_name){
   deviance = data.frame()
   i = 1
@@ -167,6 +186,16 @@ plot_p <- function(summary){
     geom_errorbar(aes(x = Size, 
                       ymin = min, ymax = max), width = 0.4)+
     labs(y = "Capture probability", x = "Size group")+
+    ylim(0,1)
+}
+
+# plot v
+plot_v <- function(summary){
+  ggplot(summary)+
+    geom_point(aes(x = Size, y = mean))+
+    geom_errorbar(aes(x = Size, 
+                      ymin = min, ymax = max), width = 0.4)+
+    labs(y = "vidange survival", x = "Size group")+
     ylim(0,1)
 }
 

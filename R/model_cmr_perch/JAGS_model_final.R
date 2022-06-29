@@ -696,6 +696,10 @@ model <- function(){
     }
   }
   
+  v1 ~ dunif(0,1)
+  v2 ~ dunif(0,1)
+  v3 ~ dunif(0,1)
+  
   p1 ~ dunif(0,1)
   p2 ~ dunif(0,1)
   p3 ~ dunif(0,1)
@@ -717,8 +721,9 @@ model <- function(){
   error ~ dunif(0,1)
   
   # probabilities of state z(t+1) given z(t)
-  for (t in 1:(noccas-1)){
-    for (tr in 1:4) {
+  for (tr in 1:4) {
+    for (t in 1:(noccas-2)){
+      
       gamma[1,1,tr,t] <- phi1_aux[tr,t] * (1-psi12_aux[tr,t]-psi13_aux[tr,t])
       gamma[1,2,tr,t] <- phi1_aux[tr,t] * psi12_aux[tr,t]
       gamma[1,3,tr,t] <- phi1_aux[tr,t] * psi13_aux[tr,t]
@@ -736,8 +741,23 @@ model <- function(){
       gamma[4,3,tr,t] <- 0
       gamma[4,4,tr,t] <- 1
     }
+    gamma[1,1,tr,noccas-1] <- v1
+    gamma[1,2,tr,noccas-1] <- v1*error
+    gamma[1,3,tr,noccas-1] <- v1*error
+    gamma[1,4,tr,noccas-1] <- 1-(1-2*error)*v1
+    gamma[2,1,tr,noccas-1] <- error*v2
+    gamma[2,2,tr,noccas-1] <- v2
+    gamma[2,3,tr,noccas-1] <- error*v2
+    gamma[2,4,tr,noccas-1] <- 1-(1-2*error)*v2
+    gamma[3,1,tr,noccas-1] <- error*v3
+    gamma[3,2,tr,noccas-1] <- error*v3
+    gamma[3,3,tr,noccas-1] <- v3
+    gamma[3,4,tr,noccas-1] <- 1-(1-2*error)*v3
+    gamma[4,1,tr,noccas-1] <- 0
+    gamma[4,2,tr,noccas-1] <- 0
+    gamma[4,3,tr,noccas-1] <- 0
+    gamma[4,4,tr,noccas-1] <- 1
   }
-  
   
   # probabilities of y(t) given z(t)
   for (l in 1:16){
@@ -813,6 +833,7 @@ inits = function(){
        p1 = runif(1,0,1),p2 = runif(1,0,1),p3 = runif(1,0,1),
        psi12 = matrix(ncol = 2, runif(8,0,0.5)),psi23 = matrix(ncol = 2, runif(8,0,0.5)), psi13 = matrix(ncol = 2, runif(8,0,0.5)),
        error = runif(1,0,0.1), epsilon = matrix(ncol = 5, runif(80,-2,2)),
+       v1 = runif(1,0,1),v2 = runif(1,0,1),v3 = runif(1,0,1),
        z = zi)}
 
 parameters = c("phi1","phi2","phi3",
@@ -820,16 +841,17 @@ parameters = c("phi1","phi2","phi3",
                "psi12","psi23","psi13",
                "error",
                "epsilon",
+               "v1","v2","v3",
                "n1","n2","n3","ntot")
 
-Model_treatment_capture_p1 <- jags.parallel(data = jags.data,
+Model_treatment_capture_2022 <- jags.parallel(data = jags.data,
                                  inits = inits,
                                  parameters.to.save = parameters,
                                  model.file = model,
                                  n.chains = 2,
                                  n.iter = ni)
 
-save(Model_Treatment_capture, file = "R/model_cmr_perch/Model_Treatment_capture.RData" )
+save(Model_Treatment_capture_2022, file = "R/model_cmr_perch/Model_Treatment_capture_2022.RData" )
 
 runtime = Sys.time() - old
 print(runtime)
