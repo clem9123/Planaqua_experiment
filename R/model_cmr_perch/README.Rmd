@@ -14,8 +14,11 @@ knitr::opts_chunk$set(echo=FALSE,message=FALSE, warning=FALSE)
 
 load("Model_Treatment.RData")
 load("Model_Treatment_2022.RData")
+load("Model_Treatment_2022_long.RData")
 load("Model_Treatment_capture.RData")
 load("Model_Treatment_capture_reverse.RData")
+setwd("..")
+load("Model_Treatment_capture_random.RData")
 ```
 
 ```{r}
@@ -31,7 +34,7 @@ theme_set(theme_bw()+
 ## Capture Probability and variability
 ### Mean capture probability
 ```{r fig.height=4, fig.width=8}
-model = Model_Treatment_2022
+model = Model_Treatment_capture_random
 
 ggplot(get_p(model))+
   geom_point(aes(x = Size, y = mean))+
@@ -132,5 +135,18 @@ p1+p2
 
 ```{r}
 traceplot(model,ask=F)
+```
+
+deviance model_treatment-capture_random : 6 610   DIC 12093.4
+avec p1 : 7 048
+normal : 7005   DIC 14751.8
+
+
+```{r}
+print(Model_Treatment_capture)
+print(Model_Treatment_capture[[2]]$mean)
+```
+```{r}
+
 ```
 

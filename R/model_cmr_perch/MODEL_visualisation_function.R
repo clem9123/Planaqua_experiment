@@ -104,7 +104,7 @@ get_n <- function(model){
   for (i in 1:2){
     for (tr in 1:4){
       for (gs in 1:3){
-        for (t in 1:7){
+        for (t in 1:6){
           n <- rbind(n, 
                      data.frame(model[[i]][,paste("n",as.character(gs),"[",as.character(t),",",as.character(tr),"]", sep = "")],
                                 Size = gs,
@@ -119,8 +119,8 @@ get_n <- function(model){
           summarize(mean = mean(var1), min = quantile(var1,0.025), max = quantile(var1,0.975)) %>%
           mutate(Size = factor(Size, levels = c("1","2","3"), labels = c("Small","Medium","Large")),
                  Treatment  = factor(Treatment, levels = c("1","2","3","4"), labels = Treatment_name),
-                 Year = factor(Year, levels = c(1,2,3,4,5,6,7), 
-                                     labels = c(2016,2017,2018,2019,2020,2021,2022))))
+                 Year = factor(Year, levels = c(1,2,3,4,5,6), 
+                                     labels = c(2016,2017,2018,2019,2020,2021))))
 }
 
 # Extract v from model (survival vidange)

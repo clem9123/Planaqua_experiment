@@ -63,23 +63,23 @@ model <- function(){
   # (derived from survival and growth above, only needed for notation)
   for (t in 1:2){ #experiment time 1
     for (l in 1:16){
-      logit(phi1_aux[l,t]) <- logit(phi1[tr,1]) + lake[l]
-      logit(phi2_aux[l,t]) <- logit(phi2[tr,1]) + lake[l]
-      logit(phi3_aux[l,t]) <- logit(phi3[tr,1]) + lake[l]
+      logit(phi1_aux[l,t]) <- logit(phi1[LT[l],1]) + lake[l]
+      logit(phi2_aux[l,t]) <- logit(phi2[LT[l],1]) + lake[l]
+      logit(phi3_aux[l,t]) <- logit(phi3[LT[l],1]) + lake[l]
       
-      logit(psi12_aux[l,t]) <- logit(psi12[tr,1]) + lake[l]
-      logit(psi23_aux[l,t]) <- logit(psi23[tr,1]) + lake[l]
+      logit(psi12_aux[l,t]) <- logit(psi12[LT[l],1]) + lake[l]
+      logit(psi23_aux[l,t]) <- logit(psi23[LT[l],1]) + lake[l]
     }
   }
   
   for (t in 3:(noccas-1)){
     for (l in 1:16){ # experiment time 2
-      logit(phi1_aux[l,t]) <- logit(phi1[tr,2]) + lake[l]
-      logit(phi2_aux[l,t]) <- logit(phi2[tr,2]) + lake[l]
-      logit(phi3_aux[l,t]) <- logit(phi3[tr,2]) + lake[l]
+      logit(phi1_aux[l,t]) <- logit(phi1[LT[l],2]) + lake[l]
+      logit(phi2_aux[l,t]) <- logit(phi2[LT[l],2]) + lake[l]
+      logit(phi3_aux[l,t]) <- logit(phi3[LT[l],2]) + lake[l]
       
-      logit(psi12_aux[l,t]) <- logit(psi12[tr,2]) + lake[l]
-      logit(psi23_aux[l,t]) <- logit(psi23[tr,2]) + lake[l]
+      logit(psi12_aux[l,t]) <- logit(psi12[LT[l],2]) + lake[l]
+      logit(psi23_aux[l,t]) <- logit(psi23[LT[l],2]) + lake[l]
     }
   }
   
@@ -117,11 +117,11 @@ model <- function(){
   
   # probabilities of real state z(t+1) given real state z(t)
   for (t in 1:(noccas-1)){
-    for (tr in 1:16) {
+    for (l in 1:16) {
       gamma[1,1,l,t] <- phi1_aux[l,t] * (1-psi12_aux[l,t])   # Pr(alive and small t -> alive and small t+1)    survivalin same size class
       gamma[1,2,l,t] <- phi1_aux[l,t] * psi12_aux[l,t]       # Pr(alive and small t -> alive and medium t+1)   survival and growth
       gamma[1,3,l,t] <- 0                                      # Pr(alive and small t -> alive and large t+1)    impossible to shrink
-      gamma[1,4,l,t] <- (1-phi1_aux[tr,t])                     # Pr(alive and small t -> dead t+1)               mortality
+      gamma[1,4,l,t] <- (1-phi1_aux[l,t])                     # Pr(alive and small t -> dead t+1)               mortality
       gamma[2,1,l,t] <- 0                                      # Pr(alive and medium t -> alive and small t+1)   impossible to shrink
       gamma[2,2,l,t] <- phi2_aux[l,t] * (1-psi23_aux[l,t])   # Pr(alive and medium t -> alive and medium t+1)  survival in same size class
       gamma[2,3,l,t] <- phi2_aux[l,t] * psi23_aux[l,t]       # Pr(alive and medium t -> alive and large t+1)   survival and growth
@@ -242,14 +242,14 @@ parameters = c("phi1","phi2","phi3",
                "n1","n2","n3","ntot",
                "sigma")
 
-Model_treatment_capture_random <- jags.parallel(data = jags.data,
+Model_Treatment_capture_random <- jags.parallel(data = jags.data,
                                          inits = inits,
                                          parameters.to.save = parameters,
                                          model.file = model,
                                          n.chains = 2,
                                          n.iter = ni)
 
-save(Model_Treatment_capture_random, file = "R/model_final/Model_Treatment_capture_random.RData" )
+save(Model_Treatment_capture_random, file = "R/Model_Treatment_capture_random.RData" )
 
 runtime = Sys.time() - old
 print(runtime)

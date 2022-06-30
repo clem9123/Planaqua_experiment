@@ -203,14 +203,14 @@ parameters = c("phi1","phi2","phi3",
                "v1","v2","v3",
                "n1","n2","n3","ntot")
 
-Model_Treatment_2022 <- jags.parallel(data = jags.data,
+Model_Treatment_2022_long <- jags.parallel(data = jags.data,
                                     inits = inits,
                                     parameters.to.save = parameters,
                                     model.file = model,
                                     n.chains = 2,
                                     n.iter = ni)
 
-save(Model_Treatment_2022, file = "R/model_cmr_perch/Model_Treatment_2022.RData" )
+save(Model_Treatment_2022_long, file = "R/model_cmr_perch/Model_Treatment_2022_long.RData" )
 
 runtime = Sys.time() - old
 print(runtime)
