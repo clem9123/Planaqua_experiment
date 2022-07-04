@@ -34,7 +34,7 @@ theme_set(theme_bw()+
 ## Capture Probability and variability
 ### Mean capture probability
 ```{r fig.height=4, fig.width=8}
-model = Model_Treatment_capture_random
+model = Model_Treatment_capture_random_true
 
 ggplot(get_p(model))+
   geom_point(aes(x = Size, y = mean))+
@@ -57,6 +57,7 @@ ggplot(get_epsilon(model))+
 
 ```{r fig.height=4, fig.width=8}
 # color for nutrients (in my oral pres) : ,type = c("#31B404","#6E6E6E","#31B404","#6E6E6E")
+
 
 ggplot(get_phi(model) %>% filter(Exp_time == "After treatment"), aes(color = factor(Treatment)))+
   geom_point(aes(x = factor(Treatment), y = mean))+
@@ -94,7 +95,7 @@ ggplot(get_n(model),aes(y = mean, x = Year, color = Treatment))+
 ```
 
 ```{r}
-bn <- BDD_p %>% filter(Year=="2022") %>% group_by(Treatment, s_group) %>% summarize(n = n()) %>% filter(s_group !="0" & !is.na(s_group))
+bn <- BDD_g %>% filter(Year=="2022") %>% group_by(Treatment, s_group) %>% summarize(n = n()) %>% filter(s_group !="0" & !is.na(s_group))
 colnames(bn) <- c("Treatment","Size","n")
 bn <- bn %>% mutate(Treatment = factor(Treatment, level = c(1,2,3,4), labels = c("Perch- / Nutrients+","Perch+ / Nutrients+","Perch- / Nutrients-","Perch+ / Nutrients-")),
                     Size = factor(Size, level = c(1,2,3), labels = c("Small","Medium","Large")))
@@ -140,13 +141,31 @@ traceplot(model,ask=F)
 deviance model_treatment-capture_random : 6 610   DIC 12093.4
 avec p1 : 7 048
 normal : 7005   DIC 14751.8
+```{r}
+print(Model_Treatment_capture_randomlt[[2]]$DIC)
+print(Model_Treatment_capture_randomlt[[2]]$mean$deviance)
+print(Model_Treatment_randomlt[[2]]$DIC)
+print(Model_Treatment_randomlt[[2]]$mean$deviance)
+print(Model_Treatment_random[[2]]$DIC)
+print(Model_Treatment_random[[2]]$mean$deviance)
+print(Model_Treatment_capture_reverse[[2]]$DIC)
+print(Model_Treatment_capture_reverse[[2]]$mean$deviance)
+print(Model_Treatment_capture_random_true[[2]]$DIC)
+print(Model_Treatment_capture_random_true[[2]]$mean$deviance)
+print(Model_Treatment_random_true[[2]]$DIC)
+print(Model_Treatment_random_true[[2]]$mean$deviance)
+```
 
 
 ```{r}
-print(Model_Treatment_capture)
-print(Model_Treatment_capture[[2]]$mean)
+print(Model_Treatment_capture_random[[2]]$DIC)
+print(Model_Treatment_capture_random[[2]]$mean$deviance)
+print(Model_Treatment_capture[[2]]$DIC)
+print(Model_Treatment_capture[[2]]$mean$deviance)
+
+model = Model_Treatment_capture_random_true
 ```
 ```{r}
-
+traceplot(Model_Treatment_random_true,ask=F)
 ```
 

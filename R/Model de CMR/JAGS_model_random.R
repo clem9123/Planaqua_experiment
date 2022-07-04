@@ -54,32 +54,34 @@ model <- function(){
   }
   
   for (l in 1:16) {
-    lake[l]~dnorm(0,1/(sigma*sigma))
+    lake_phi[l]~dnorm(0,1/(sigma_phi*sigma_phi))
+    lake_psi[l]~dnorm(0,1/(sigma_psi*sigma_psi))
   }
   
-  sigma ~ dunif(0,100)
+  sigma_phi ~ dunif(0,100)
+  sigma_psi ~ dunif(0,100)
   
   #survival and growth for each time and treatment 
   # (derived from survival and growth above, only needed for notation)
   for (t in 1:2){ #experiment time 1
     for (l in 1:16){
-      logit(phi1_aux[l,t]) <- logit(phi1[LT[l],1]) + lake[l]
-      logit(phi2_aux[l,t]) <- logit(phi2[LT[l],1]) + lake[l]
-      logit(phi3_aux[l,t]) <- logit(phi3[LT[l],1]) + lake[l]
+      logit(phi1_aux[l,t]) <- logit(phi1[LT[l],1]) + lake_phi[l]
+      logit(phi2_aux[l,t]) <- logit(phi2[LT[l],1]) + lake_phi[l]
+      logit(phi3_aux[l,t]) <- logit(phi3[LT[l],1]) + lake_phi[l]
       
-      logit(psi12_aux[l,t]) <- logit(psi12[LT[l],1]) + lake[l]
-      logit(psi23_aux[l,t]) <- logit(psi23[LT[l],1]) + lake[l]
+      logit(psi12_aux[l,t]) <- logit(psi12[LT[l],1]) + lake_psi[l]
+      logit(psi23_aux[l,t]) <- logit(psi23[LT[l],1]) + lake_psi[l]
     }
   }
   
   for (t in 3:(noccas-1)){
     for (l in 1:16){ # experiment time 2
-      logit(phi1_aux[l,t]) <- logit(phi1[LT[l],2]) + lake[l]
-      logit(phi2_aux[l,t]) <- logit(phi2[LT[l],2]) + lake[l]
-      logit(phi3_aux[l,t]) <- logit(phi3[LT[l],2]) + lake[l]
+      logit(phi1_aux[l,t]) <- logit(phi1[LT[l],2]) + lake_phi[l]
+      logit(phi2_aux[l,t]) <- logit(phi2[LT[l],2]) + lake_phi[l]
+      logit(phi3_aux[l,t]) <- logit(phi3[LT[l],2]) + lake_phi[l]
       
-      logit(psi12_aux[l,t]) <- logit(psi12[LT[l],2]) + lake[l]
-      logit(psi23_aux[l,t]) <- logit(psi23[LT[l],2]) + lake[l]
+      logit(psi12_aux[l,t]) <- logit(psi12[LT[l],2]) + lake_psi[l]
+      logit(psi23_aux[l,t]) <- logit(psi23[LT[l],2]) + lake_psi[l]
     }
   }
   
@@ -119,13 +121,13 @@ model <- function(){
   for (t in 1:(noccas-1)){
     for (l in 1:16) {
       gamma[1,1,l,t] <- phi1_aux[l,t] * (1-psi12_aux[l,t])   # Pr(alive and small t -> alive and small t+1)    survivalin same size class
-      gamma[1,2,l,t] <- phi1_aux[l,t] * psi12_aux[l,t]       # Pr(alive and small t -> alive and medium t+1)   survival and growth
+      gamma[1,2,l,t] <- phi2_aux[l,t] * psi12_aux[l,t]       # Pr(alive and small t -> alive and medium t+1)   survival and growth
       gamma[1,3,l,t] <- 0                                      # Pr(alive and small t -> alive and large t+1)    impossible to shrink
-      gamma[1,4,l,t] <- (1-phi1_aux[l,t])                     # Pr(alive and small t -> dead t+1)               mortality
+      gamma[1,4,l,t] <- (1-phi1_aux[l,t] * (1-psi12_aux[l,t])-phi2_aux[l,t] * psi12_aux[l,t] )                     # Pr(alive and small t -> dead t+1)               mortality
       gamma[2,1,l,t] <- 0                                      # Pr(alive and medium t -> alive and small t+1)   impossible to shrink
       gamma[2,2,l,t] <- phi2_aux[l,t] * (1-psi23_aux[l,t])   # Pr(alive and medium t -> alive and medium t+1)  survival in same size class
-      gamma[2,3,l,t] <- phi2_aux[l,t] * psi23_aux[l,t]       # Pr(alive and medium t -> alive and large t+1)   survival and growth
-      gamma[2,4,l,t] <- (1-phi2_aux[l,t])                     # Pr(alive and medium t -> dead t+1)              mortality
+      gamma[2,3,l,t] <- phi3_aux[l,t] * psi23_aux[l,t]       # Pr(alive and medium t -> alive and large t+1)   survival and growth
+      gamma[2,4,l,t] <- (1-phi2_aux[l,t] * (1-psi23_aux[l,t])-phi3_aux[l,t] * psi23_aux[l,t])                     # Pr(alive and medium t -> dead t+1)              mortality
       gamma[3,1,l,t] <- 0                                      # Pr(alive and large t -> alive and small t+1)    impossible to shrink
       gamma[3,2,l,t] <- 0                                      # Pr(alive and large t -> alive and medium t+1)   impossible to shrink
       gamma[3,3,l,t] <- phi3_aux[l,t]                         # Pr(alive and large t -> alive and large t+1)    survivalin same size class
@@ -232,7 +234,7 @@ inits = function(){
        psi12 = matrix(ncol = 2, runif(8,0,0.5)),psi23 = matrix(ncol = 2, runif(8,0,0.5)), psi13 = matrix(ncol = 2, runif(8,0,0.5)),
        error = runif(1,0,0.1), epsilon = matrix(ncol = 5, runif(80,-2,2)),
        z = zi,
-       sigma = runif(1,0,100))}
+       sigma_phi = runif(1,0,100),sigma_psi = runif(1,0,100))}
 
 parameters = c("phi1","phi2","phi3",
                "p1","p2","p3",
@@ -240,16 +242,17 @@ parameters = c("phi1","phi2","phi3",
                "error",
                "epsilon",
                "n1","n2","n3","ntot",
-               "sigma")
+               "sigma_psi","sigma_phi",
+               "lake_phi","lake_psi")
 
-Model_Treatment_capture_random <- jags.parallel(data = jags.data,
+Model_Treatment_capture_random_reverse_true <- jags.parallel(data = jags.data,
                                          inits = inits,
                                          parameters.to.save = parameters,
                                          model.file = model,
-                                         n.chains = 2,
+                                         n.chains = 4,
                                          n.iter = 10000)
 
-save(Model_Treatment_capture_random, file = "R/Model_Treatment_capture_random.RData" )
+save(Model_Treatment_capture_random_reverse_true, file = "R/Model_Treatment_capture_random_reverse_true.RData" )
 
 runtime = Sys.time() - old
 print(runtime)
@@ -559,35 +562,38 @@ model <- function(){
   }
   
   for (l in 1:16) {
-    lake[l]~dnorm(0,1/(sigma[LT[l]]*sigma[LT[l]]))
+    for (t in 1:(noccas-1)){
+      lake[l,t]~dnorm(0,1/(sigma*sigma))
+    }
+    
   }
   
-  for (tr in 1:4){
-    sigma[tr] ~ dunif(0,100)
-  }
+ 
+  sigma ~ dunif(0,100)
+  
   
   
   #survival and growth for each time and treatment 
   # (derived from survival and growth above, only needed for notation)
   for (t in 1:2){ #experiment time 1
     for (l in 1:16){
-      logit(phi1_aux[l,t]) <- logit(phi1[LT[l],1]) + lake[l]
-      logit(phi2_aux[l,t]) <- logit(phi2[LT[l],1]) + lake[l]
-      logit(phi3_aux[l,t]) <- logit(phi3[LT[l],1]) + lake[l]
+      logit(phi1_aux[l,t]) <- logit(phi1[LT[l],1]) + lake[l,t]
+      logit(phi2_aux[l,t]) <- logit(phi2[LT[l],1]) + lake[l,t]
+      logit(phi3_aux[l,t]) <- logit(phi3[LT[l],1]) + lake[l,t]
       
-      logit(psi12_aux[l,t]) <- logit(psi12[LT[l],1]) + lake[l]
-      logit(psi23_aux[l,t]) <- logit(psi23[LT[l],1]) + lake[l]
+      logit(psi12_aux[l,t]) <- logit(psi12[LT[l],1]) + lake[l,t]
+      logit(psi23_aux[l,t]) <- logit(psi23[LT[l],1]) + lake[l,t]
     }
   }
   
   for (t in 3:(noccas-1)){
     for (l in 1:16){ # experiment time 2
-      logit(phi1_aux[l,t]) <- logit(phi1[LT[l],2]) + lake[l]
-      logit(phi2_aux[l,t]) <- logit(phi2[LT[l],2]) + lake[l]
-      logit(phi3_aux[l,t]) <- logit(phi3[LT[l],2]) + lake[l]
+      logit(phi1_aux[l,t]) <- logit(phi1[LT[l],2]) + lake[l,t]
+      logit(phi2_aux[l,t]) <- logit(phi2[LT[l],2]) + lake[l,t]
+      logit(phi3_aux[l,t]) <- logit(phi3[LT[l],2]) + lake[l,t]
       
-      logit(psi12_aux[l,t]) <- logit(psi12[LT[l],2]) + lake[l]
-      logit(psi23_aux[l,t]) <- logit(psi23[LT[l],2]) + lake[l]
+      logit(psi12_aux[l,t]) <- logit(psi12[LT[l],2]) + lake[l,t]
+      logit(psi23_aux[l,t]) <- logit(psi23[LT[l],2]) + lake[l,t]
     }
   }
   
@@ -602,9 +608,11 @@ model <- function(){
   # variability of capture probability for each event
   for (l in 1:16){
     for (t in 1:(noccas-1)){
-      epsilon[l,t] ~ dunif(-20,20)
+      epsilon[l,t] ~ dnorm(0,1/(tau*tau))
     }
   }
+  
+  tau ~ dunif(0,100)
   
   # corrected capture probability for each event
   for (l in 1:16){
@@ -740,7 +748,7 @@ inits = function(){
        psi12 = matrix(ncol = 2, runif(8,0,0.5)),psi23 = matrix(ncol = 2, runif(8,0,0.5)), psi13 = matrix(ncol = 2, runif(8,0,0.5)),
        error = runif(1,0,0.1), epsilon = matrix(ncol = 5, runif(80,-2,2)),
        z = zi,
-       sigma = runif(4,0,100))}
+       sigma = runif(1,0,100), tau = runif(1,0,1))}
 
 parameters = c("phi1","phi2","phi3",
                "p1","p2","p3",
@@ -748,16 +756,16 @@ parameters = c("phi1","phi2","phi3",
                "error",
                "epsilon",
                "n1","n2","n3","ntot",
-               "sigma")
+               "sigma","tau")
 
-Model_Treatment_capture_random <- jags.parallel(data = jags.data,
+Model_Treatment_capture_randomlt <- jags.parallel(data = jags.data,
                                                 inits = inits,
                                                 parameters.to.save = parameters,
                                                 model.file = model,
                                                 n.chains = 2,
                                                 n.iter = 5000)
 
-save(Model_Treatment_capture_randomtr, file = "R/Model_Treatment_capture_randomtr.RData" )
+save(Model_Treatment_capture_randomlt, file = "R/Model_Treatment_capture_randomlt.RData" )
 
 runtime = Sys.time() - old
 print(runtime)

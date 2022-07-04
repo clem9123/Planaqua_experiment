@@ -210,7 +210,7 @@ for (i in 1:nrow(s_group)) {
 }
 for (i in 1:nrow(s_group)) {
   if (f[i]<5){
-    if (zinit[i,f[i]+1] < fs[i]){
+    if (zinit[i,f[i]+1] < fs[i]){ 
       zinit[i,f[i]+1] <- fs[i]
     }
   }
