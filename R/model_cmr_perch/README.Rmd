@@ -34,7 +34,7 @@ theme_set(theme_bw()+
 ## Capture Probability and variability
 ### Mean capture probability
 ```{r fig.height=4, fig.width=8}
-model = Model_Treatment_capture_random_true
+model = Model_Treatment_capture_random_reverse_true
 
 ggplot(get_p(model))+
   geom_point(aes(x = Size, y = mean))+
@@ -154,6 +154,8 @@ print(Model_Treatment_capture_random_true[[2]]$DIC)
 print(Model_Treatment_capture_random_true[[2]]$mean$deviance)
 print(Model_Treatment_random_true[[2]]$DIC)
 print(Model_Treatment_random_true[[2]]$mean$deviance)
+print(Model_Treatment_capture_random_reverse_true[[2]]$DIC)
+print(Model_Treatment_capture_random_reverse_true[[2]]$mean$deviance)
 ```
 
 
@@ -166,6 +168,6 @@ print(Model_Treatment_capture[[2]]$mean$deviance)
 model = Model_Treatment_capture_random_true
 ```
 ```{r}
-traceplot(Model_Treatment_random_true,ask=F)
+traceplot(Model_Treatment_capture_random_reverse_true,ask=F)
 ```
 
